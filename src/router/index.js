@@ -34,6 +34,12 @@ const router = createRouter({
             meta: { public: true } // Ruta pública
         },
         {
+            path: '/auth/register',
+            name: 'register',
+            component: () => import('@/views/auth/Register.vue'),
+            meta: { public: true } // Ruta pública
+        },
+        {
             path: '/accessdenied',
             name: 'accessDenied',
             component: () => import('@/views/auth/Access.vue'),
