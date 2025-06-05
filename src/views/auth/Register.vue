@@ -179,7 +179,7 @@ const register = async () => {
 };
 
 const goToLogin = () => {
-    router.push('/login');
+    router.push('/auth/login');
 };
 
 const goToStore = () => {
@@ -196,158 +196,146 @@ const toggleConfirmPasswordVisibility = () => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <div class="w-full max-w-6xl">
-            <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
-                <div class="flex flex-col lg:flex-row">
-                    <!-- Panel lateral izquierdo -->
-                    <div class="lg:w-1/2 bg-blue-700 p-8 lg:p-12 text-white relative overflow-hidden">
+    <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-1 sm:p-2 md:p-4 py-4 sm:py-6 md:py-8">
+        <div class="w-full max-w-7xl">
+            <div class="bg-white rounded-xl sm:rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+                <div class="flex flex-col xl:flex-row min-h-[450px] sm:min-h-[500px] md:min-h-[600px] max-h-none xl:max-h-screen">
+                    <!-- Panel lateral izquierdo - Optimizado para diferentes tamaños -->
+                    <div class="xl:w-2/5 bg-gradient-to-br from-blue-700 to-blue-800 p-3 sm:p-4 md:p-6 lg:p-8 text-white relative overflow-hidden min-h-[350px] sm:min-h-[380px] md:min-h-[400px] xl:min-h-0">
                         <!-- Elementos decorativos de fondo -->
-                        <div class="absolute top-0 right-0 w-64 h-64 bg-blue-600 opacity-20 rounded-full -translate-y-32 translate-x-32"></div>
-                        <div class="absolute bottom-0 left-0 w-48 h-48 bg-blue-900 opacity-20 rounded-full translate-y-24 -translate-x-24"></div>
+                        <div class="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 bg-blue-600 opacity-20 rounded-full -translate-y-16 sm:-translate-y-32 translate-x-16 sm:translate-x-32"></div>
+                        <div class="absolute bottom-0 left-0 w-24 h-24 sm:w-32 sm:h-32 lg:w-48 lg:h-48 bg-blue-900 opacity-20 rounded-full translate-y-12 sm:translate-y-24 -translate-x-12 sm:-translate-x-24"></div>
 
-                        <div class="relative z-10 h-full flex flex-col justify-center">
+                        <div class="relative z-10 h-full flex flex-col justify-between py-2">
                             <!-- Logo y título -->
-                            <div class="text-center lg:text-left mb-8">
-                                <div class="flex items-center justify-center lg:justify-start mb-6">
-                                    <div class="w-20 h-20 bg-white rounded-xl flex items-center justify-center shadow-lg border-2 border-white">
-                                        <img src="/mc.png" alt="Master Color Logo" class="w-16 h-16 object-contain" />
+                            <div class="text-center xl:text-left">
+                                <div class="flex items-center justify-center xl:justify-start mb-3 sm:mb-4">
+                                    <div class="w-12 h-12 sm:w-16 sm:h-16 bg-white rounded-lg flex items-center justify-center shadow-lg">
+                                        <img src="/mc.png" alt="Master Color Logo" class="w-10 h-10 sm:w-14 sm:h-14 object-contain" />
                                     </div>
                                 </div>
-                                <h1 class="text-4xl lg:text-5xl font-bold mb-4 text-white drop-shadow-sm">Master Color</h1>
-                                <p class="text-xl lg:text-2xl text-blue-50 font-light leading-relaxed">Únete a nuestra comunidad</p>
+                                <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2 text-white">Master Color</h1>
+                                <p class="text-sm sm:text-base md:text-lg lg:text-xl text-blue-50 font-light">Únete a nuestra comunidad</p>
                             </div>
 
-                            <!-- Beneficios de registrarse -->
-                            <div class="space-y-6 mt-6">
-                                <div class="flex items-center space-x-4">
-                                    <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm border border-gray-100">
-                                        <i class="pi pi-shopping-cart text-blue-700 text-lg font-bold"></i>
+                            <!-- Beneficios de registrarse - Compacto para móviles -->
+                            <div class="space-y-1.5 sm:space-y-2 md:space-y-3 lg:space-y-4 my-3 sm:my-4 md:my-5">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <i class="pi pi-shopping-cart text-blue-700 text-xs sm:text-sm md:text-base"></i>
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-lg text-white">Compras Rápidas</h3>
-                                        <p class="text-blue-100 text-sm font-medium">Acceso exclusivo a nuestro catálogo</p>
+                                        <h3 class="font-semibold text-xs sm:text-sm md:text-base text-white">Compras Rápidas</h3>
+                                        <p class="text-blue-100 text-[10px] sm:text-xs md:text-sm">Acceso exclusivo a nuestro catálogo</p>
                                     </div>
                                 </div>
 
-                                <div class="flex items-center space-x-4">
-                                    <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm border border-gray-100">
-                                        <i class="pi pi-tags text-blue-700 text-lg font-bold"></i>
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <i class="pi pi-tags text-blue-700 text-sm sm:text-base"></i>
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-lg text-white">Ofertas Especiales</h3>
-                                        <p class="text-blue-100 text-sm font-medium">Descuentos exclusivos para clientes</p>
+                                        <h3 class="font-semibold text-sm sm:text-base text-white">Ofertas Especiales</h3>
+                                        <p class="text-blue-100 text-xs sm:text-sm">Descuentos exclusivos para clientes</p>
                                     </div>
                                 </div>
 
-                                <div class="flex items-center space-x-4">
-                                    <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm border border-gray-100">
-                                        <i class="pi pi-truck text-blue-700 text-lg font-bold"></i>
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <i class="pi pi-truck text-blue-700 text-sm sm:text-base"></i>
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-lg text-white">Seguimiento de Pedidos</h3>
-                                        <p class="text-blue-100 text-sm font-medium">Rastrea tus compras en tiempo real</p>
+                                        <h3 class="font-semibold text-sm sm:text-base text-white">Seguimiento de Pedidos</h3>
+                                        <p class="text-blue-100 text-xs sm:text-sm">Rastrea tus compras en tiempo real</p>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Call to action -->
-                            <div class="mt-4 p-4">
+                            <div class="mt-4">
                                 <Button
                                     label="Explorar Tienda"
                                     icon="pi pi-shopping-cart"
-                                    class="w-full p-button-filled bg-yellow-500 border-yellow-500 text-blue-900 font-bold text-lg hover:bg-yellow-400 hover:border-yellow-400 hover:text-blue-800 transition-all duration-300 shadow-lg"
+                                    class="w-full bg-yellow-500 border-yellow-500 text-blue-900 font-bold hover:bg-yellow-400 hover:border-yellow-400 transition-all duration-300"
                                     @click="goToStore"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <!-- Panel de registro -->
-                    <div class="lg:w-1/2 p-8 lg:p-12 bg-white">
-                        <div class="max-w-md mx-auto">
+                    <!-- Panel de registro - Optimizado para scroll interno si es necesario -->
+                    <div class="xl:w-3/5 p-2 sm:p-3 md:p-4 lg:p-8 bg-white overflow-y-auto max-h-[70vh] sm:max-h-[75vh] md:max-h-[80vh] xl:max-h-screen">
+                        <div class="max-w-2xl mx-auto">
                             <!-- Header del formulario -->
-                            <div class="text-center mb-8">
-                                <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Crear Cuenta</h2>
-                                <p class="text-gray-700 text-lg font-medium">Regístrate y únete a nosotros</p>
+                            <div class="text-center mb-2 sm:mb-3 md:mb-4 lg:mb-6">
+                                <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-0.5 sm:mb-1">Crear Cuenta</h2>
+                                <p class="text-gray-600 text-xs sm:text-sm md:text-base">Regístrate y únete a nosotros</p>
                             </div>
 
-                            <form @submit.prevent="register" class="space-y-6">
-                                <!-- Campo de nombre -->
-                                <div>
-                                    <label for="name" class="block text-sm font-bold text-gray-800 mb-3">Nombre Completo</label>
-                                    <div class="relative">
-                                        <IconField>
-                                            <InputIcon class="pi pi-user" />
-                                            <InputText id="name" v-model="name" type="text" placeholder="Tu nombre completo" class="w-full text-gray-900 font-medium" :class="nameError ? 'p-invalid' : ''" @input="nameError = ''" />
-                                        </IconField>
-                                    </div>
-                                    <small v-if="nameError" class="p-error text-red-700 text-sm mt-2 block font-semibold">
-                                        {{ nameError }}
-                                    </small>
-                                </div>
-
-                                <!-- Campo de email -->
-                                <div>
-                                    <label for="email" class="block text-sm font-bold text-gray-800 mb-3">Correo Electrónico</label>
-                                    <div class="relative">
-                                        <IconField>
-                                            <InputIcon class="pi pi-envelope" />
-                                            <InputText id="email" v-model="email" type="email" placeholder="tu@email.com" class="w-full text-gray-900 font-medium" :class="emailError ? 'p-invalid' : ''" @input="emailError = ''" />
-                                        </IconField>
-                                    </div>
-                                    <small v-if="emailError" class="p-error text-red-700 text-sm mt-2 block font-semibold">
-                                        {{ emailError }}
-                                    </small>
-                                </div>
-
-                                <!-- Tipo de cliente -->
-                                <div>
-                                    <label for="clientType" class="block text-sm font-bold text-gray-800 mb-3">Tipo de Cliente</label>
-                                    <Dropdown v-model="clientType" :options="clientTypeOptions" optionLabel="label" optionValue="value" placeholder="Selecciona el tipo de cliente" class="w-full" @change="onClientTypeChange" />
-                                </div>
-
-                                <!-- Tipo de documento y número -->
+                            <form @submit.prevent="register" class="space-y-2 sm:space-y-3 md:space-y-4">
+                                <!-- Primera fila: Nombre y Email -->
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label for="documentType" class="block text-sm font-bold text-gray-800 mb-3">Tipo de Documento</label>
-                                        <Dropdown v-model="documentType" :options="documentTypeOptions" optionLabel="label" optionValue="value" placeholder="Tipo de documento" class="w-full" />
+                                        <label for="name" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-1 sm:mb-2">Nombre Completo</label>
+                                        <IconField>
+                                            <InputIcon class="pi pi-user" />
+                                            <InputText id="name" v-model="name" type="text" placeholder="Tu nombre completo" class="w-full compact-input" :class="nameError ? 'p-invalid' : ''" @input="nameError = ''" />
+                                        </IconField>
+                                        <small v-if="nameError" class="p-error text-red-600 text-xs mt-1 block">{{ nameError }}</small>
+                                    </div>
+
+                                    <div>
+                                        <label for="email" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Correo Electrónico</label>
+                                        <IconField>
+                                            <InputIcon class="pi pi-envelope" />
+                                            <InputText id="email" v-model="email" type="email" placeholder="tu@email.com" class="w-full compact-input" :class="emailError ? 'p-invalid' : ''" @input="emailError = ''" />
+                                        </IconField>
+                                        <small v-if="emailError" class="p-error text-red-600 text-xs mt-1 block">{{ emailError }}</small>
+                                    </div>
+                                </div>
+
+                                <!-- Segunda fila: Tipo de cliente y Teléfono -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="clientType" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Tipo de Cliente</label>
+                                        <Select v-model="clientType" :options="clientTypeOptions" optionLabel="label" optionValue="value" placeholder="Selecciona el tipo" class="w-full compact-select" @change="onClientTypeChange" />
+                                    </div>
+
+                                    <div>
+                                        <label for="phone" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Teléfono</label>
+                                        <IconField>
+                                            <InputIcon class="pi pi-phone" />
+                                            <InputText id="phone" v-model="phone" type="tel" placeholder="987654321" class="w-full compact-input" :class="phoneError ? 'p-invalid' : ''" @input="phoneError = ''" />
+                                        </IconField>
+                                        <small v-if="phoneError" class="p-error text-red-600 text-xs mt-1 block">{{ phoneError }}</small>
+                                    </div>
+                                </div>
+
+                                <!-- Tercera fila: Tipo de documento y Número -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="documentType" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Tipo de Documento</label>
+                                        <Select v-model="documentType" :options="documentTypeOptions" optionLabel="label" optionValue="value" placeholder="Tipo de documento" class="w-full compact-select" />
                                     </div>
                                     <div>
-                                        <label for="identityDocument" class="block text-sm font-bold text-gray-800 mb-3">Número de Documento</label>
+                                        <label for="identityDocument" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Número de Documento</label>
                                         <InputText
                                             id="identityDocument"
                                             v-model="identityDocument"
                                             type="text"
                                             :placeholder="documentType === 'dni' ? '12345678' : documentType === 'ruc' ? '12345678901' : 'Número de documento'"
-                                            class="w-full text-gray-900 font-medium"
+                                            class="w-full compact-input"
                                             :class="identityDocumentError ? 'p-invalid' : ''"
                                             @input="identityDocumentError = ''"
                                         />
-                                        <small v-if="identityDocumentError" class="p-error text-red-700 text-sm mt-2 block font-semibold">
-                                            {{ identityDocumentError }}
-                                        </small>
+                                        <small v-if="identityDocumentError" class="p-error text-red-600 text-xs mt-1 block">{{ identityDocumentError }}</small>
                                     </div>
                                 </div>
 
-                                <!-- Campo de teléfono -->
-                                <div>
-                                    <label for="phone" class="block text-sm font-bold text-gray-800 mb-3">Teléfono</label>
-                                    <div class="relative">
-                                        <IconField>
-                                            <InputIcon class="pi pi-phone" />
-                                            <InputText id="phone" v-model="phone" type="tel" placeholder="987654321" class="w-full text-gray-900 font-medium" :class="phoneError ? 'p-invalid' : ''" @input="phoneError = ''" />
-                                        </IconField>
-                                    </div>
-                                    <small v-if="phoneError" class="p-error text-red-700 text-sm mt-2 block font-semibold">
-                                        {{ phoneError }}
-                                    </small>
-                                </div>
-
-                                <!-- Campos de contraseña -->
+                                <!-- Cuarta fila: Contraseñas -->
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label for="password" class="block text-sm font-bold text-gray-800 mb-3">Contraseña</label>
+                                        <label for="password" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Contraseña</label>
                                         <div class="relative">
                                             <IconField>
                                                 <InputIcon class="pi pi-lock" />
@@ -356,23 +344,21 @@ const toggleConfirmPasswordVisibility = () => {
                                                     v-model="password"
                                                     :type="showPassword ? 'text' : 'password'"
                                                     placeholder="Tu contraseña"
-                                                    class="w-full text-gray-900 font-medium"
+                                                    class="w-full compact-input pr-12"
                                                     :class="passwordError ? 'p-invalid' : ''"
                                                     @input="passwordError = ''"
                                                 />
                                                 <i
                                                     :class="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
-                                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 cursor-pointer hover:text-gray-800 transition-colors text-lg"
+                                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hover:text-gray-700 z-10"
                                                     @click="togglePasswordVisibility"
                                                 ></i>
                                             </IconField>
                                         </div>
-                                        <small v-if="passwordError" class="p-error text-red-700 text-sm mt-2 block font-semibold">
-                                            {{ passwordError }}
-                                        </small>
+                                        <small v-if="passwordError" class="p-error text-red-600 text-xs mt-1 block">{{ passwordError }}</small>
                                     </div>
                                     <div>
-                                        <label for="confirmPassword" class="block text-sm font-bold text-gray-800 mb-3">Confirmar Contraseña</label>
+                                        <label for="confirmPassword" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Confirmar Contraseña</label>
                                         <div class="relative">
                                             <IconField>
                                                 <InputIcon class="pi pi-lock" />
@@ -381,57 +367,43 @@ const toggleConfirmPasswordVisibility = () => {
                                                     v-model="confirmPassword"
                                                     :type="showConfirmPassword ? 'text' : 'password'"
                                                     placeholder="Confirma tu contraseña"
-                                                    class="w-full text-gray-900 font-medium"
+                                                    class="w-full compact-input pr-12"
                                                     :class="confirmPasswordError ? 'p-invalid' : ''"
                                                     @input="confirmPasswordError = ''"
                                                 />
                                                 <i
                                                     :class="showConfirmPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
-                                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 cursor-pointer hover:text-gray-800 transition-colors text-lg"
+                                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hover:text-gray-700 z-10"
                                                     @click="toggleConfirmPasswordVisibility"
                                                 ></i>
                                             </IconField>
                                         </div>
-                                        <small v-if="confirmPasswordError" class="p-error text-red-700 text-sm mt-2 block font-semibold">
-                                            {{ confirmPasswordError }}
-                                        </small>
+                                        <small v-if="confirmPasswordError" class="p-error text-red-600 text-xs mt-1 block">{{ confirmPasswordError }}</small>
                                     </div>
                                 </div>
 
                                 <!-- Términos y condiciones -->
-                                <div>
+                                <div class="py-1 sm:py-2">
                                     <div class="flex items-start">
                                         <Checkbox v-model="acceptTerms" :binary="true" id="acceptTerms" class="mr-3 mt-1" />
-                                        <label for="acceptTerms" class="text-sm text-gray-800 cursor-pointer font-semibold leading-relaxed">
+                                        <label for="acceptTerms" class="text-xs sm:text-sm text-gray-700 cursor-pointer leading-tight sm:leading-relaxed">
                                             Acepto los
-                                            <a href="#" class="text-blue-700 hover:text-blue-800 underline">términos y condiciones</a>
+                                            <a href="#" class="text-blue-600 hover:text-blue-800 underline">términos y condiciones</a>
                                             y la
-                                            <a href="#" class="text-blue-700 hover:text-blue-800 underline">política de privacidad</a>
+                                            <a href="#" class="text-blue-600 hover:text-blue-800 underline">política de privacidad</a>
                                         </label>
                                     </div>
-                                    <small v-if="termsError" class="p-error text-red-700 text-sm mt-2 block font-semibold">
-                                        {{ termsError }}
-                                    </small>
+                                    <small v-if="termsError" class="p-error text-red-600 text-xs mt-1 block">{{ termsError }}</small>
                                 </div>
 
-                                <!-- Botón de registro -->
-                                <Button
-                                    type="submit"
-                                    label="Crear Cuenta"
-                                    icon="pi pi-user-plus"
-                                    class="w-full p-3 text-lg font-bold bg-blue-700 border-blue-700 hover:bg-blue-800 hover:border-blue-800 transition-all duration-300 shadow-lg"
-                                    :loading="loading"
-                                />
+                                <!-- Botones de acción -->
+                                <div class="space-y-2 sm:space-y-3 pt-1 sm:pt-2">
+                                    <Button type="submit" label="Crear Cuenta" icon="pi pi-user-plus" class="w-full compact-button bg-blue-600 border-blue-600 hover:bg-blue-700 hover:border-blue-700" :loading="loading" />
 
-                                <!-- Enlace de login -->
-                                <div class="text-center pt-6 border-t-2 border-gray-300">
-                                    <p class="text-gray-800 mb-4 font-semibold">¿Ya tienes una cuenta?</p>
-                                    <Button
-                                        label="Iniciar Sesión"
-                                        icon="pi pi-sign-in"
-                                        class="p-button-outlined p-button-secondary w-full border-2 border-gray-600 text-gray-800 font-bold hover:bg-gray-100 hover:border-gray-700 transition-all duration-300 shadow-md"
-                                        @click="goToLogin"
-                                    />
+                                    <div class="text-center">
+                                        <span class="text-xs sm:text-sm text-gray-600">¿Ya tienes una cuenta? </span>
+                                        <Button label="Iniciar Sesión" class="p-button-link text-blue-600 hover:text-blue-800 p-0 h-auto text-xs sm:text-sm" @click="goToLogin" />
+                                    </div>
                                 </div>
                             </form>
                         </div>
@@ -441,164 +413,170 @@ const toggleConfirmPasswordVisibility = () => {
         </div>
 
         <!-- Toast para notificaciones -->
-        <Toast position="top-right" />
+        <Toast position="top-right" class="toast-responsive" />
     </div>
 </template>
 
 <style scoped>
-/* Estilos personalizados para PrimeVue mejorados */
-:deep(.p-inputtext) {
-    padding: 1rem 1.25rem;
-    border-radius: 0.75rem;
-    border: 2px solid #d1d5db;
-    font-size: 1rem;
-    font-weight: 500;
-    color: #111827;
-    background-color: #ffffff;
-    transition: all 0.3s ease;
+/* Ajustes para pantallas muy pequeñas */
+@media (max-width: 400px) {
+    .min-h-screen {
+        padding: 0.25rem 0.125rem;
+    }
+
+    .compact-input :deep(.p-inputtext),
+    .compact-select :deep(.p-select .p-select-label) {
+        padding: 0.375rem 0.625rem;
+        font-size: 0.6875rem;
+    }
+
+    :deep(.p-input-icon-left > i:first-of-type) {
+        left: 0.625rem;
+        font-size: 0.6875rem;
+    }
+
+    :deep(.p-input-icon-left > .p-inputtext) {
+        padding-left: 2rem;
+    }
+}
+/* Estilos compactos para mejor uso del espacio */
+.compact-input :deep(.p-inputtext) {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border: 1.5px solid #d1d5db;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
 }
 
-:deep(.p-inputtext:focus) {
-    border-color: #1d4ed8;
-    box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.15);
-    background-color: #ffffff;
+.compact-input :deep(.p-inputtext:focus) {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-:deep(.p-inputtext.p-invalid) {
+.compact-input :deep(.p-inputtext.p-invalid) {
     border-color: #dc2626;
-    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.15);
-    background-color: #fef2f2;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
-:deep(.p-dropdown) {
-    border-radius: 0.75rem;
-    border: 2px solid #d1d5db;
-    font-weight: 500;
-    transition: all 0.3s ease;
+.compact-select :deep(.p-select) {
+    border-radius: 0.5rem;
+    border: 1.5px solid #d1d5db;
+    transition: all 0.2s ease;
 }
 
-:deep(.p-dropdown:not(.p-disabled):hover) {
-    border-color: #9ca3af;
+.compact-select :deep(.p-select:not(.p-disabled).p-focus) {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-:deep(.p-dropdown:not(.p-disabled).p-focus) {
-    border-color: #1d4ed8;
-    box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.15);
+.compact-select :deep(.p-select .p-select-label) {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
 }
 
-:deep(.p-dropdown .p-dropdown-label) {
-    padding: 1rem 1.25rem;
-    font-weight: 500;
-    color: #111827;
+.compact-button :deep(.p-button) {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
 }
 
 :deep(.p-input-icon-left > i:first-of-type) {
-    left: 1.25rem;
+    left: 1rem;
     color: #6b7280;
-    font-weight: bold;
+    font-size: 0.875rem;
 }
 
 :deep(.p-input-icon-left > .p-inputtext) {
-    padding-left: 3.5rem;
-}
-
-:deep(.p-input-icon-right > .p-inputtext) {
-    padding-right: 3.5rem;
-}
-
-:deep(.p-button) {
-    border-radius: 0.75rem;
-    font-weight: 700;
-    padding: 1rem 1.5rem;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    border-width: 2px;
-}
-
-:deep(.p-button:not(.p-button-outlined):not(.p-button-text)) {
-    background: #1d4ed8;
-    border-color: #1d4ed8;
-    color: #ffffff;
-}
-
-:deep(.p-button:not(.p-button-outlined):not(.p-button-text):hover) {
-    background: #1e40af;
-    border-color: #1e40af;
-    transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgba(29, 78, 216, 0.4);
-}
-
-:deep(.p-button-outlined) {
-    background: transparent;
-    border-width: 2px;
+    padding-left: 2.75rem;
 }
 
 :deep(.p-checkbox) {
-    width: 1.25rem;
-    height: 1.25rem;
+    width: 1rem;
+    height: 1rem;
 }
 
 :deep(.p-checkbox .p-checkbox-box) {
-    border-width: 2px;
+    border-width: 1.5px;
     border-color: #6b7280;
-    border-radius: 0.375rem;
+    border-radius: 0.25rem;
 }
 
 :deep(.p-checkbox.p-checkbox-checked .p-checkbox-box) {
-    background-color: #1d4ed8;
-    border-color: #1d4ed8;
+    background-color: #2563eb;
+    border-color: #2563eb;
 }
 
-:deep(.p-toast .p-toast-message) {
-    border-radius: 0.75rem;
-    box-shadow:
-        0 20px 25px -5px rgba(0, 0, 0, 0.15),
-        0 10px 10px -5px rgba(0, 0, 0, 0.08);
-    border-width: 1px;
+/* Responsive adjustments */
+@media (min-width: 401px) and (max-width: 768px) {
+    .compact-input :deep(.p-inputtext) {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.8125rem;
+    }
+
+    .compact-select :deep(.p-select .p-select-label) {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.8125rem;
+    }
+
+    .compact-button :deep(.p-button) {
+        padding: 0.625rem 1rem;
+        font-size: 0.8125rem;
+    }
 }
 
-:deep(.p-toast .p-toast-message-success) {
-    background-color: #dcfce7;
-    border-color: #16a34a;
+/* Ajustes para dispositivos táctiles */
+@media (hover: none) and (pointer: coarse) {
+    .overflow-y-auto::-webkit-scrollbar {
+        width: 0;
+    }
+
+    .overflow-y-auto {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
 }
 
-:deep(.p-toast .p-toast-message-error) {
-    background-color: #fef2f2;
-    border-color: #dc2626;
+/* Scrollbar personalizado para el panel de registro */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 4px;
 }
 
-/* Animaciones y efectos mejorados */
-.p-button {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: #f1f5f9;
 }
 
-.p-inputtext {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
 }
 
-:deep(.p-button-outlined:hover) {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
-/* Mejoras adicionales de contraste */
-:deep(.p-inputtext::placeholder) {
-    color: #9ca3af;
-    font-weight: 500;
-}
+/* Ajustes para Toast en móviles */
+@media (max-width: 480px) {
+    :deep(.toast-responsive .p-toast-message) {
+        margin: 0.25rem;
+        padding: 0.5rem;
+        width: calc(100vw - 2rem);
+        max-width: 100%;
+    }
 
-/* Hover states mejorados */
-:deep(.p-button:hover) {
-    font-weight: 700;
-}
+    :deep(.toast-responsive .p-toast-message-content) {
+        padding: 0.5rem;
+        align-items: flex-start;
+    }
 
-/* Estados de focus mejorados */
-:deep(.p-button:focus) {
-    box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.2);
-}
+    :deep(.toast-responsive .p-toast-message-text) {
+        margin-left: 0.5rem;
+    }
 
-:deep(.p-checkbox:focus .p-checkbox-box) {
-    box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.2);
+    :deep(.toast-responsive .p-toast-detail) {
+        margin-top: 0.25rem;
+        font-size: 0.75rem;
+    }
 }
 </style>

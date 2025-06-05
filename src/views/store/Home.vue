@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 
@@ -15,6 +15,12 @@ const selectedCategory = ref(null);
 const cartVisible = ref(false);
 const cartItems = ref([]);
 const loading = ref(false);
+const isSmallScreen = ref(false);
+
+// Responsive detection
+const checkScreenSize = () => {
+    isSmallScreen.value = window.innerWidth < 640;
+};
 
 // Sample categories
 const categories = ref([
@@ -290,6 +296,12 @@ const generateStars = (rating) => {
 // Lifecycle hooks
 onMounted(() => {
     console.log('Master Color Store initialized');
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('resize', checkScreenSize);
 });
 </script>
 
@@ -297,16 +309,16 @@ onMounted(() => {
     <div class="store-container min-h-screen bg-gray-50">
         <!-- Header -->
         <div class="bg-white shadow-sm border-b sticky top-0 z-40">
-            <div class="max-w-7xl mx-auto p-4">
-                <div class="flex justify-between items-center">
+            <div class="max-w-7xl mx-auto p-2 sm:p-3 md:p-4">
+                <div class="flex flex-wrap justify-between items-center gap-2">
                     <!-- Logo -->
                     <div class="flex items-center space-x-2">
-                        <img src="/mc.png" alt="Master Color Logo" class="h-10" />
-                        <h1 class="text-2xl font-bold text-gray-800">Master Color Store</h1>
+                        <img src="/mc.png" alt="Master Color Logo" class="h-8 sm:h-10" />
+                        <h1 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-800">Master Color Store</h1>
                     </div>
 
                     <!-- Search bar -->
-                    <div class="flex-1 max-w-md mx-8">
+                    <div class="flex-1 max-w-md mx-0 sm:mx-2 md:mx-4 lg:mx-8 order-3 sm:order-2 w-full sm:w-auto mt-2 sm:mt-0">
                         <IconField>
                             <InputIcon class="pi pi-search" />
                             <InputText v-model="searchQuery" placeholder="Buscar productos, categorías..." class="w-full" />
@@ -314,9 +326,15 @@ onMounted(() => {
                     </div>
 
                     <!-- Auth buttons and cart -->
-                    <div class="flex items-center space-x-4">
-                        <Button label="Iniciar sesión" icon="pi pi-sign-in" class="p-button-outlined p-button-sm font-medium" @click="navigateToLogin" />
-                        <Button label="Registrarse" icon="pi pi-user-plus" class="p-button-sm bg-blue-600 border-blue-600 hover:bg-blue-700 font-medium shadow-md" @click="navigateToRegister" />
+                    <div class="flex items-center space-x-2 sm:space-x-4 order-2 sm:order-3">
+                        <Button icon="pi pi-sign-in" :label="isSmallScreen ? undefined : 'Iniciar sesión'" class="p-button-outlined p-button-sm font-medium" :class="{ 'p-button-icon-only': isSmallScreen }" @click="navigateToLogin" />
+                        <Button
+                            icon="pi pi-user-plus"
+                            :label="isSmallScreen ? undefined : 'Registrarse'"
+                            class="p-button-sm bg-blue-600 border-blue-600 hover:bg-blue-700 font-medium shadow-md"
+                            :class="{ 'p-button-icon-only': isSmallScreen }"
+                            @click="navigateToRegister"
+                        />
 
                         <!-- Cart button -->
                         <div class="relative">
@@ -330,22 +348,22 @@ onMounted(() => {
         </div>
 
         <!-- Main content -->
-        <div class="max-w-7xl mx-auto p-4">
-            <div class="flex gap-6">
+        <div class="max-w-7xl mx-auto p-2 sm:p-3 md:p-4">
+            <div class="flex flex-col md:flex-row gap-3 md:gap-6">
                 <!-- Category sidebar -->
-                <div class="w-64 flex-shrink-0">
-                    <div class="bg-white rounded-lg shadow-sm p-4 sticky top-24">
+                <div class="w-full md:w-64 md:flex-shrink-0">
+                    <div class="bg-white rounded-lg shadow-sm p-3 sm:p-4 sticky top-[4.5rem] md:top-24">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-semibold text-gray-800">Categorías</h2>
                             <Button v-if="selectedCategory || searchQuery" v-tooltip="'Limpiar filtros'" icon="pi pi-filter-slash" class="p-button-rounded p-button-outlined p-button-sm p-button-danger" @click="clearFilters" />
                         </div>
 
-                        <div class="space-y-2">
+                        <div class="flex flex-wrap md:flex-col md:space-y-2 gap-2 md:gap-0">
                             <div
                                 v-for="category in categories"
                                 :key="category.id"
                                 @click="selectCategory(category)"
-                                class="flex items-center p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-50"
+                                class="flex items-center p-2 sm:p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-50 text-sm sm:text-base"
                                 :class="selectedCategory === category ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-600' : 'text-gray-700 hover:text-blue-600'"
                             >
                                 <i :class="['pi', category.icon, 'mr-3']"></i>
@@ -371,11 +389,11 @@ onMounted(() => {
                     </div>
 
                     <!-- Products grid -->
-                    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                         <div v-for="product in filteredProducts" :key="product.id" class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group">
                             <!-- Product image -->
                             <div class="relative overflow-hidden">
-                                <img :src="product.image" :alt="product.name" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" />
+                                <img :src="product.image" :alt="product.name" class="w-full h-36 sm:h-40 md:h-48 object-cover group-hover:scale-105 transition-transform duration-300" />
 
                                 <!-- Discount badge -->
                                 <div v-if="product.originalPrice > product.price" class="absolute top-2 left-2">
@@ -389,12 +407,12 @@ onMounted(() => {
                             </div>
 
                             <!-- Product info -->
-                            <div class="p-4">
+                            <div class="p-3 sm:p-4">
                                 <div class="mb-2">
                                     <span class="text-xs text-gray-500 uppercase tracking-wide">{{ product.category }}</span>
                                 </div>
 
-                                <h3 class="text-lg font-semibold text-gray-800 mb-2 line-clamp-2">
+                                <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-2 line-clamp-2">
                                     {{ product.name }}
                                 </h3>
 
@@ -413,7 +431,7 @@ onMounted(() => {
                                 </div>
 
                                 <!-- Price -->
-                                <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center justify-between mb-3 sm:mb-4">
                                     <div class="flex items-center space-x-2">
                                         <span class="text-xl font-bold text-blue-600"> S/ {{ product.price.toFixed(2) }} </span>
                                         <span v-if="product.originalPrice > product.price" class="text-sm text-gray-400 line-through"> S/ {{ product.originalPrice.toFixed(2) }} </span>
@@ -436,7 +454,7 @@ onMounted(() => {
         </div>
 
         <!-- Shopping Cart Modal -->
-        <Dialog v-model:visible="cartVisible" modal header="Carrito de compras" :style="{ width: '90vw', maxWidth: '600px' }" class="cart-dialog">
+        <Dialog v-model:visible="cartVisible" modal header="Carrito de compras" :style="{ width: '95vw', maxWidth: '600px' }" class="cart-dialog">
             <!-- Empty cart -->
             <div v-if="cartItems.length === 0" class="text-center py-12">
                 <i class="pi pi-shopping-cart text-6xl text-gray-300 mb-4"></i>
@@ -446,14 +464,14 @@ onMounted(() => {
 
             <!-- Cart items -->
             <div v-else>
-                <div class="max-h-96 overflow-y-auto mb-4">
-                    <div v-for="(item, index) in cartItems" :key="index" class="flex items-center p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                <div class="max-h-[60vh] sm:max-h-96 overflow-y-auto mb-4">
+                    <div v-for="(item, index) in cartItems" :key="index" class="flex flex-wrap sm:flex-nowrap items-center p-3 sm:p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors gap-2">
                         <!-- Product image -->
-                        <img :src="item.image" :alt="item.name" class="w-16 h-16 object-cover rounded-lg flex-shrink-0" />
+                        <img :src="item.image" :alt="item.name" class="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg flex-shrink-0" />
 
                         <!-- Product info -->
-                        <div class="flex-1 ml-4">
-                            <h4 class="font-semibold text-gray-800">{{ item.name }}</h4>
+                        <div class="flex-1 ml-0 sm:ml-4 w-[calc(100%-3.5rem)] sm:w-auto">
+                            <h4 class="font-semibold text-gray-800 text-sm sm:text-base line-clamp-1 sm:line-clamp-none">{{ item.name }}</h4>
                             <p class="text-sm text-gray-500">{{ item.category }}</p>
                             <div class="flex items-center space-x-2 mt-1">
                                 <span class="text-sm font-medium text-blue-600">S/ {{ item.price.toFixed(2) }}</span>
@@ -462,14 +480,14 @@ onMounted(() => {
                         </div>
 
                         <!-- Quantity controls -->
-                        <div class="flex items-center space-x-2">
+                        <div class="flex items-center space-x-1 sm:space-x-2 order-3 sm:order-none w-auto">
                             <Button icon="pi pi-minus" class="p-button-rounded p-button-text p-button-sm" @click="decreaseQuantity(index)" />
                             <span class="w-8 text-center font-medium">{{ item.quantity }}</span>
                             <Button icon="pi pi-plus" class="p-button-rounded p-button-text p-button-sm" @click="increaseQuantity(index)" />
                         </div>
 
                         <!-- Item total and remove -->
-                        <div class="flex flex-col items-end ml-4">
+                        <div class="flex flex-col items-end ml-auto sm:ml-4 order-2 sm:order-none">
                             <span class="font-bold text-gray-800">S/ {{ (item.price * item.quantity).toFixed(2) }}</span>
                             <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text p-button-sm mt-1" @click="removeFromCart(index)" />
                         </div>
@@ -497,7 +515,7 @@ onMounted(() => {
                 </div>
 
                 <!-- Action buttons -->
-                <div class="flex justify-between gap-3 mt-6">
+                <div class="flex flex-col sm:flex-row justify-between gap-2 sm:gap-3 mt-4 sm:mt-6">
                     <Button label="Vaciar carrito" icon="pi pi-trash" class="p-button-outlined p-button-danger flex-1" @click="clearCart" />
                     <Button label="Finalizar compra" icon="pi pi-credit-card" class="flex-1 bg-blue-600 border-blue-600 hover:bg-blue-700" :loading="loading" @click="checkout" />
                 </div>
@@ -510,6 +528,37 @@ onMounted(() => {
 </template>
 
 <style scoped>
+@media (max-width: 640px) {
+    :deep(.p-dialog-header) {
+        padding: 1rem;
+    }
+
+    :deep(.p-dialog-content) {
+        padding: 1rem;
+    }
+
+    :deep(.p-button) {
+        padding: 0.5rem 0.75rem;
+    }
+
+    :deep(.p-button .p-button-icon) {
+        font-size: 0.875rem;
+    }
+
+    :deep(.p-button .p-button-label) {
+        font-size: 0.875rem;
+    }
+
+    :deep(.p-toast .p-toast-message) {
+        margin: 0.25rem;
+        padding: 0.5rem;
+    }
+
+    :deep(.p-toast .p-toast-message-content) {
+        padding: 0.5rem;
+    }
+}
+
 .store-container {
     min-height: 100vh;
 }

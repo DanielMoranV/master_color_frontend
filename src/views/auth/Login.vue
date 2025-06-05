@@ -70,7 +70,7 @@ const login = async () => {
 };
 
 const goToRegister = () => {
-    router.push('/register');
+    router.push('/auth/register');
 };
 
 const goToStore = () => {
@@ -83,17 +83,17 @@ const togglePasswordVisibility = () => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+    <div class="min-h-screen bg-gray-100 flex items-center justify-center p-1 sm:p-2 md:p-4 py-4 sm:py-6 md:py-8">
         <div class="w-full max-w-6xl">
             <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
-                <div class="flex flex-col lg:flex-row">
+                <div class="flex flex-col lg:flex-row min-h-[450px] sm:min-h-[500px] md:min-h-[600px] max-h-none lg:max-h-screen">
                     <!-- Panel lateral izquierdo -->
-                    <div class="lg:w-1/2 bg-blue-700 p-8 lg:p-12 text-white relative overflow-hidden">
+                    <div class="lg:w-1/2 bg-blue-700 p-4 sm:p-6 md:p-8 lg:p-12 text-white relative overflow-hidden min-h-[350px] sm:min-h-[380px] md:min-h-[400px] lg:min-h-0">
                         <!-- Elementos decorativos de fondo -->
                         <div class="absolute top-0 right-0 w-64 h-64 bg-blue-600 opacity-20 rounded-full -translate-y-32 translate-x-32"></div>
                         <div class="absolute bottom-0 left-0 w-48 h-48 bg-blue-900 opacity-20 rounded-full translate-y-24 -translate-x-24"></div>
 
-                        <div class="relative z-10 h-full flex flex-col justify-center">
+                        <div class="relative z-10 h-full flex flex-col justify-center py-2">
                             <!-- Logo y título -->
                             <div class="text-center lg:text-left mb-8">
                                 <div class="flex items-center justify-center lg:justify-start mb-6">
@@ -101,19 +101,19 @@ const togglePasswordVisibility = () => {
                                         <img src="/mc.png" alt="Master Color Logo" class="w-16 h-16 object-contain" />
                                     </div>
                                 </div>
-                                <h1 class="text-4xl lg:text-5xl font-bold mb-4 text-white drop-shadow-sm">Master Color</h1>
-                                <p class="text-xl lg:text-2xl text-blue-50 font-light leading-relaxed">Tu solución completa en impresión y fotocopiado</p>
+                                <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-3 md:mb-4 text-white drop-shadow-sm">Master Color</h1>
+                                <p class="text-base sm:text-lg md:text-xl lg:text-2xl text-blue-50 font-light leading-relaxed">Tu solución completa en impresión y fotocopiado</p>
                             </div>
 
                             <!-- Características -->
-                            <div class="space-y-6 mt-6">
+                            <div class="space-y-3 sm:space-y-4 md:space-y-6 mt-3 sm:mt-4 md:mt-6">
                                 <div class="flex items-center space-x-4">
                                     <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm border border-gray-100">
-                                        <i class="pi pi-print text-blue-700 text-lg font-bold"></i>
+                                        <i class="pi pi-print text-blue-700 text-sm sm:text-base md:text-lg font-bold"></i>
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-lg text-white">Equipos Profesionales</h3>
-                                        <p class="text-blue-100 text-sm font-medium">Impresoras y fotocopiadoras de alta calidad</p>
+                                        <h3 class="font-semibold text-base sm:text-lg text-white">Equipos Profesionales</h3>
+                                        <p class="text-blue-100 text-xs sm:text-sm font-medium">Impresoras y fotocopiadoras de alta calidad</p>
                                     </div>
                                 </div>
 
@@ -139,7 +139,7 @@ const togglePasswordVisibility = () => {
                             </div>
 
                             <!-- Call to action -->
-                            <div class="mt-4 p-4">
+                            <div class="mt-3 sm:mt-4 p-2 sm:p-3 md:p-4">
                                 <Button
                                     label="Explorar Tienda"
                                     icon="pi pi-shopping-cart"
@@ -151,15 +151,15 @@ const togglePasswordVisibility = () => {
                     </div>
 
                     <!-- Panel de login -->
-                    <div class="lg:w-1/2 p-8 lg:p-12 bg-white">
+                    <div class="lg:w-1/2 p-4 sm:p-6 md:p-8 lg:p-12 bg-white overflow-y-auto max-h-[70vh] sm:max-h-[75vh] md:max-h-[80vh] lg:max-h-screen">
                         <div class="max-w-md mx-auto">
                             <!-- Header del formulario -->
-                            <div class="text-center mb-8">
-                                <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Bienvenido</h2>
-                                <p class="text-gray-700 text-lg font-medium">Inicia sesión en tu cuenta</p>
+                            <div class="text-center mb-4 sm:mb-6 md:mb-8">
+                                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-1 sm:mb-2">Bienvenido</h2>
+                                <p class="text-gray-700 text-base sm:text-lg font-medium">Inicia sesión en tu cuenta</p>
                             </div>
 
-                            <form @submit.prevent="login" class="space-y-6">
+                            <form @submit.prevent="login" class="space-y-4 sm:space-y-5 md:space-y-6">
                                 <!-- Campo de email -->
                                 <div>
                                     <label for="email" class="block text-sm font-bold text-gray-800 mb-3">Correo Electrónico</label>
@@ -220,7 +220,7 @@ const togglePasswordVisibility = () => {
                                 />
 
                                 <!-- Enlace de registro -->
-                                <div class="text-center pt-6 border-t-2 border-gray-300">
+                                <div class="text-center pt-4 sm:pt-5 md:pt-6 border-t-2 border-gray-300">
                                     <p class="text-gray-800 mb-4 font-semibold">¿No tienes una cuenta?</p>
                                     <Button
                                         label="Crear Cuenta"
@@ -242,7 +242,48 @@ const togglePasswordVisibility = () => {
 </template>
 
 <style scoped>
+/* Ajustes para pantallas muy pequeñas */
+@media (max-width: 400px) {
+    .min-h-screen {
+        padding: 0.25rem 0.125rem;
+    }
+    
+    :deep(.p-inputtext) {
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    :deep(.p-input-icon-left > i:first-of-type) {
+        left: 0.875rem;
+        font-size: 0.875rem;
+    }
+    
+    :deep(.p-input-icon-left > .p-inputtext) {
+        padding-left: 2.75rem;
+    }
+    
+    :deep(.p-button) {
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        border-radius: 0.5rem;
+    }
+}
 /* Estilos personalizados para PrimeVue mejorados */
+/* Estilos responsivos para diferentes tamaños de pantalla */
+@media (min-width: 401px) and (max-width: 640px) {
+    :deep(.p-inputtext) {
+        padding: 0.875rem 1rem;
+        border-radius: 0.625rem;
+        font-size: 0.9375rem;
+    }
+    
+    :deep(.p-button) {
+        padding: 0.875rem 1.25rem;
+        font-size: 0.9375rem;
+    }
+}
+
 :deep(.p-inputtext) {
     padding: 1rem 1.25rem;
     border-radius: 0.75rem;
@@ -341,6 +382,23 @@ const togglePasswordVisibility = () => {
     border-color: #dc2626;
 }
 
+/* Ajustes para dispositivos táctiles */
+@media (hover: none) and (pointer: coarse) {
+    .overflow-y-auto::-webkit-scrollbar {
+        width: 0;
+    }
+    
+    .overflow-y-auto {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    
+    :deep(.p-button:hover) {
+        transform: none;
+        box-shadow: none;
+    }
+}
+
 /* Animaciones y efectos mejorados */
 .p-button {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -364,6 +422,21 @@ const togglePasswordVisibility = () => {
 /* Hover states mejorados */
 :deep(.p-button:hover) {
     font-weight: 700;
+}
+
+/* Toast responsivo */
+@media (max-width: 480px) {
+    :deep(.p-toast .p-toast-message) {
+        margin: 0.25rem;
+        padding: 0.5rem;
+        width: calc(100vw - 2rem);
+        max-width: 100%;
+    }
+    
+    :deep(.p-toast .p-toast-message-content) {
+        padding: 0.5rem;
+        align-items: flex-start;
+    }
 }
 
 /* Estados de focus mejorados */
