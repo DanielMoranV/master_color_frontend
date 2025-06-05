@@ -2,7 +2,9 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
+import { useAuthStore } from '@/stores/auth';
 
+const authStore = useAuthStore();
 const router = useRouter();
 const toast = useToast();
 
@@ -11,7 +13,7 @@ const name = ref('');
 const email = ref('');
 const password = ref('');
 const confirmPassword = ref('');
-const clientType = ref('persona'); // persona o empresa
+const clientType = ref('individual'); // persona o empresa
 const identityDocument = ref('');
 const documentType = ref('dni'); // dni, ce, pasaporte, ruc
 const phone = ref('');
@@ -31,13 +33,13 @@ const termsError = ref('');
 
 // Opciones de tipo de cliente
 const clientTypeOptions = [
-    { label: 'Persona Natural', value: 'persona' },
-    { label: 'Empresa', value: 'empresa' }
+    { label: 'Persona Natural', value: 'individual' },
+    { label: 'Empresa', value: 'company' }
 ];
 
 // Opciones de tipo de documento según el tipo de cliente
 const documentTypeOptions = computed(() => {
-    if (clientType.value === 'persona') {
+    if (clientType.value === 'individual') {
         return [
             { label: 'DNI', value: 'dni' },
             { label: 'Carnet de Extranjería', value: 'ce' },
@@ -50,7 +52,7 @@ const documentTypeOptions = computed(() => {
 
 // Actualizar tipo de documento cuando cambia el tipo de cliente
 const onClientTypeChange = () => {
-    if (clientType.value === 'persona') {
+    if (clientType.value === 'individual') {
         documentType.value = 'dni';
     } else {
         documentType.value = 'ruc';
@@ -160,22 +162,33 @@ const register = async () => {
 
     loading.value = true;
 
-    // Simulación de registro
-    setTimeout(() => {
-        loading.value = false;
+    let payload = {
+        name: name.value,
+        email: email.value,
+        password: password.value,
+        password_confirmation: confirmPassword.value,
+        client_type: clientType.value,
+        identity_document: identityDocument.value,
+        document_type: documentType.value,
+        phone: phone.value
+    };
 
-        toast.add({
-            severity: 'success',
-            summary: 'Registro exitoso',
-            detail: 'Tu cuenta ha sido creada correctamente',
-            life: 4000
-        });
+    await authStore.register(payload, 'client');
 
-        // Redirigir al login
-        setTimeout(() => {
-            router.push('/login');
-        }, 1500);
-    }, 2000);
+    if (authStore.success) {
+        toast.add({ severity: 'success', summary: 'Registro exitoso', detail: 'Cuenta creada correctamente.', life: 3000 });
+        router.push('/dashboard');
+    } else {
+        if (authStore.validationErrors && authStore.validationErrors.length > 0) {
+            authStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
+        }
+    }
+
+    loading.value = false;
 };
 
 const goToLogin = () => {
@@ -402,7 +415,7 @@ const toggleConfirmPasswordVisibility = () => {
 
                                     <div class="text-center">
                                         <span class="text-xs sm:text-sm text-gray-600">¿Ya tienes una cuenta? </span>
-                                        <Button label="Iniciar Sesión" class="p-button-link text-blue-600 hover:text-blue-800 p-0 h-auto text-xs sm:text-sm" @click="goToLogin" />
+                                        <Button type="button" label="Iniciar Sesión" class="p-button-link text-blue-600 hover:text-blue-800 p-0 h-auto text-xs sm:text-sm" @click="goToLogin" />
                                     </div>
                                 </div>
                             </form>

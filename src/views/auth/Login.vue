@@ -247,22 +247,22 @@ const togglePasswordVisibility = () => {
     .min-h-screen {
         padding: 0.25rem 0.125rem;
     }
-    
+
     :deep(.p-inputtext) {
         padding: 0.75rem 1rem;
         border-radius: 0.5rem;
         font-size: 0.875rem;
     }
-    
+
     :deep(.p-input-icon-left > i:first-of-type) {
         left: 0.875rem;
         font-size: 0.875rem;
     }
-    
+
     :deep(.p-input-icon-left > .p-inputtext) {
         padding-left: 2.75rem;
     }
-    
+
     :deep(.p-button) {
         padding: 0.75rem 1rem;
         font-size: 0.875rem;
@@ -277,7 +277,7 @@ const togglePasswordVisibility = () => {
         border-radius: 0.625rem;
         font-size: 0.9375rem;
     }
-    
+
     :deep(.p-button) {
         padding: 0.875rem 1.25rem;
         font-size: 0.9375rem;
@@ -387,12 +387,12 @@ const togglePasswordVisibility = () => {
     .overflow-y-auto::-webkit-scrollbar {
         width: 0;
     }
-    
+
     .overflow-y-auto {
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
     }
-    
+
     :deep(.p-button:hover) {
         transform: none;
         box-shadow: none;
@@ -432,7 +432,7 @@ const togglePasswordVisibility = () => {
         width: calc(100vw - 2rem);
         max-width: 100%;
     }
-    
+
     :deep(.p-toast .p-toast-message-content) {
         padding: 0.5rem;
         align-items: flex-start;

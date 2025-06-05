@@ -1,4 +1,5 @@
 import { createApp } from 'vue';
+import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
 
@@ -10,10 +11,11 @@ import ToastService from 'primevue/toastservice';
 // Importar componentes PrimeVue
 import '@/assets/styles.scss';
 import registerPrimeVueComponents from './plugins/primevue-components';
-
+const pinia = createPinia();
 const app = createApp(App);
 
 app.use(router);
+app.use(pinia);
 app.use(PrimeVue, {
     theme: {
         preset: {
