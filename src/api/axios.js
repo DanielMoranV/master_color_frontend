@@ -1,9 +1,10 @@
 import axios from 'axios';
+import { useAuthStore } from '@/stores/auth';
 
 // Crear instancia de Axios con configuración base
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
-    timeout: 10000,
+    timeout: 90000,
     headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json'
@@ -14,9 +15,10 @@ const api = axios.create({
 api.interceptors.request.use(
     (config) => {
         // Obtener token del localStorage si existe
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+        const { getToken } = useAuthStore();
+        console.log(getToken);
+        if (getToken) {
+            config.headers.Authorization = 'Bearer ' + getToken;
         }
         return config;
     },

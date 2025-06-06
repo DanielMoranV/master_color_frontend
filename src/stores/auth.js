@@ -16,7 +16,7 @@ export const useAuthStore = defineStore('authStore', {
         validationErrors: []
     }),
     getters: {
-        isAuthenticated: (state) => !!state.token,
+        isAuthenticated: (state) => !!state.user && !!state.success,
         currentUser: (state) => state.user,
         isLoading: (state) => state.loading,
         getToken: (state) => state.token,
@@ -103,6 +103,7 @@ export const useAuthStore = defineStore('authStore', {
         async me() {
             this.loading = true;
             try {
+                console.log(this.userType);
                 // Usar la interfaz unificada authApi con el tipo de usuario almacenado
                 const response = await authApi.me(this.userType);
 

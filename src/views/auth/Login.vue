@@ -2,9 +2,11 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
+import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
 const toast = useToast();
+const authStore = useAuthStore();
 
 // Estado
 const email = ref('');
@@ -53,20 +55,27 @@ const login = async () => {
 
     loading.value = true;
 
-    // Simulación de login
-    setTimeout(() => {
-        loading.value = false;
+    let payload = {
+        email: email.value,
+        password: password.value
+    };
 
-        toast.add({
-            severity: 'success',
-            summary: 'Bienvenido',
-            detail: 'Inicio de sesión exitoso',
-            life: 3000
-        });
+    await authStore.login(payload, 'client');
 
-        // Redirigir a la tienda
-        router.push('/store');
-    }, 1500);
+    if (authStore.success) {
+        toast.add({ severity: 'success', summary: 'Inicio de sesión exitoso', detail: 'Bienvenido.', life: 3000 });
+        router.push('/dashboard');
+    } else {
+        if (authStore.validationErrors && authStore.validationErrors.length > 0) {
+            authStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
+        }
+    }
+
+    loading.value = false;
 };
 
 const goToRegister = () => {
