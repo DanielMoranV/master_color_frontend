@@ -31,8 +31,10 @@ export const useAuthStore = defineStore('authStore', {
                 const response = await authApi.login(payload, type);
 
                 const processed = handleProcessSuccess(response, this);
+
+                console.log(processed);
                 if (processed.success) {
-                    this.setToken(processed.data.token);
+                    this.setToken(processed.data.access_token);
                     this.setExpiration(processed.data.expiresIn);
                     this.setUser(processed.data.user);
                     this.startRefreshInterval();
@@ -52,7 +54,7 @@ export const useAuthStore = defineStore('authStore', {
                 const response = await authApi.register(payload, type);
 
                 const processed = handleProcessSuccess(response, this);
-                this.token = processed.data.token;
+                this.token = processed.data.access_token;
                 this.user = processed.data.user;
                 cache.setItem('token', this.token);
                 cache.setItem('currentUser', this.user);
@@ -89,7 +91,7 @@ export const useAuthStore = defineStore('authStore', {
                 const response = await authApi.refresh(this.userType);
 
                 const processed = handleProcessSuccess(response, this);
-                this.token = processed.data.token;
+                this.token = processed.data.access_token;
                 this.user = processed.data.user;
                 cache.setItem('token', this.token);
                 cache.setItem('currentUser', this.user);
@@ -108,7 +110,8 @@ export const useAuthStore = defineStore('authStore', {
                 const response = await authApi.me(this.userType);
 
                 const processed = handleProcessSuccess(response, this);
-                this.user = processed.data;
+                console.log(processed);
+                this.user = processed.data.user;
                 cache.setItem('currentUser', this.user);
             } catch (error) {
                 this.error = error;

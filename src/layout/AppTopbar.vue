@@ -36,6 +36,7 @@ const logout = async () => {
 
 onMounted(async () => {
     await authStore.me();
+    console.log(authStore.currentUser);
     if (!authStore.isAuthenticated) {
         console.log('no autenticado');
         router.push('/login');
