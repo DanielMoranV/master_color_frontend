@@ -13,6 +13,8 @@ export const registerClient = (payload) => axios.post('/client/auth/register', p
 export const logoutClient = () => axios.post('/client/auth/logout');
 export const refreshClient = () => axios.post('/client/auth/refresh');
 export const meClient = () => axios.post('/client/auth/me');
+export const verifyEmail = (payload) => axios.post('/client/auth/verify-email', payload);
+export const resendVerificationEmail = (payload) => axios.post('/client/auth/resend-verification', payload);
 
 // Función genérica para seleccionar el endpoint correcto según el tipo de usuario
 export const authApi = {
@@ -20,5 +22,7 @@ export const authApi = {
     register: (payload, type = 'user') => (type === 'client' ? registerClient(payload) : register(payload)),
     logout: (type = 'user') => (type === 'client' ? logoutClient() : logout()),
     refresh: (type = 'user') => (type === 'client' ? refreshClient() : refresh()),
-    me: (type = 'user') => (type === 'client' ? meClient() : me())
+    me: (type = 'user') => (type === 'client' ? meClient() : me()),
+    verifyEmail: (payload) => verifyEmail(payload), // Solo disponible para clientes
+    resendVerificationEmail: (payload) => resendVerificationEmail(payload) // Solo disponible para clientes
 };

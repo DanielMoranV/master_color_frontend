@@ -40,6 +40,12 @@ const router = createRouter({
             meta: { public: true } // Ruta pública
         },
         {
+            path: '/verify-email',
+            name: 'verifyEmail',
+            component: () => import('@/views/auth/VerifyEmail.vue'),
+            meta: { public: true } // Ruta pública
+        },
+        {
             path: '/accessdenied',
             name: 'accessDenied',
             component: () => import('@/views/auth/Access.vue'),

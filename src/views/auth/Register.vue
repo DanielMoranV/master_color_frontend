@@ -1,11 +1,12 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { useAuthStore } from '@/stores/auth';
 
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 const toast = useToast();
 
 // Estado
@@ -21,6 +22,12 @@ const acceptTerms = ref(false);
 const loading = ref(false);
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
+
+// Estado para verificación de email
+const registrationComplete = ref(false);
+const verificationSent = ref(false);
+const resendLoading = ref(false);
+const verificationToken = ref('');
 
 // Errores
 const nameError = ref('');
@@ -176,8 +183,16 @@ const register = async () => {
     await authStore.register(payload, 'client');
 
     if (authStore.success) {
-        toast.add({ severity: 'success', summary: 'Registro exitoso', detail: 'Cuenta creada correctamente.', life: 3000 });
-        router.push('/dashboard');
+        toast.add({
+            severity: 'success',
+            summary: 'Registro exitoso',
+            detail: 'Cuenta creada correctamente. Por favor verifica tu correo electrónico.',
+            life: 5000
+        });
+
+        // Mostrar pantalla de verificación en lugar de redirigir
+        registrationComplete.value = true;
+        verificationSent.value = true;
     } else {
         if (authStore.validationErrors && authStore.validationErrors.length > 0) {
             authStore.validationErrors.forEach((err) => {
@@ -199,6 +214,87 @@ const goToStore = () => {
     router.push('/');
 };
 
+// Función para reenviar el correo de verificación
+const resendVerificationEmail = async () => {
+    if (!email.value) return;
+
+    resendLoading.value = true;
+
+    try {
+        const result = await authStore.resendVerificationEmail({ email: email.value });
+
+        if (result.success) {
+            verificationSent.value = true;
+            toast.add({
+                severity: 'success',
+                summary: 'Correo enviado',
+                detail: 'Se ha enviado un nuevo correo de verificación',
+                life: 3000
+            });
+        } else {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: result.message || 'No se pudo enviar el correo de verificación',
+                life: 3000
+            });
+        }
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo enviar el correo de verificación',
+            life: 3000
+        });
+    } finally {
+        resendLoading.value = false;
+    }
+};
+
+// Función para verificar el email con el token
+const verifyEmail = async () => {
+    // Obtener token de la URL si existe
+    const token = route.query.token;
+
+    if (!token) return;
+
+    verificationToken.value = token;
+    loading.value = true;
+
+    try {
+        const result = await authStore.verifyEmail({ token });
+
+        if (result.success) {
+            toast.add({
+                severity: 'success',
+                summary: 'Email verificado',
+                detail: 'Tu correo electrónico ha sido verificado correctamente',
+                life: 3000
+            });
+            // Redirigir al dashboard después de verificar
+            setTimeout(() => {
+                router.push('/dashboard');
+            }, 1500);
+        } else {
+            toast.add({
+                severity: 'error',
+                summary: 'Error de verificación',
+                detail: result.message || 'No se pudo verificar el correo electrónico',
+                life: 4000
+            });
+        }
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo verificar el correo electrónico',
+            life: 3000
+        });
+    } finally {
+        loading.value = false;
+    }
+};
+
 const togglePasswordVisibility = () => {
     showPassword.value = !showPassword.value;
 };
@@ -206,6 +302,16 @@ const togglePasswordVisibility = () => {
 const toggleConfirmPasswordVisibility = () => {
     showConfirmPassword.value = !showConfirmPassword.value;
 };
+
+// Verificar si hay un token de verificación en la URL al cargar la página
+onMounted(() => {
+    const token = route.query.token;
+    if (token) {
+        verificationToken.value = token;
+        // Intentar verificar el email automáticamente
+        verifyEmail();
+    }
+});
 </script>
 
 <template>
@@ -278,147 +384,172 @@ const toggleConfirmPasswordVisibility = () => {
 
                     <!-- Panel de registro - Optimizado para scroll interno si es necesario -->
                     <div class="xl:w-3/5 p-2 sm:p-3 md:p-4 lg:p-8 bg-white overflow-y-auto max-h-[70vh] sm:max-h-[75vh] md:max-h-[80vh] xl:max-h-screen">
-                        <div class="max-w-2xl mx-auto">
-                            <!-- Header del formulario -->
-                            <div class="text-center mb-2 sm:mb-3 md:mb-4 lg:mb-6">
-                                <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-0.5 sm:mb-1">Crear Cuenta</h2>
-                                <p class="text-gray-600 text-xs sm:text-sm md:text-base">Regístrate y únete a nosotros</p>
+                        <!-- Pantalla de verificación de email después del registro -->
+                        <div v-if="registrationComplete" class="h-full flex flex-col justify-center items-center px-4 py-8 text-center space-y-6">
+                            <div class="w-16 h-16 sm:w-20 sm:h-20 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="pi pi-envelope text-blue-600 text-3xl sm:text-4xl"></i>
                             </div>
 
-                            <form @submit.prevent="register" class="space-y-2 sm:space-y-3 md:space-y-4">
-                                <!-- Primera fila: Nombre y Email -->
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="name" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-1 sm:mb-2">Nombre Completo</label>
-                                        <IconField>
-                                            <InputIcon class="pi pi-user" />
-                                            <InputText id="name" v-model="name" type="text" placeholder="Tu nombre completo" class="w-full compact-input" :class="nameError ? 'p-invalid' : ''" @input="nameError = ''" />
-                                        </IconField>
-                                        <small v-if="nameError" class="p-error text-red-600 text-xs mt-1 block">{{ nameError }}</small>
-                                    </div>
+                            <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">¡Verifica tu correo electrónico!</h2>
 
-                                    <div>
-                                        <label for="email" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Correo Electrónico</label>
-                                        <IconField>
-                                            <InputIcon class="pi pi-envelope" />
-                                            <InputText id="email" v-model="email" type="email" placeholder="tu@email.com" class="w-full compact-input" :class="emailError ? 'p-invalid' : ''" @input="emailError = ''" />
-                                        </IconField>
-                                        <small v-if="emailError" class="p-error text-red-600 text-xs mt-1 block">{{ emailError }}</small>
-                                    </div>
+                            <p class="text-gray-600 max-w-md">
+                                Hemos enviado un correo de verificación a <span class="font-semibold">{{ email }}</span
+                                >. Por favor, revisa tu bandeja de entrada y haz clic en el enlace de verificación.
+                            </p>
+
+                            <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                                <Button label="Reenviar correo" icon="pi pi-refresh" :loading="resendLoading" :disabled="verificationSent" class="p-button-outlined p-button-primary" @click="resendVerificationEmail" />
+
+                                <Button label="Ir a iniciar sesión" icon="pi pi-sign-in" class="p-button-primary" @click="goToLogin" />
+                            </div>
+
+                            <p v-if="verificationSent" class="text-sm text-green-600 mt-2"><i class="pi pi-check mr-1"></i> Correo enviado. Si no lo recibes, revisa tu carpeta de spam.</p>
+                        </div>
+
+                        <!-- Formulario de registro -->
+                        <div v-else>
+                            <div class="max-w-2xl mx-auto">
+                                <!-- Header del formulario -->
+                                <div class="text-center mb-2 sm:mb-3 md:mb-4 lg:mb-6">
+                                    <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-0.5 sm:mb-1">Crear Cuenta</h2>
+                                    <p class="text-gray-600 text-xs sm:text-sm md:text-base">Regístrate y únete a nosotros</p>
                                 </div>
 
-                                <!-- Segunda fila: Tipo de cliente y Teléfono -->
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="clientType" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Tipo de Cliente</label>
-                                        <Select v-model="clientType" :options="clientTypeOptions" optionLabel="label" optionValue="value" placeholder="Selecciona el tipo" class="w-full compact-select" @change="onClientTypeChange" />
-                                    </div>
-
-                                    <div>
-                                        <label for="phone" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Teléfono</label>
-                                        <IconField>
-                                            <InputIcon class="pi pi-phone" />
-                                            <InputText id="phone" v-model="phone" type="tel" placeholder="987654321" class="w-full compact-input" :class="phoneError ? 'p-invalid' : ''" @input="phoneError = ''" />
-                                        </IconField>
-                                        <small v-if="phoneError" class="p-error text-red-600 text-xs mt-1 block">{{ phoneError }}</small>
-                                    </div>
-                                </div>
-
-                                <!-- Tercera fila: Tipo de documento y Número -->
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="documentType" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Tipo de Documento</label>
-                                        <Select v-model="documentType" :options="documentTypeOptions" optionLabel="label" optionValue="value" placeholder="Tipo de documento" class="w-full compact-select" />
-                                    </div>
-                                    <div>
-                                        <label for="identityDocument" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Número de Documento</label>
-                                        <InputText
-                                            id="identityDocument"
-                                            v-model="identityDocument"
-                                            type="text"
-                                            :placeholder="documentType === 'dni' ? '12345678' : documentType === 'ruc' ? '12345678901' : 'Número de documento'"
-                                            class="w-full compact-input"
-                                            :class="identityDocumentError ? 'p-invalid' : ''"
-                                            @input="identityDocumentError = ''"
-                                        />
-                                        <small v-if="identityDocumentError" class="p-error text-red-600 text-xs mt-1 block">{{ identityDocumentError }}</small>
-                                    </div>
-                                </div>
-
-                                <!-- Cuarta fila: Contraseñas -->
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="password" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Contraseña</label>
-                                        <div class="relative">
+                                <form @submit.prevent="register" class="space-y-2 sm:space-y-3 md:space-y-4">
+                                    <!-- Primera fila: Nombre y Email -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="name" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-1 sm:mb-2">Nombre Completo</label>
                                             <IconField>
-                                                <InputIcon class="pi pi-lock" />
-                                                <InputText
-                                                    id="password"
-                                                    v-model="password"
-                                                    :type="showPassword ? 'text' : 'password'"
-                                                    placeholder="Tu contraseña"
-                                                    class="w-full compact-input pr-12"
-                                                    :class="passwordError ? 'p-invalid' : ''"
-                                                    @input="passwordError = ''"
-                                                />
-                                                <i
-                                                    :class="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
-                                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hover:text-gray-700 z-10"
-                                                    @click="togglePasswordVisibility"
-                                                ></i>
+                                                <InputIcon class="pi pi-user" />
+                                                <InputText id="name" v-model="name" type="text" placeholder="Tu nombre completo" class="w-full compact-input" :class="nameError ? 'p-invalid' : ''" @input="nameError = ''" />
                                             </IconField>
+                                            <small v-if="nameError" class="p-error text-red-600 text-xs mt-1 block">{{ nameError }}</small>
                                         </div>
-                                        <small v-if="passwordError" class="p-error text-red-600 text-xs mt-1 block">{{ passwordError }}</small>
-                                    </div>
-                                    <div>
-                                        <label for="confirmPassword" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Confirmar Contraseña</label>
-                                        <div class="relative">
+
+                                        <div>
+                                            <label for="email" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Correo Electrónico</label>
                                             <IconField>
-                                                <InputIcon class="pi pi-lock" />
-                                                <InputText
-                                                    id="confirmPassword"
-                                                    v-model="confirmPassword"
-                                                    :type="showConfirmPassword ? 'text' : 'password'"
-                                                    placeholder="Confirma tu contraseña"
-                                                    class="w-full compact-input pr-12"
-                                                    :class="confirmPasswordError ? 'p-invalid' : ''"
-                                                    @input="confirmPasswordError = ''"
-                                                />
-                                                <i
-                                                    :class="showConfirmPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
-                                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hover:text-gray-700 z-10"
-                                                    @click="toggleConfirmPasswordVisibility"
-                                                ></i>
+                                                <InputIcon class="pi pi-envelope" />
+                                                <InputText id="email" v-model="email" type="email" placeholder="tu@email.com" class="w-full compact-input" :class="emailError ? 'p-invalid' : ''" @input="emailError = ''" />
                                             </IconField>
+                                            <small v-if="emailError" class="p-error text-red-600 text-xs mt-1 block">{{ emailError }}</small>
                                         </div>
-                                        <small v-if="confirmPasswordError" class="p-error text-red-600 text-xs mt-1 block">{{ confirmPasswordError }}</small>
                                     </div>
-                                </div>
 
-                                <!-- Términos y condiciones -->
-                                <div class="py-1 sm:py-2">
-                                    <div class="flex items-start">
-                                        <Checkbox v-model="acceptTerms" :binary="true" id="acceptTerms" class="mr-3 mt-1" />
-                                        <label for="acceptTerms" class="text-xs sm:text-sm text-gray-700 cursor-pointer leading-tight sm:leading-relaxed">
-                                            Acepto los
-                                            <a href="#" class="text-blue-600 hover:text-blue-800 underline">términos y condiciones</a>
-                                            y la
-                                            <a href="#" class="text-blue-600 hover:text-blue-800 underline">política de privacidad</a>
-                                        </label>
+                                    <!-- Segunda fila: Tipo de cliente y Teléfono -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="clientType" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Tipo de Cliente</label>
+                                            <Select v-model="clientType" :options="clientTypeOptions" optionLabel="label" optionValue="value" placeholder="Selecciona el tipo" class="w-full compact-select" @change="onClientTypeChange" />
+                                        </div>
+
+                                        <div>
+                                            <label for="phone" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Teléfono</label>
+                                            <IconField>
+                                                <InputIcon class="pi pi-phone" />
+                                                <InputText id="phone" v-model="phone" type="tel" placeholder="987654321" class="w-full compact-input" :class="phoneError ? 'p-invalid' : ''" @input="phoneError = ''" />
+                                            </IconField>
+                                            <small v-if="phoneError" class="p-error text-red-600 text-xs mt-1 block">{{ phoneError }}</small>
+                                        </div>
                                     </div>
-                                    <small v-if="termsError" class="p-error text-red-600 text-xs mt-1 block">{{ termsError }}</small>
-                                </div>
 
-                                <!-- Botones de acción -->
-                                <div class="space-y-2 sm:space-y-3 pt-1 sm:pt-2">
-                                    <Button type="submit" label="Crear Cuenta" icon="pi pi-user-plus" class="w-full compact-button bg-blue-600 border-blue-600 hover:bg-blue-700 hover:border-blue-700" :loading="loading" />
-
-                                    <div class="text-center">
-                                        <span class="text-xs sm:text-sm text-gray-600">¿Ya tienes una cuenta? </span>
-                                        <Button type="button" label="Iniciar Sesión" class="p-button-link text-blue-600 hover:text-blue-800 p-0 h-auto text-xs sm:text-sm" @click="goToLogin" />
+                                    <!-- Tercera fila: Tipo de documento y Número -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="documentType" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Tipo de Documento</label>
+                                            <Select v-model="documentType" :options="documentTypeOptions" optionLabel="label" optionValue="value" placeholder="Tipo de documento" class="w-full compact-select" />
+                                        </div>
+                                        <div>
+                                            <label for="identityDocument" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Número de Documento</label>
+                                            <InputText
+                                                id="identityDocument"
+                                                v-model="identityDocument"
+                                                type="text"
+                                                :placeholder="documentType === 'dni' ? '12345678' : documentType === 'ruc' ? '12345678901' : 'Número de documento'"
+                                                class="w-full compact-input"
+                                                :class="identityDocumentError ? 'p-invalid' : ''"
+                                                @input="identityDocumentError = ''"
+                                            />
+                                            <small v-if="identityDocumentError" class="p-error text-red-600 text-xs mt-1 block">{{ identityDocumentError }}</small>
+                                        </div>
                                     </div>
-                                </div>
-                            </form>
+
+                                    <!-- Cuarta fila: Contraseñas -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="password" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Contraseña</label>
+                                            <div class="relative">
+                                                <IconField>
+                                                    <InputIcon class="pi pi-lock" />
+                                                    <InputText
+                                                        id="password"
+                                                        v-model="password"
+                                                        :type="showPassword ? 'text' : 'password'"
+                                                        placeholder="Tu contraseña"
+                                                        class="w-full compact-input pr-12"
+                                                        :class="passwordError ? 'p-invalid' : ''"
+                                                        @input="passwordError = ''"
+                                                    />
+                                                    <i
+                                                        :class="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                                                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hover:text-gray-700 z-10"
+                                                        @click="togglePasswordVisibility"
+                                                    ></i>
+                                                </IconField>
+                                            </div>
+                                            <small v-if="passwordError" class="p-error text-red-600 text-xs mt-1 block">{{ passwordError }}</small>
+                                        </div>
+                                        <div>
+                                            <label for="confirmPassword" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Confirmar Contraseña</label>
+                                            <div class="relative">
+                                                <IconField>
+                                                    <InputIcon class="pi pi-lock" />
+                                                    <InputText
+                                                        id="confirmPassword"
+                                                        v-model="confirmPassword"
+                                                        :type="showConfirmPassword ? 'text' : 'password'"
+                                                        placeholder="Confirma tu contraseña"
+                                                        class="w-full compact-input pr-12"
+                                                        :class="confirmPasswordError ? 'p-invalid' : ''"
+                                                        @input="confirmPasswordError = ''"
+                                                    />
+                                                    <i
+                                                        :class="showConfirmPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                                                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hover:text-gray-700 z-10"
+                                                        @click="toggleConfirmPasswordVisibility"
+                                                    ></i>
+                                                </IconField>
+                                            </div>
+                                            <small v-if="confirmPasswordError" class="p-error text-red-600 text-xs mt-1 block">{{ confirmPasswordError }}</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Términos y condiciones -->
+                                    <div class="py-1 sm:py-2">
+                                        <div class="flex items-start">
+                                            <Checkbox v-model="acceptTerms" :binary="true" id="acceptTerms" class="mr-3 mt-1" />
+                                            <label for="acceptTerms" class="text-xs sm:text-sm text-gray-700 cursor-pointer leading-tight sm:leading-relaxed">
+                                                Acepto los
+                                                <a href="#" class="text-blue-600 hover:text-blue-800 underline">términos y condiciones</a>
+                                                y la
+                                                <a href="#" class="text-blue-600 hover:text-blue-800 underline">política de privacidad</a>
+                                            </label>
+                                        </div>
+                                        <small v-if="termsError" class="p-error text-red-600 text-xs mt-1 block">{{ termsError }}</small>
+                                    </div>
+
+                                    <!-- Botones de acción -->
+                                    <div class="space-y-2 sm:space-y-3 pt-1 sm:pt-2">
+                                        <Button type="submit" label="Crear Cuenta" icon="pi pi-user-plus" class="w-full compact-button bg-blue-600 border-blue-600 hover:bg-blue-700 hover:border-blue-700" :loading="loading" />
+
+                                        <div class="text-center">
+                                            <span class="text-xs sm:text-sm text-gray-600">¿Ya tienes una cuenta? </span>
+                                            <Button type="button" label="Iniciar Sesión" class="p-button-link text-blue-600 hover:text-blue-800 p-0 h-auto text-xs sm:text-sm" @click="goToLogin" />
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>

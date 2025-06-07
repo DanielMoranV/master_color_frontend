@@ -198,6 +198,62 @@ export const useAuthStore = defineStore('authStore', {
             this.message = '';
             this.success = false;
             this.validationErrors = [];
+        },
+
+        /**
+         * Verifica el email del usuario utilizando el token enviado por correo
+         * @param {Object} payload - Contiene el token de verificación
+         * @returns {Promise<void>}
+         */
+        async verifyEmail(payload) {
+            this.resetState();
+            try {
+                // Solo disponible para clientes
+                const response = await authApi.verifyEmail(payload);
+                
+                const processed = handleProcessSuccess(response, this);
+                
+                if (processed.success && this.user) {
+                    // Actualizar el estado del usuario si está autenticado
+                    this.user = {
+                        ...this.user,
+                        email_verified_at: new Date().toISOString()
+                    };
+                    cache.setItem('currentUser', this.user);
+                }
+                
+                return processed;
+            } catch (error) {
+                handleProcessError(error, this);
+                return { success: false, message: error.message || 'Error al verificar el email' };
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        /**
+         * Reenvía el correo de verificación al usuario actual
+         * @param {Object} payload - Puede contener el email si es necesario
+         * @returns {Promise<void>}
+         */
+        async resendVerificationEmail(payload = {}) {
+            this.resetState();
+            try {
+                // Si no se proporciona un email y el usuario está autenticado, usar su email
+                if (!payload.email && this.user && this.user.email) {
+                    payload = { email: this.user.email };
+                }
+                
+                // Solo disponible para clientes
+                const response = await authApi.resendVerificationEmail(payload);
+                
+                return handleProcessSuccess(response, this);
+            } catch (error) {
+                handleProcessError(error, this);
+                return { success: false, message: error.message || 'Error al reenviar el correo de verificación' };
+            } finally {
+                this.loading = false;
+            }
         }
     }
 });

@@ -6,6 +6,7 @@ import router from './router';
 import Aura from '@primeuix/themes/aura';
 import PrimeVue from 'primevue/config';
 import ConfirmationService from 'primevue/confirmationservice';
+import StyleClass from 'primevue/styleclass';
 import ToastService from 'primevue/toastservice';
 
 // Importar componentes PrimeVue
@@ -46,7 +47,7 @@ app.use(PrimeVue, {
 });
 app.use(ToastService);
 app.use(ConfirmationService);
-
+app.directive('styleclass', StyleClass);
 registerPrimeVueComponents(app);
 
 app.mount('#app');

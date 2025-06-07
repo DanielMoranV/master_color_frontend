@@ -1,6 +1,6 @@
 // src/plugins/primevue-components.js
 
-import { Drawer, IconField, InputIcon, Popover, Select, ToggleSwitch, MultiSelect, AutoComplete } from 'primevue';
+import { Drawer, IconField, InputIcon, Popover, Select, ToggleSwitch, MultiSelect, AutoComplete, SelectButton } from 'primevue';
 import Avatar from 'primevue/avatar';
 import Badge from 'primevue/badge';
 import Button from 'primevue/button';
@@ -10,6 +10,9 @@ import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
 import ConfirmDialog from 'primevue/confirmdialog';
 import DataTable from 'primevue/datatable';
+import Chart from 'primevue/chart';
+import Menu from 'primevue/menu';
+import Timeline from 'primevue/timeline';
 import DatePicker from 'primevue/datepicker';
 import Dialog from 'primevue/dialog';
 import Divider from 'primevue/divider';
@@ -43,6 +46,7 @@ export default function registerPrimeVueComponents(app) {
     app.component('Textarea', Textarea);
     app.component('TabPanel', TabPanel);
     app.component('Select', Select);
+    app.component('SelectButton', SelectButton);
     app.component('ToggleSwitch', ToggleSwitch);
     app.component('Drawer', Drawer);
     app.component('Popover', Popover);
@@ -52,5 +56,8 @@ export default function registerPrimeVueComponents(app) {
     app.component('AutoComplete', AutoComplete);
     app.component('Badge', Badge);
     app.component('OverlayBadge', OverlayBadge);
+    app.component('Menu', Menu);
+    app.component('Chart', Chart);
+    app.component('Timeline', Timeline);
     app.directive('tooltip', Tooltip);
 }
