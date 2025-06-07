@@ -28,10 +28,10 @@ Master Color Store es una aplicación web moderna para una tienda especializada 
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/tu-usuario/master-color-frontend.git
+git clone https://github.com/DanielMoranV/master_color_frontend.git
 
 # Navegar al directorio del proyecto
-cd master-color-frontend
+cd master_color_frontend
 
 # Instalar dependencias
 npm install

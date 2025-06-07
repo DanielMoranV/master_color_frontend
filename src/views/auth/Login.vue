@@ -17,6 +17,13 @@ const showPassword = ref(false);
 const emailError = ref('');
 const passwordError = ref('');
 
+// Estado para recuperación de contraseña
+const showForgotPasswordDialog = ref(false);
+const forgotPasswordEmail = ref('');
+const forgotPasswordLoading = ref(false);
+const forgotPasswordEmailError = ref('');
+const forgotPasswordSuccess = ref(false);
+
 // Métodos
 const validateForm = () => {
     let isValid = true;
@@ -89,9 +96,109 @@ const goToStore = () => {
 const togglePasswordVisibility = () => {
     showPassword.value = !showPassword.value;
 };
+
+// Métodos para recuperación de contraseña
+const openForgotPasswordDialog = () => {
+    forgotPasswordEmail.value = email.value; // Pre-llenar con el email del login si existe
+    forgotPasswordEmailError.value = '';
+    forgotPasswordSuccess.value = false;
+    showForgotPasswordDialog.value = true;
+};
+
+const closeForgotPasswordDialog = () => {
+    showForgotPasswordDialog.value = false;
+};
+
+const validateForgotPasswordEmail = () => {
+    forgotPasswordEmailError.value = '';
+
+    if (!forgotPasswordEmail.value) {
+        forgotPasswordEmailError.value = 'El correo electrónico es requerido';
+        return false;
+    } else if (!/^\S+@\S+\.\S+$/.test(forgotPasswordEmail.value)) {
+        forgotPasswordEmailError.value = 'Ingrese un correo electrónico válido';
+        return false;
+    }
+
+    return true;
+};
+
+const submitForgotPassword = async () => {
+    if (!validateForgotPasswordEmail()) {
+        return;
+    }
+
+    forgotPasswordLoading.value = true;
+
+    try {
+        const result = await authStore.forgotPassword({ email: forgotPasswordEmail.value });
+
+        if (result.success) {
+            forgotPasswordSuccess.value = true;
+            toast.add({
+                severity: 'success',
+                summary: 'Correo enviado',
+                detail: 'Hemos enviado un enlace de recuperación a tu correo electrónico.',
+                life: 5000
+            });
+        } else {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: result.message || 'No se pudo enviar el correo de recuperación.',
+                life: 5000
+            });
+        }
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Ocurrió un error al procesar tu solicitud.',
+            life: 5000
+        });
+    } finally {
+        forgotPasswordLoading.value = false;
+    }
+};
 </script>
 
 <template>
+    <!-- Diálogo de recuperación de contraseña -->
+    <Dialog v-model:visible="showForgotPasswordDialog" modal header="Recuperar contraseña" :style="{ width: '450px' }" :closable="!forgotPasswordLoading">
+        <div class="password-recovery-dialog">
+            <div v-if="!forgotPasswordSuccess" class="p-2">
+                <p class="text-gray-700 mb-4">Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.</p>
+
+                <div class="mb-4">
+                    <label for="forgotPasswordEmail" class="block text-sm font-bold text-gray-800 mb-2">Correo electrónico</label>
+                    <span class="p-input-icon-left w-full">
+                        <IconField>
+                            <InputIcon class="pi pi-envelope" />
+                            <InputText id="forgotPasswordEmail" v-model="forgotPasswordEmail" type="email" class="w-full" placeholder="correo@ejemplo.com" :disabled="forgotPasswordLoading" :class="{ 'p-invalid': forgotPasswordEmailError }" />
+                        </IconField>
+                    </span>
+                    <small v-if="forgotPasswordEmailError" class="p-error block mt-1">
+                        {{ forgotPasswordEmailError }}
+                    </small>
+                </div>
+            </div>
+
+            <div v-else class="p-2 text-center">
+                <div class="mb-4 success-animation">
+                    <i class="pi pi-check-circle text-green-500 text-5xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">¡Correo enviado!</h3>
+                <p class="text-gray-700 mb-4">Hemos enviado un enlace de recuperación a tu correo electrónico. Por favor revisa tu bandeja de entrada y sigue las instrucciones.</p>
+            </div>
+
+            <div class="flex justify-end pt-4">
+                <Button v-if="!forgotPasswordSuccess" label="Cancelar" icon="pi pi-times" class="p-button-outlined p-button-secondary mr-2" @click="closeForgotPasswordDialog" :disabled="forgotPasswordLoading" />
+                <Button v-if="!forgotPasswordSuccess" label="Enviar enlace" icon="pi pi-envelope" class="p-button-primary" @click="submitForgotPassword" :loading="forgotPasswordLoading" />
+                <Button v-else label="Cerrar" icon="pi pi-check" class="p-button-primary" @click="closeForgotPasswordDialog" />
+            </div>
+        </div>
+    </Dialog>
+
     <div class="min-h-screen bg-gray-100 flex items-center justify-center p-1 sm:p-2 md:p-4 py-4 sm:py-6 md:py-8">
         <div class="w-full max-w-6xl">
             <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
@@ -211,12 +318,12 @@ const togglePasswordVisibility = () => {
                                 </div>
 
                                 <!-- Checkbox recordarme -->
-                                <div class="flex items-center justify-between">
+                                <div class="flex items-center justify-between mt-2 mb-1">
                                     <div class="flex items-center">
-                                        <Checkbox v-model="rememberMe" :binary="true" id="rememberme" class="mr-3" />
-                                        <label for="rememberme" class="text-sm text-gray-800 cursor-pointer font-semibold">Recordarme</label>
+                                        <Checkbox v-model="rememberMe" inputId="rememberMe" class="mr-2" />
+                                        <label for="rememberMe" class="text-sm text-gray-700 cursor-pointer select-none">Recordarme</label>
                                     </div>
-                                    <a href="#" class="text-sm text-blue-700 hover:text-blue-800 font-bold transition-colors underline">¿Olvidaste tu contraseña?</a>
+                                    <a href="#" @click.prevent="openForgotPasswordDialog" class="text-sm text-blue-700 hover:text-blue-800 font-semibold">¿Olvidaste tu contraseña?</a>
                                 </div>
 
                                 <!-- Botón de login -->
@@ -250,8 +357,51 @@ const togglePasswordVisibility = () => {
     </div>
 </template>
 
-<style scoped>
-/* Ajustes para pantallas muy pequeñas */
+<style lang="scss" scoped>
+/* Estilos para el diálogo de recuperación de contraseña */
+.password-recovery-dialog {
+    .success-animation {
+        animation: scaleIn 0.5s ease-out;
+        margin: 1.5rem 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        i {
+            font-size: 4rem;
+            color: var(--primary-color, #4f46e5);
+            animation: pulse 2s infinite;
+        }
+    }
+}
+
+@keyframes scaleIn {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+    }
+}
+
+/* Estilos responsivos para móviles */
 @media (max-width: 400px) {
     .min-h-screen {
         padding: 0.25rem 0.125rem;

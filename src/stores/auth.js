@@ -254,6 +254,42 @@ export const useAuthStore = defineStore('authStore', {
             } finally {
                 this.loading = false;
             }
+        },
+
+        /**
+         * Solicita un enlace para restablecer la contraseña
+         * @param {Object} payload - Contiene el email del usuario
+         * @returns {Promise<Object>} - Resultado de la operación
+         */
+        async forgotPassword(payload) {
+            this.resetState();
+            try {
+                const response = await authApi.forgotPassword(payload);
+                return handleProcessSuccess(response, this);
+            } catch (error) {
+                handleProcessError(error, this);
+                return { success: false, message: error.message || 'Error al solicitar el restablecimiento de contraseña' };
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        /**
+         * Restablece la contraseña del usuario utilizando el token
+         * @param {Object} payload - Contiene email, token, password y password_confirmation
+         * @returns {Promise<Object>} - Resultado de la operación
+         */
+        async resetPassword(payload) {
+            this.resetState();
+            try {
+                const response = await authApi.resetPassword(payload);
+                return handleProcessSuccess(response, this);
+            } catch (error) {
+                handleProcessError(error, this);
+                return { success: false, message: error.message || 'Error al restablecer la contraseña' };
+            } finally {
+                this.loading = false;
+            }
         }
     }
 });

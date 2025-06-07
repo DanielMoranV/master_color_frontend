@@ -5,7 +5,9 @@ import Avatar from 'primevue/avatar';
 import Badge from 'primevue/badge';
 import Button from 'primevue/button';
 import OverlayBadge from 'primevue/overlaybadge';
+import ProgressSpinner from 'primevue/progressspinner';
 import Card from 'primevue/card';
+import InputSwitch from 'primevue/inputswitch';
 import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
 import ConfirmDialog from 'primevue/confirmdialog';
@@ -41,6 +43,7 @@ export default function registerPrimeVueComponents(app) {
     app.component('Card', Card);
     app.component('Divider', Divider);
     app.component('Checkbox', Checkbox);
+    app.component('InputSwitch', InputSwitch);
     app.component('InputNumber', InputNumber);
     app.component('DatePicker', DatePicker);
     app.component('Textarea', Textarea);
@@ -59,5 +62,6 @@ export default function registerPrimeVueComponents(app) {
     app.component('Menu', Menu);
     app.component('Chart', Chart);
     app.component('Timeline', Timeline);
+    app.component('ProgressSpinner', ProgressSpinner);
     app.directive('tooltip', Tooltip);
 }

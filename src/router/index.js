@@ -46,6 +46,18 @@ const router = createRouter({
             meta: { public: true } // Ruta pública
         },
         {
+            path: '/forgot-password',
+            name: 'forgotPassword',
+            component: () => import('@/views/auth/ForgotPassword.vue'),
+            meta: { public: true } // Ruta pública
+        },
+        {
+            path: '/reset-password',
+            name: 'resetPassword',
+            component: () => import('@/views/auth/ResetPassword.vue'),
+            meta: { public: true } // Ruta pública
+        },
+        {
             path: '/accessdenied',
             name: 'accessDenied',
             component: () => import('@/views/auth/Access.vue'),
