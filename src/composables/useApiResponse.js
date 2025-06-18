@@ -12,7 +12,8 @@ export function processResponse(response) {
             validationErrors = response.details;
         }
     }
-    if (response && response.validationErrors) {
+    if (response && response.validationErrors && Array.isArray(response.validationErrors)) {
+        console.log(response.validationErrors);
         validationErrors = response.validationErrors.map((err) => (typeof err === 'string' ? err.toUpperCase() : err));
     }
 

@@ -30,3 +30,30 @@ export const authApi = {
     forgotPassword: (payload) => forgotPassword(payload), // Solo disponible para clientes
     resetPassword: (payload) => resetPassword(payload) // Solo disponible para clientes
 };
+
+// Funciones para usuarios
+export const usersApi = {
+    getUsers: () => axios.get('/users'),
+    getUserById: (id) => axios.get(`/users/${id}`),
+    createUser: (payload) => axios.post('/users', payload),
+    updateUser: (id, payload) => axios.put(`/users/${id}`, payload),
+    deleteUser: (id) => axios.delete(`/users/${id}`)
+};
+
+// Funciones para roles
+export const rolesApi = {
+    getRoles: () => axios.get('/roles'),
+    getRoleById: (id) => axios.get(`/roles/${id}`),
+    createRole: (payload) => axios.post('/roles', payload),
+    updateRole: (id, payload) => axios.put(`/roles/${id}`, payload),
+    deleteRole: (id) => axios.delete(`/roles/${id}`)
+};
+
+// Funciones para productos
+export const productsApi = {
+    getProducts: () => axios.get('/products'),
+    getProductById: (id) => axios.get(`/products/${id}`),
+    createProduct: (payload) => axios.post('/products', payload),
+    updateProduct: (id, payload) => axios.put(`/products/${id}`, payload),
+    deleteProduct: (id) => axios.delete(`/products/${id}`)
+};

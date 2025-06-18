@@ -8,7 +8,14 @@ const model = ref([
         label: 'Home',
         items: [
             { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/dashboard' },
-            { label: 'Profile', icon: 'pi pi-fw pi-user', to: '/profile' }
+            { label: 'Perfil', icon: 'pi pi-fw pi-user', to: '/profile' }
+        ]
+    },
+    {
+        label: 'Administración',
+        items: [
+            { label: 'Usuarios', icon: 'pi pi-fw pi-users', to: '/users' },
+            { label: 'Roles', icon: 'pi pi-fw pi-user', to: '' }
         ]
     }
 ]);

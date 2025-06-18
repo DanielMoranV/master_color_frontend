@@ -12,7 +12,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 
 const logoutDialog = ref(false);
-const { onMenuToggle, toggleDarkMode, isDarkTheme } = useLayout();
+const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
 
 const goToProfile = () => {
     router.push({ name: 'profile' });
@@ -59,7 +59,7 @@ onBeforeMount(() => {
             </router-link>
         </div>
 
-        <button class="layout-menu-button layout-topbar-action" @click="onMenuToggle">
+        <button class="layout-menu-button layout-topbar-action" @click="toggleMenu">
             <i class="pi pi-bars"></i>
         </button>
 
@@ -93,10 +93,6 @@ onBeforeMount(() => {
                         <i class="pi pi-refresh"></i>
                         <span>Actualizar</span>
                     </button>
-                    <!-- <button @click="goToConfig()" type="button" class="layout-topbar-action">
-                        <i class="pi pi-cog"></i>
-                        <span>Configuración</span>
-                    </button> -->
                     <button @click="goToProfile()" type="button" class="layout-topbar-action">
                         <i class="pi pi-user"></i>
                         <span>Perfil</span>

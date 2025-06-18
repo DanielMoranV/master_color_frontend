@@ -1,4 +1,5 @@
 import { computed, reactive } from 'vue';
+import cache from '@/utils/cache';
 
 const layoutConfig = reactive({
     preset: 'Aura',
@@ -36,6 +37,7 @@ export function useLayout() {
     const executeDarkModeToggle = () => {
         layoutConfig.darkTheme = !layoutConfig.darkTheme;
         document.documentElement.classList.toggle('app-dark');
+        cache.setItem('darkMode', layoutConfig.darkTheme);
     };
 
     const toggleMenu = () => {

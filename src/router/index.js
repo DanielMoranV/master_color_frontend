@@ -17,6 +17,11 @@ const router = createRouter({
                     path: '/profile',
                     name: 'profile',
                     component: () => import('@/views/auth/Profile.vue')
+                },
+                {
+                    path: '/users',
+                    name: 'users',
+                    component: () => import('@/views/users/Users.vue')
                 }
             ]
         },
@@ -31,6 +36,12 @@ const router = createRouter({
             path: '/auth/login',
             name: 'login',
             component: () => import('@/views/auth/Login.vue'),
+            meta: { public: true } // Ruta pública
+        },
+        {
+            path: '/auth/employee-login',
+            name: 'loginEmployee',
+            component: () => import('@/views/auth/EmployeeLogin.vue'),
             meta: { public: true } // Ruta pública
         },
         {
@@ -68,6 +79,12 @@ const router = createRouter({
             name: 'error',
             component: () => import('@/views/auth/Error.vue'),
             meta: { public: true } // Ruta pública
+        },
+        {
+            path: '/notfound',
+            name: 'notfound',
+            component: () => import('@/views/pages/NotFound.vue'),
+            meta: { public: true } // Ruta públicaW
         },
         {
             path: '/:catchAll(.*)',
