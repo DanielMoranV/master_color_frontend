@@ -17,9 +17,12 @@
             :rowHover="true"
         >
             <template #empty>
-                <div class="text-center py-4">
-                    <i class="pi pi-users text-4xl text-400 mb-3"></i>
-                    <p class="text-500 text-lg">No se encontraron usuarios</p>
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="pi pi-users"></i>
+                    </div>
+                    <h3 class="empty-title">No hay usuarios disponibles</h3>
+                    <p class="empty-message">Aún no se han registrado usuarios en el sistema. Comienza creando tu primer usuario.</p>
                 </div>
             </template>
 
@@ -378,5 +381,48 @@ const exportCSV = () => {
 }
 :root[data-theme='dark'] :deep(.p-datatable .p-datatable-tbody > tr:nth-child(even)) {
     background: #23272f;
+}
+
+/* Empty State Styles */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-color-secondary);
+}
+
+.empty-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--surface-border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem auto;
+}
+
+.empty-icon i {
+    font-size: 2rem;
+    color: var(--text-color-secondary);
+}
+
+.empty-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.empty-message {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Dark mode support for empty state */
+[data-theme='dark'] .empty-icon {
+    background: var(--surface-ground);
 }
 </style>

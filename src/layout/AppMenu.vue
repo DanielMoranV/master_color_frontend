@@ -15,7 +15,7 @@ const model = ref([
         label: 'Administración',
         items: [
             { label: 'Usuarios', icon: 'pi pi-fw pi-users', to: '/users' },
-            { label: 'Roles', icon: 'pi pi-fw pi-user', to: '' }
+            { label: 'Productos', icon: 'pi pi-fw pi-box', to: '/products' }
         ]
     }
 ]);
