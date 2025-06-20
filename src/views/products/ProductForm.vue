@@ -2,6 +2,7 @@
     <div class="compact-form">
         <form @submit.prevent="handleSubmit">
             <div class="form-grid">
+                <!-- Fila 1: Nombre y SKU -->
                 <div class="form-row">
                     <div class="form-field">
                         <label for="name" class="field-label">Nombre *</label>
@@ -10,10 +11,12 @@
                     </div>
                     <div class="form-field">
                         <label for="sku" class="field-label">SKU *</label>
-                        <InputText id="sku" v-model="formData.sku" :class="{ 'p-invalid': errors.sku }" placeholder="SKU" class="compact-input" />
+                        <InputText id="sku" v-model="formData.sku" :class="{ 'p-invalid': errors.sku }" placeholder="SKU único" class="compact-input" />
                         <small v-if="errors.sku" class="p-error">{{ errors.sku }}</small>
                     </div>
                 </div>
+
+                <!-- Fila 2: Código de barras y Marca -->
                 <div class="form-row">
                     <div class="form-field">
                         <label for="barcode" class="field-label">Código de barras *</label>
@@ -22,30 +25,36 @@
                     </div>
                     <div class="form-field">
                         <label for="brand" class="field-label">Marca</label>
-                        <InputText id="brand" v-model="formData.brand" placeholder="Marca" class="compact-input" />
+                        <InputText id="brand" v-model="formData.brand" placeholder="Marca del producto" class="compact-input" />
                     </div>
                 </div>
+
+                <!-- Fila 3: Categoría y Presentación -->
                 <div class="form-row">
                     <div class="form-field">
                         <label for="category" class="field-label">Categoría</label>
-                        <InputText id="category" v-model="formData.category" placeholder="Categoría" class="compact-input" />
+                        <InputText id="category" v-model="formData.category" placeholder="Categoría del producto" class="compact-input" />
                     </div>
                     <div class="form-field">
                         <label for="presentation" class="field-label">Presentación</label>
-                        <InputText id="presentation" v-model="formData.presentation" placeholder="Presentación" class="compact-input" />
+                        <InputText id="presentation" v-model="formData.presentation" placeholder="Presentación del producto" class="compact-input" />
                     </div>
                 </div>
+
+                <!-- Fila 4: Unidad y Descripción -->
                 <div class="form-row">
                     <div class="form-field">
-                        <label for="unidad" class="field-label">Unidad</label>
-                        <Select id="unidad" v-model="formData.unidad" :options="unidadOptions" optionLabel="label" optionValue="value" placeholder="Selecciona unidad" class="compact-input" :class="{ 'p-invalid': errors.unidad }" />
+                        <label for="unidad" class="field-label">Unidad *</label>
+                        <Select id="unidad" v-model="formData.unidad" :options="unidadOptions" optionLabel="label" optionValue="value" :class="{ 'p-invalid': errors.unidad }" placeholder="Selecciona unidad" class="compact-input" />
                         <small v-if="errors.unidad" class="p-error">{{ errors.unidad }}</small>
                     </div>
                     <div class="form-field">
                         <label for="description" class="field-label">Descripción</label>
-                        <InputText id="description" v-model="formData.description" placeholder="Descripción" class="compact-input" />
+                        <InputText id="description" v-model="formData.description" placeholder="Descripción del producto" class="compact-input" />
                     </div>
                 </div>
+
+                <!-- Fila 5: Upload de imagen -->
                 <div class="form-row image-upload-row">
                     <div class="form-field image-field">
                         <label class="field-label">Imagen del Producto</label>
@@ -60,7 +69,22 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Fila 6: Estado activo -->
+                <div class="form-row">
+                    <div class="form-field status-field">
+                        <label class="field-label">Estado</label>
+                        <div class="status-toggle">
+                            <Checkbox id="is_active" v-model="formData.is_active" :binary="true" class="mr-2" />
+                            <label for="is_active" class="status-label">
+                                {{ formData.is_active ? 'Producto activo' : 'Producto inactivo' }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <!-- Botones de acción -->
             <div class="form-actions">
                 <Button label="Cancelar" icon="pi pi-times" class="p-button-text" @click="$emit('cancel')" type="button" />
                 <Button :label="isEdit ? 'Actualizar' : 'Crear'" :icon="isEdit ? 'pi pi-check' : 'pi pi-plus'" type="submit" :loading="loading" />
@@ -70,20 +94,22 @@
 </template>
 
 <script setup>
-defineProps({
-    loading: {
-        type: Boolean,
-        default: false
-    },
+import { computed, reactive, ref, watch } from 'vue';
+
+const props = defineProps({
     product: {
         type: Object,
         default: () => ({})
+    },
+    loading: {
+        type: Boolean,
+        default: false
     }
 });
 
-defineEmits(['cancel', 'submit']);
+const emit = defineEmits(['submit', 'cancel']);
 
-import { ref } from 'vue';
+const isEdit = computed(() => props.product && props.product.id);
 
 const unidadOptions = [
     { label: 'Kilogramo (kg)', value: 'kg' },
@@ -102,7 +128,7 @@ const unidadOptions = [
     { label: 'Otro', value: 'otro' }
 ];
 
-const formData = ref({
+const formData = reactive({
     name: '',
     sku: '',
     barcode: '',
@@ -111,29 +137,31 @@ const formData = ref({
     presentation: '',
     unidad: '',
     description: '',
-    image: null
+    image: null,
+    is_active: true
 });
 
-const errors = ref({
+const errors = reactive({
     name: '',
     sku: '',
     barcode: '',
-    brand: '',
-    category: '',
-    presentation: '',
-    unidad: '',
-    description: ''
+    unidad: ''
 });
 
-const isEdit = ref(false);
 const selectedImage = ref(null);
 const imagePreview = ref(null);
+
+const clearErrors = () => {
+    Object.keys(errors).forEach((key) => {
+        errors[key] = '';
+    });
+};
 
 const onImageSelect = (event) => {
     const file = event.files[0];
     if (file) {
         selectedImage.value = file;
-        formData.value.image = file;
+        formData.image = file;
 
         // Crear preview
         const reader = new FileReader();
@@ -146,7 +174,7 @@ const onImageSelect = (event) => {
 
 const onImageClear = () => {
     selectedImage.value = null;
-    formData.value.image = null;
+    formData.image = null;
     imagePreview.value = null;
 };
 
@@ -154,15 +182,91 @@ const removeImage = () => {
     onImageClear();
 };
 
+// Watch for product prop changes
+watch(
+    () => props.product,
+    (newProduct) => {
+        if (newProduct && newProduct.id) {
+            // Editando producto existente
+            formData.name = newProduct.name || '';
+            formData.sku = newProduct.sku || '';
+            formData.barcode = newProduct.barcode || '';
+            formData.brand = newProduct.brand || '';
+            formData.category = newProduct.category || '';
+            formData.presentation = newProduct.presentation || '';
+            formData.unidad = newProduct.unidad || '';
+            formData.description = newProduct.description || '';
+            formData.is_active = newProduct.is_active !== undefined ? newProduct.is_active : true;
+
+            // Limpiar imagen para edición
+            selectedImage.value = null;
+            formData.image = null;
+            imagePreview.value = null;
+
+            // Si el producto tiene una imagen URL, mostrarla como preview
+            if (newProduct.image_url) {
+                imagePreview.value = newProduct.image_url;
+            }
+        } else {
+            // Creando nuevo producto
+            formData.name = '';
+            formData.sku = '';
+            formData.barcode = '';
+            formData.brand = '';
+            formData.category = '';
+            formData.presentation = '';
+            formData.unidad = '';
+            formData.description = '';
+            formData.image = null;
+            formData.is_active = true;
+
+            selectedImage.value = null;
+            imagePreview.value = null;
+        }
+        clearErrors();
+    },
+    { immediate: true }
+);
+
+const validateForm = () => {
+    clearErrors();
+    let isValid = true;
+
+    if (!formData.name.trim()) {
+        errors.name = 'El nombre es requerido';
+        isValid = false;
+    }
+
+    if (!formData.sku.trim()) {
+        errors.sku = 'El SKU es requerido';
+        isValid = false;
+    }
+
+    if (!formData.barcode.trim()) {
+        errors.barcode = 'El código de barras es requerido';
+        isValid = false;
+    }
+
+    if (!formData.unidad) {
+        errors.unidad = 'La unidad es requerida';
+        isValid = false;
+    }
+
+    return isValid;
+};
+
 const handleSubmit = () => {
-    // Aquí puedes agregar validación antes de emitir
-    $emit('submit', formData.value);
+    if (validateForm()) {
+        console.log(formData);
+        const submitData = { ...formData };
+        emit('submit', submitData);
+    }
 };
 </script>
 
 <style scoped>
 .compact-form {
-    padding: 0.1rem;
+    padding: 1rem;
 }
 
 .form-grid {
@@ -196,21 +300,49 @@ const handleSubmit = () => {
     gap: 0.5rem;
 }
 
+.status-field {
+    grid-column: 1 / -1;
+}
+
 .field-label {
-    font-weight: bold;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-color);
+    margin-bottom: 0.25rem;
 }
 
 .compact-input {
-    width: 100%;
+    height: 2.5rem;
+}
+
+.compact-input :deep(.p-inputtext) {
+    height: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.compact-input :deep(.p-dropdown) {
+    height: 2.5rem;
+}
+
+.compact-input :deep(.p-dropdown-label) {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
 }
 
 .compact-upload {
     width: 100%;
 }
 
+.compact-upload :deep(.p-fileupload-choose) {
+    height: 2.5rem;
+    font-size: 0.875rem;
+}
+
 .upload-hint {
     color: var(--text-color-secondary);
-    font-size: 0.875rem;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
 }
 
 .image-preview {
@@ -238,18 +370,41 @@ const handleSubmit = () => {
     height: 2rem;
 }
 
+.status-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+}
+
+.status-label {
+    font-size: 0.875rem;
+    color: var(--text-color);
+    cursor: pointer;
+}
+
 .form-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 0.5rem;
-    padding-top: 0.5rem;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
     border-top: 1px solid var(--surface-border);
 }
 
+.p-error {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
     .form-row {
         grid-template-columns: 1fr;
+    }
+
+    .compact-form {
+        padding: 0.75rem;
     }
 
     .preview-image {
