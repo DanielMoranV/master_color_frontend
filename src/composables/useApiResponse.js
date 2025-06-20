@@ -1,4 +1,4 @@
-const isDev = import.meta.env.MODE === 'development';
+const isDev = import.meta.env.MODE === 'development'; // Reverted
 
 export function processResponse(response) {
     let validationErrors = [];
@@ -13,7 +13,7 @@ export function processResponse(response) {
         }
     }
     if (response && response.validationErrors && Array.isArray(response.validationErrors)) {
-        console.log(response.validationErrors);
+        console.log(response.validationErrors); // This log was already here
         validationErrors = response.validationErrors.map((err) => (typeof err === 'string' ? err.toUpperCase() : err));
     }
 
@@ -29,8 +29,8 @@ export function processResponse(response) {
     }
 
     if (isDev && response.details && response.validationErrors) {
-        console.error('Detalles técnicos:', response.details);
-        console.error('validationErrors', validationErrors);
+        console.error('Detalles técnicos:', response.details); // This log was already here
+        console.error('validationErrors', validationErrors); // This log was already here
     }
 
     return {

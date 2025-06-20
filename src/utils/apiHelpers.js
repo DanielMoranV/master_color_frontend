@@ -1,4 +1,4 @@
-import { processResponse } from '@/composables/useApiResponse';
+import { processResponse } from '@/composables/useApiResponse'; // Reverted
 
 /**
  * Maneja errores del servidor y actualiza el estado de la store.

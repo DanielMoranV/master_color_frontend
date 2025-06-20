@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/stores/auth'; // Reverted path
 
 // Crear instancia de Axios con configuración base
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api', // Reverted env guard
     timeout: 90000,
     headers: {
         'Content-Type': 'application/json',
@@ -16,7 +16,7 @@ api.interceptors.request.use(
     (config) => {
         // Obtener token del localStorage si existe
         const { getToken } = useAuthStore();
-        console.log(getToken);
+        console.log(getToken); // This console.log was part of the original file or added during tests not specific to Node.js compatibility
         if (getToken) {
             config.headers.Authorization = 'Bearer ' + getToken;
         }
@@ -55,7 +55,7 @@ api.interceptors.response.use(
 
         // Mensajes amigables según código de estado
         if (error.response) {
-            console.log(error.response);
+            console.log(error.response); // This console.log was part of the original file or added during tests
             switch (error.response.status) {
                 case 401:
                     errResponse.message = 'Credenciales incorrectas. Por favor, inténtelo nuevamente.';
@@ -80,7 +80,7 @@ api.interceptors.response.use(
                         errResponse.validationErrors = validationMsgs;
                     }
 
-                    console.log('errResponse', errResponse);
+                    console.log('errResponse', errResponse); // This console.log was part of the original file or added during tests
                     errResponse.message = 'Error de validación. Por favor, revise los campos.';
                     break;
                 case 500:

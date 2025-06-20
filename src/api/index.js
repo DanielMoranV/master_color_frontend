@@ -51,9 +51,21 @@ export const rolesApi = {
 
 // Funciones para productos
 export const productsApi = {
-    getProducts: () => axios.get('/products'),
-    getProductById: (id) => axios.get(`/products/${id}`),
+    getProducts: () => {
+        console.log('Calling productsApi.getProducts');
+        return axios.get('/products');
+    },
+    getProductById: (id) => {
+        console.log('Calling productsApi.getProductById with ID:', id);
+        return axios.get(`/products/${id}`);
+    },
     createProduct: (payload) => axios.post('/products', payload),
-    updateProduct: (id, payload) => axios.put(`/products/${id}`, payload),
-    deleteProduct: (id) => axios.delete(`/products/${id}`)
+    updateProduct: (id, payload) => {
+        console.log('Calling productsApi.updateProduct with ID:', id, 'and Payload:', JSON.stringify(payload, null, 2));
+        return axios.put(`/products/${id}`, payload);
+    },
+    deleteProduct: (id) => {
+        console.log('Calling productsApi.deleteProduct with ID:', id);
+        return axios.delete(`/products/${id}`);
+    }
 };

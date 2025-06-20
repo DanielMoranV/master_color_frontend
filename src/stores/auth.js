@@ -1,14 +1,14 @@
-import cache from '@/utils/cache';
+import cache from '@/utils/cache'; // Reverted
 import { defineStore } from 'pinia';
-import { authApi } from '@/api/index';
-import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
+import { authApi } from '@/api/index'; // Reverted
+import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers'; // Reverted
 
 export const useAuthStore = defineStore('authStore', {
     state: () => ({
-        userType: cache.getItem('userType') || 'user', // 'user' o 'client'
-        token: cache.getItem('token') || null,
-        user: cache.getItem('currentUser') || null,
-        expiresAt: cache.getItem('expiresAt') || null,
+        userType: cache.getItem('userType') || 'user', // Reverted
+        token: cache.getItem('token') || null, // Reverted
+        user: cache.getItem('currentUser') || null, // Reverted
+        expiresAt: cache.getItem('expiresAt') || null, // Reverted
         loading: false,
         error: null,
         success: false,
@@ -32,7 +32,7 @@ export const useAuthStore = defineStore('authStore', {
 
                 const processed = handleProcessSuccess(response, this);
 
-                console.log(processed);
+                console.log(processed); // This log was already here
                 if (processed.success) {
                     this.setToken(processed.data.access_token);
                     this.setExpiration(processed.data.expiresIn);
@@ -59,7 +59,7 @@ export const useAuthStore = defineStore('authStore', {
                 cache.setItem('token', this.token);
                 cache.setItem('currentUser', this.user);
             } catch (error) {
-                console.log(error);
+                console.log(error); // This log was already here
                 this.error = error;
                 handleProcessError(error, this);
             } finally {
@@ -105,12 +105,12 @@ export const useAuthStore = defineStore('authStore', {
         async me() {
             this.loading = true;
             try {
-                console.log(this.userType);
+                console.log(this.userType); // This log was already here
                 // Usar la interfaz unificada authApi con el tipo de usuario almacenado
                 const response = await authApi.me(this.userType);
 
                 const processed = handleProcessSuccess(response, this);
-                console.log(processed);
+                console.log(processed); // This log was already here
                 this.user = processed.data.user;
                 cache.setItem('currentUser', this.user);
             } catch (error) {
@@ -129,10 +129,10 @@ export const useAuthStore = defineStore('authStore', {
                 const now = Date.now();
                 const timeLeft = this.expiresAt - now;
 
-                console.log('Token refresh check. Time left: ', timeLeft);
+                console.log('Token refresh check. Time left: ', timeLeft); // This log was already here
 
                 if (timeLeft < 90_000) {
-                    console.log('Intentando refrescar token como el tiempo restante es menor a 90 segundos.');
+                    console.log('Intentando refrescar token como el tiempo restante es menor a 90 segundos.'); // This log was already here
                     await this.refresh();
                 }
             }, 60_000); // Verifica cada 60s

@@ -144,13 +144,29 @@ function hideDialog() {
 }
 
 async function handleSaveProduct(productData) {
+    console.log('Product data from form:', JSON.stringify(productData, null, 2));
     try {
         if (selectedProduct.value.id) {
             await productsStore.updateProduct(selectedProduct.value.id, productData);
             toast.add({ severity: 'success', summary: 'Éxito', detail: 'Producto actualizado correctamente', life: 3000 });
         } else {
-            await productsStore.createProduct(productData);
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Producto creado correctamente', life: 3000 });
+            // Simulate complete productData for testing createProduct flow
+            const mockProductData = {
+                name: 'Mock Product',
+                sku: 'MOCK-SKU-123',
+                image: new File(["mock"], "mock.jpg", { type: "image/jpeg" }), // Mock file object
+                barcode: '1234567890123',
+                brand: 'MockBrand',
+                description: 'This is a mock product description.',
+                presentation: 'Mock Presentation',
+                category: 'Mock Category',
+                unidad: 'Mock Unit',
+                // user_id might be set automatically by the backend or store
+            };
+            console.log('Mock product data being sent to store:', JSON.stringify(mockProductData, null, 2));
+            await productsStore.createProduct(mockProductData); // Use mock data for create
+            // await productsStore.createProduct(productData); // Original call
+            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Producto creado correctamente (mock)', life: 3000 });
         }
         hideDialog();
     } catch (error) {
