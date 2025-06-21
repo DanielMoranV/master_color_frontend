@@ -160,6 +160,8 @@ const errors = reactive({
 
 const selectedImage = ref(null);
 const imagePreview = ref(null);
+// NUEVO: Variable para rastrear si hay una nueva imagen seleccionada
+const hasNewImage = ref(false);
 
 const clearErrors = () => {
     Object.keys(errors).forEach((key) => {
@@ -167,11 +169,13 @@ const clearErrors = () => {
     });
 };
 
+// MODIFICADO: Función onImageSelect actualizada
 const onImageSelect = (event) => {
     const file = event.files[0];
     if (file) {
         selectedImage.value = file;
         formData.image = file;
+        hasNewImage.value = true; // Marcar que hay nueva imagen
 
         // Crear preview
         const reader = new FileReader();
@@ -182,17 +186,19 @@ const onImageSelect = (event) => {
     }
 };
 
+// MODIFICADO: Función onImageClear actualizada
 const onImageClear = () => {
     selectedImage.value = null;
     formData.image = null;
     imagePreview.value = null;
+    hasNewImage.value = false; // Marcar que no hay nueva imagen
 };
 
 const removeImage = () => {
     onImageClear();
 };
 
-// Watch for product prop changes
+// MODIFICADO: Watcher actualizado para manejar la nueva lógica
 watch(
     () => props.product,
     (newProduct) => {
@@ -208,14 +214,17 @@ watch(
             formData.description = newProduct.description || '';
             formData.is_active = newProduct.is_active !== undefined ? newProduct.is_active : true;
 
-            // Limpiar imagen para edición
-            selectedImage.value = null;
-            formData.image = null;
-            imagePreview.value = null;
+            // Solo resetear imagen si no hay una nueva imagen seleccionada
+            if (!hasNewImage.value) {
+                selectedImage.value = null;
+                formData.image = null;
 
-            // Si el producto tiene una imagen URL, mostrarla como preview
-            if (newProduct.image_url) {
-                imagePreview.value = newProduct.image_url;
+                // Si el producto tiene una imagen URL, mostrarla como preview
+                if (newProduct.image_url) {
+                    imagePreview.value = newProduct.image_url;
+                } else {
+                    imagePreview.value = null;
+                }
             }
         } else {
             // Creando nuevo producto
@@ -232,6 +241,7 @@ watch(
 
             selectedImage.value = null;
             imagePreview.value = null;
+            hasNewImage.value = false; // Resetear bandera para nuevo producto
         }
         clearErrors();
     },

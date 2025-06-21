@@ -60,7 +60,7 @@ export const productsApi = {
             }
         }),
     updateProduct: (id, formData) =>
-        axios.put(`/products/${id}`, formData, {
+        axios.post(`/products/updateProduct/${id}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }

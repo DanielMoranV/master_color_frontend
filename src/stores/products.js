@@ -73,9 +73,12 @@ export const useProductsStore = defineStore('productsStore', {
         },
 
         async updateProduct(id, payload) {
+            console.log('updateProduct', id, payload);
+
             this.loading = true;
             this.error = null;
             try {
+                //payload.append('_method', 'PUT');
                 const response = await productsApi.updateProduct(id, payload);
                 const processed = handleProcessSuccess(response, this);
                 this.product = processed.data.product || processed.data;

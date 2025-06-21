@@ -14,6 +14,16 @@ const api = axios.create({
 // Interceptor para solicitudes
 api.interceptors.request.use(
     (config) => {
+        // Debug: Verificar configuración completa de la request
+        console.log('🚀 REQUEST CONFIG:', {
+            url: config.url,
+            method: config.method,
+            baseURL: config.baseURL,
+            fullURL: `${config.baseURL}${config.url}`,
+            headers: config.headers,
+            params: config.params,
+            data: config.data
+        });
         // Obtener token del localStorage si existe
         const { getToken } = useAuthStore();
         console.log(getToken);
