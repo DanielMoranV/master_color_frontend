@@ -29,9 +29,10 @@ export const useProductsStore = defineStore('productsStore', {
                 const processed = handleProcessSuccess(response, this);
                 this.productsList = processed.data.products || processed.data || [];
                 cache.setItem('productsList', this.productsList);
+                this.success = true;
             } catch (error) {
                 this.error = error;
-                this.validationErrors = error.response?.data?.errors || [];
+                handleProcessError(error, this);
             } finally {
                 this.loading = false;
             }
@@ -45,9 +46,10 @@ export const useProductsStore = defineStore('productsStore', {
                 const processed = handleProcessSuccess(response, this);
                 this.product = processed.data.product || processed.data;
                 cache.setItem('product', this.product);
+                this.success = true;
             } catch (error) {
                 this.error = error;
-                this.validationErrors = error.response?.data?.errors || [];
+                handleProcessError(error, this);
             } finally {
                 this.loading = false;
             }
@@ -61,9 +63,10 @@ export const useProductsStore = defineStore('productsStore', {
                 const processed = handleProcessSuccess(response, this);
                 this.product = processed.data.product || processed.data;
                 cache.setItem('product', this.product);
+                this.success = true;
             } catch (error) {
                 this.error = error;
-                this.validationErrors = error.response?.data?.errors || [];
+                handleProcessError(error, this);
             } finally {
                 this.loading = false;
             }
@@ -77,9 +80,10 @@ export const useProductsStore = defineStore('productsStore', {
                 const processed = handleProcessSuccess(response, this);
                 this.product = processed.data.product || processed.data;
                 cache.setItem('product', this.product);
+                this.success = true;
             } catch (error) {
                 this.error = error;
-                this.validationErrors = error.response?.data?.errors || [];
+                handleProcessError(error, this);
             } finally {
                 this.loading = false;
             }
@@ -93,9 +97,10 @@ export const useProductsStore = defineStore('productsStore', {
                 const processed = handleProcessSuccess(response, this);
                 this.product = processed.data.product || processed.data;
                 cache.setItem('product', this.product);
+                this.success = true;
             } catch (error) {
                 this.error = error;
-                this.validationErrors = error.response?.data?.errors || [];
+                handleProcessError(error, this);
             } finally {
                 this.loading = false;
             }

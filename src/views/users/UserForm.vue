@@ -114,8 +114,6 @@ onMounted(async () => {
     if (rolesStore.rolesList.length === 0) {
         await rolesStore.fetchRoles();
     }
-
-    console.log('roleOptions.value', roleOptions.value);
 });
 
 const clearErrors = () => {

@@ -33,7 +33,7 @@
                 <div class="form-row">
                     <div class="form-field">
                         <label for="category" class="field-label">Categoría</label>
-                        <InputText id="category" v-model="formData.category" placeholder="Categoría del producto" class="compact-input" />
+                        <Select id="category" v-model="formData.category" :options="categoriesOptions" optionLabel="label" optionValue="value" placeholder="Categoría del producto" class="compact-input" />
                     </div>
                     <div class="form-field">
                         <label for="presentation" class="field-label">Presentación</label>
@@ -112,6 +112,7 @@ const emit = defineEmits(['submit', 'cancel']);
 const isEdit = computed(() => props.product && props.product.id);
 
 const unidadOptions = [
+    { label: 'Unidad', value: 'unidad' },
     { label: 'Kilogramo (kg)', value: 'kg' },
     { label: 'Gramo (g)', value: 'g' },
     { label: 'Libra (lb)', value: 'lb' },
@@ -126,6 +127,15 @@ const unidadOptions = [
     { label: 'Paquete', value: 'paquete' },
     { label: 'Docena', value: 'docena' },
     { label: 'Otro', value: 'otro' }
+];
+
+const categoriesOptions = [
+    { label: 'Impresoras', value: 'impresoras' },
+    { label: 'Tintas', value: 'tintas' },
+    { label: 'Tóners', value: 'toners' },
+    { label: 'Papel', value: 'papel' },
+    { label: 'Repuestos', value: 'repuestos' },
+    { label: 'Accesorios', value: 'accesorios' }
 ];
 
 const formData = reactive({
@@ -258,10 +268,6 @@ const validateForm = () => {
 const handleSubmit = () => {
     if (validateForm()) {
         const submitData = { ...formData };
-
-        if (isEdit.value) {
-            delete submitData.password;
-        }
 
         emit('submit', submitData);
     }
