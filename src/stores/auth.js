@@ -32,7 +32,6 @@ export const useAuthStore = defineStore('authStore', {
 
                 const processed = handleProcessSuccess(response, this);
 
-                console.log(processed);
                 if (processed.success) {
                     this.setToken(processed.data.access_token);
                     this.setExpiration(processed.data.expiresIn);
@@ -105,12 +104,10 @@ export const useAuthStore = defineStore('authStore', {
         async me() {
             this.loading = true;
             try {
-                console.log(this.userType);
                 // Usar la interfaz unificada authApi con el tipo de usuario almacenado
                 const response = await authApi.me(this.userType);
 
                 const processed = handleProcessSuccess(response, this);
-                console.log(processed);
                 this.user = processed.data.user;
                 cache.setItem('currentUser', this.user);
             } catch (error) {
@@ -210,9 +207,9 @@ export const useAuthStore = defineStore('authStore', {
             try {
                 // Solo disponible para clientes
                 const response = await authApi.verifyEmail(payload);
-                
+
                 const processed = handleProcessSuccess(response, this);
-                
+
                 if (processed.success && this.user) {
                     // Actualizar el estado del usuario si está autenticado
                     this.user = {
@@ -221,7 +218,7 @@ export const useAuthStore = defineStore('authStore', {
                     };
                     cache.setItem('currentUser', this.user);
                 }
-                
+
                 return processed;
             } catch (error) {
                 handleProcessError(error, this);
@@ -243,10 +240,10 @@ export const useAuthStore = defineStore('authStore', {
                 if (!payload.email && this.user && this.user.email) {
                     payload = { email: this.user.email };
                 }
-                
+
                 // Solo disponible para clientes
                 const response = await authApi.resendVerificationEmail(payload);
-                
+
                 return handleProcessSuccess(response, this);
             } catch (error) {
                 handleProcessError(error, this);

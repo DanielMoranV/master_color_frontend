@@ -137,7 +137,6 @@ const hideDialog = () => {
 };
 
 const handleSaveUser = async (userData) => {
-    console.log(userData);
     try {
         if (dialogMode.value === 'create') {
             await usersStore.createUser(userData);

@@ -14,19 +14,8 @@ const api = axios.create({
 // Interceptor para solicitudes
 api.interceptors.request.use(
     (config) => {
-        // Debug: Verificar configuración completa de la request
-        console.log('🚀 REQUEST CONFIG:', {
-            url: config.url,
-            method: config.method,
-            baseURL: config.baseURL,
-            fullURL: `${config.baseURL}${config.url}`,
-            headers: config.headers,
-            params: config.params,
-            data: config.data
-        });
         // Obtener token del localStorage si existe
         const { getToken } = useAuthStore();
-        console.log(getToken);
         if (getToken) {
             config.headers.Authorization = 'Bearer ' + getToken;
         }
@@ -65,7 +54,6 @@ api.interceptors.response.use(
 
         // Mensajes amigables según código de estado
         if (error.response) {
-            console.log(error.response);
             switch (error.response.status) {
                 case 401:
                     errResponse.message = 'Credenciales incorrectas. Por favor, inténtelo nuevamente.';
@@ -90,7 +78,6 @@ api.interceptors.response.use(
                         errResponse.validationErrors = validationMsgs;
                     }
 
-                    console.log('errResponse', errResponse);
                     errResponse.message = 'Error de validación. Por favor, revise los campos.';
                     break;
                 case 500:

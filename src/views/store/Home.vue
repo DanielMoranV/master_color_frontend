@@ -295,7 +295,6 @@ const generateStars = (rating) => {
 
 // Lifecycle hooks
 onMounted(() => {
-    console.log('Master Color Store initialized');
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
 });

@@ -209,7 +209,6 @@ async function deleteProduct() {
 
 onMounted(async () => {
     await productsStore.fetchProducts();
-    console.log(productsStore.productsList);
 });
 </script>
 

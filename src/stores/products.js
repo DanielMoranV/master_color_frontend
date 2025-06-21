@@ -73,8 +73,6 @@ export const useProductsStore = defineStore('productsStore', {
         },
 
         async updateProduct(id, payload) {
-            console.log('updateProduct', id, payload);
-
             this.loading = true;
             this.error = null;
             try {
