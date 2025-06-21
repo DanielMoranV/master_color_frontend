@@ -68,7 +68,8 @@
                     <div>
                         <p class="warning-text">
                             ¿Estás seguro de que quieres eliminar el producto
-                            <strong>{{ selectedProduct.name }}</strong>?
+                            <strong>{{ selectedProduct.name }}</strong
+                            >?
                         </p>
                         <p class="warning-subtext">Se perderán todos los datos asociados al producto.</p>
                     </div>
@@ -100,6 +101,7 @@ const toast = useToast();
 const productDialog = ref(false);
 const deleteProductDialog = ref(false);
 const selectedProduct = ref({});
+const dialogMode = ref('create');
 const searchQuery = ref('');
 
 const filteredProducts = computed(() => {
@@ -131,10 +133,12 @@ function openNew() {
         user_id: ''
     };
     productDialog.value = true;
+    dialogMode.value = 'create';
 }
 
 function editProduct(product) {
     selectedProduct.value = { ...product };
+    dialogMode.value = 'edit';
     productDialog.value = true;
 }
 
@@ -145,16 +149,32 @@ function hideDialog() {
 
 async function handleSaveProduct(productData) {
     try {
-        if (selectedProduct.value.id) {
-            await productsStore.updateProduct(selectedProduct.value.id, productData);
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Producto actualizado correctamente', life: 3000 });
-        } else {
+        if (dialogMode.value === 'create') {
             await productsStore.createProduct(productData);
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Producto creado correctamente', life: 3000 });
+            toast.add({
+                severity: 'success',
+                summary: 'Producto Creado',
+                detail: 'El producto se ha creado correctamente',
+                life: 4000
+            });
+        } else {
+            await productsStore.updateProduct(selectedProduct.value.id, productData);
+            toast.add({
+                severity: 'success',
+                summary: 'Producto Actualizado',
+                detail: 'Los cambios se han guardado correctamente',
+                life: 4000
+            });
         }
+        await productsStore.fetchProducts();
         hideDialog();
     } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: error.message || 'Error al guardar el producto', life: 3000 });
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: productsStore.message || 'Ha ocurrido un error inesperado',
+            life: 5000
+        });
     }
 }
 
@@ -166,16 +186,30 @@ function confirmDeleteProduct(product) {
 async function deleteProduct() {
     try {
         await productsStore.deleteProduct(selectedProduct.value.id);
-        toast.add({ severity: 'success', summary: 'Éxito', detail: 'Producto eliminado correctamente', life: 3000 });
         deleteProductDialog.value = false;
         selectedProduct.value = {};
+
+        toast.add({
+            severity: 'success',
+            summary: 'Producto Eliminado',
+            detail: 'El producto se ha eliminado correctamente',
+            life: 4000
+        });
+
+        await productsStore.fetchProducts();
     } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: error.message || 'Error al eliminar el producto', life: 3000 });
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: productsStore.message || 'No se pudo eliminar el producto',
+            life: 5000
+        });
     }
 }
 
 onMounted(async () => {
     await productsStore.fetchProducts();
+    console.log(productsStore.productsList);
 });
 </script>
 

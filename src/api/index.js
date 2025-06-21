@@ -53,7 +53,17 @@ export const rolesApi = {
 export const productsApi = {
     getProducts: () => axios.get('/products'),
     getProductById: (id) => axios.get(`/products/${id}`),
-    createProduct: (payload) => axios.post('/products', payload),
-    updateProduct: (id, payload) => axios.put(`/products/${id}`, payload),
+    createProduct: (formData) =>
+        axios.post('/products', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        }),
+    updateProduct: (id, formData) =>
+        axios.put(`/products/${id}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        }),
     deleteProduct: (id) => axios.delete(`/products/${id}`)
 };

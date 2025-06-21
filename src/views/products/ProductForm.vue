@@ -257,8 +257,12 @@ const validateForm = () => {
 
 const handleSubmit = () => {
     if (validateForm()) {
-        console.log(formData);
         const submitData = { ...formData };
+
+        if (isEdit.value) {
+            delete submitData.password;
+        }
+
         emit('submit', submitData);
     }
 };

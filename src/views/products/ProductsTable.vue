@@ -35,12 +35,41 @@
 </template>
 
 <script setup>
-import { defineProps } from 'vue';
+import { ref } from 'vue';
+import { FilterMatchMode } from '@primevue/core/api';
 
-defineProps({
+const props = defineProps({
     products: { type: Array, required: true },
     loading: { type: Boolean, default: false }
 });
+
+const emit = defineEmits(['edit', 'delete', 'view', 'refresh']);
+
+const dt = ref();
+
+const filters = ref({
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+});
+
+const exportCSV = () => {
+    dt.value.exportCSV();
+};
+
+const refreshData = () => {
+    emit('refresh');
+};
+
+const viewProduct = (product) => {
+    emit('view', product);
+};
+
+const editProduct = (product) => {
+    emit('edit', product);
+};
+
+const deleteProduct = (product) => {
+    emit('delete', product);
+};
 </script>
 
 <style scoped>

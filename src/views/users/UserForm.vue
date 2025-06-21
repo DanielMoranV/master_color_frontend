@@ -38,17 +38,7 @@
                     </div>
                     <div class="form-field">
                         <label for="role" class="field-label">Rol *</label>
-                        <Select 
-                            id="role" 
-                            v-model="formData.role_id" 
-                            :options="roleOptions" 
-                            optionLabel="value" 
-                            optionValue="id" 
-                            :class="{ 'p-invalid': errors.role_name }" 
-                            placeholder="Seleccionar rol" 
-                            class="compact-input"
-                            @change="onRoleChange"
-                        />
+                        <Select id="role" v-model="formData.role_id" :options="roleOptions" optionLabel="value" optionValue="id" :class="{ 'p-invalid': errors.role_name }" placeholder="Seleccionar rol" class="compact-input" @change="onRoleChange" />
                         <small v-if="errors.role_name" class="p-error">{{ errors.role_name }}</small>
                     </div>
                 </div>
@@ -156,12 +146,12 @@ const getDefaultRoleId = () => {
 };
 
 const findRoleIdByName = (roleName) => {
-    const role = roleOptions.value.find(r => r.value.toLowerCase() === roleName.toLowerCase());
+    const role = roleOptions.value.find((r) => r.value.toLowerCase() === roleName.toLowerCase());
     return role ? role.id : null;
 };
 
 const onRoleChange = (event) => {
-    const selectedRole = roleOptions.value.find(role => role.id === event.value);
+    const selectedRole = roleOptions.value.find((role) => role.id === event.value);
     if (selectedRole) {
         formData.role_name = selectedRole.value;
     }
@@ -176,7 +166,7 @@ watch(
             formData.email = newUser.email || '';
             formData.dni = newUser.dni || '';
             formData.phone = newUser.phone || '';
-            
+
             // Para editar: buscar el role_id basado en role_name
             if (newUser.role_name) {
                 formData.role_name = newUser.role_name;
@@ -185,7 +175,7 @@ watch(
                 formData.role_name = getDefaultRoleName();
                 formData.role_id = getDefaultRoleId();
             }
-            
+
             formData.is_active = newUser.is_active !== undefined ? newUser.is_active : true;
             formData.password = '';
         } else {
