@@ -33,6 +33,7 @@ export const useProductsStore = defineStore('productsStore', {
             } catch (error) {
                 this.error = error;
                 handleProcessError(error, this);
+                throw error;
             } finally {
                 this.loading = false;
             }
@@ -50,6 +51,7 @@ export const useProductsStore = defineStore('productsStore', {
             } catch (error) {
                 this.error = error;
                 handleProcessError(error, this);
+                throw error;
             } finally {
                 this.loading = false;
             }
@@ -58,15 +60,25 @@ export const useProductsStore = defineStore('productsStore', {
         async createProduct(payload) {
             this.loading = true;
             this.error = null;
+            this.validationErrors = [];
             try {
                 const response = await productsApi.createProduct(payload);
                 const processed = handleProcessSuccess(response, this);
                 this.product = processed.data.product || processed.data;
+
+                const newProduct = processed.data.product || processed.data;
+
+                this.productsList.unshift(newProduct);
+                this.product = newProduct;
                 cache.setItem('product', this.product);
+                cache.setItem('productsList', this.productsList);
                 this.success = true;
+                this.message = 'Producto creado exitosamente';
+                return this.product;
             } catch (error) {
                 this.error = error;
                 handleProcessError(error, this);
+                throw error;
             } finally {
                 this.loading = false;
             }
@@ -80,11 +92,17 @@ export const useProductsStore = defineStore('productsStore', {
                 const response = await productsApi.updateProduct(id, payload);
                 const processed = handleProcessSuccess(response, this);
                 this.product = processed.data.product || processed.data;
+                const newProduct = processed.data.product || processed.data;
+                this.productsList.unshift(newProduct);
                 cache.setItem('product', this.product);
+                cache.setItem('productsList', this.productsList);
                 this.success = true;
+                this.message = 'Producto actualizado exitosamente';
+                return this.product;
             } catch (error) {
                 this.error = error;
                 handleProcessError(error, this);
+                throw error;
             } finally {
                 this.loading = false;
             }
@@ -97,11 +115,17 @@ export const useProductsStore = defineStore('productsStore', {
                 const response = await productsApi.deleteProduct(id);
                 const processed = handleProcessSuccess(response, this);
                 this.product = processed.data.product || processed.data;
+                const newProduct = processed.data.product || processed.data;
+                this.productsList.unshift(newProduct);
                 cache.setItem('product', this.product);
+                cache.setItem('productsList', this.productsList);
                 this.success = true;
+                this.message = 'Producto eliminado exitosamente';
+                return this.product;
             } catch (error) {
                 this.error = error;
                 handleProcessError(error, this);
+                throw error;
             } finally {
                 this.loading = false;
             }

@@ -151,6 +151,7 @@ async function handleSaveProduct(productData) {
     try {
         if (dialogMode.value === 'create') {
             await productsStore.createProduct(productData);
+
             toast.add({
                 severity: 'success',
                 summary: 'Producto Creado',
@@ -169,12 +170,23 @@ async function handleSaveProduct(productData) {
         await productsStore.fetchProducts();
         hideDialog();
     } catch (error) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: productsStore.message || 'Ha ocurrido un error inesperado',
-            life: 5000
-        });
+        if (productsStore.validationErrors) {
+            for (let i = 0; i < productsStore.validationErrors.length; i++) {
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: productsStore.validationErrors[i],
+                    life: 5000
+                });
+            }
+        } else {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: productsStore.message || 'Ha ocurrido un error inesperado',
+                life: 5000
+            });
+        }
     }
 }
 
@@ -198,12 +210,23 @@ async function deleteProduct() {
 
         await productsStore.fetchProducts();
     } catch (error) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: productsStore.message || 'No se pudo eliminar el producto',
-            life: 5000
-        });
+        if (productsStore.validationErrors) {
+            for (let i = 0; i < productsStore.validationErrors.length; i++) {
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: productsStore.validationErrors[i],
+                    life: 5000
+                });
+            }
+        } else {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: productsStore.message || 'No se pudo eliminar el producto',
+                life: 5000
+            });
+        }
     }
 }
 

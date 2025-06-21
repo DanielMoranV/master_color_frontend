@@ -159,12 +159,23 @@ const handleSaveUser = async (userData) => {
         await usersStore.fetchUsers();
         hideDialog();
     } catch (error) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: usersStore.message || 'Ha ocurrido un error inesperado',
-            life: 5000
-        });
+        if (usersStore.validationErrors) {
+            for (let i = 0; i < usersStore.validationErrors.length; i++) {
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: usersStore.validationErrors[i],
+                    life: 5000
+                });
+            }
+        } else {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: usersStore.message || 'Ha ocurrido un error inesperado',
+                life: 5000
+            });
+        }
     }
 };
 
@@ -188,12 +199,23 @@ const deleteUser = async () => {
 
         await usersStore.fetchUsers();
     } catch (error) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: usersStore.message || 'No se pudo eliminar el usuario',
-            life: 5000
-        });
+        if (usersStore.validationErrors) {
+            for (let i = 0; i < usersStore.validationErrors.length; i++) {
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: usersStore.validationErrors[i],
+                    life: 5000
+                });
+            }
+        } else {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: usersStore.message || 'No se pudo eliminar el usuario',
+                life: 5000
+            });
+        }
     }
 };
 

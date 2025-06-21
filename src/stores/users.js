@@ -13,13 +13,13 @@ export const useUsersStore = defineStore('usersStore', {
         message: '',
         validationErrors: []
     }),
-    
+
     getters: {
         getUsersCount: (state) => state.usersList.length,
-        getActiveUsers: (state) => state.usersList.filter(user => user.status === 'active' || user.status === 1),
-        findUserById: (state) => (id) => state.usersList.find(user => user.id === id)
+        getActiveUsers: (state) => state.usersList.filter((user) => user.status === 'active' || user.status === 1),
+        findUserById: (state) => (id) => state.usersList.find((user) => user.id === id)
     },
-    
+
     actions: {
         async fetchUsers() {
             this.loading = true;
@@ -33,11 +33,12 @@ export const useUsersStore = defineStore('usersStore', {
             } catch (error) {
                 this.error = error;
                 handleProcessError(error, this);
+                throw error;
             } finally {
                 this.loading = false;
             }
         },
-        
+
         async getUserById(id) {
             this.loading = true;
             this.error = null;
@@ -56,7 +57,7 @@ export const useUsersStore = defineStore('usersStore', {
                 this.loading = false;
             }
         },
-        
+
         async createUser(payload) {
             this.loading = true;
             this.error = null;
@@ -65,16 +66,16 @@ export const useUsersStore = defineStore('usersStore', {
                 const response = await usersApi.createUser(payload);
                 const processed = handleProcessSuccess(response, this);
                 const newUser = processed.data.user || processed.data;
-                
+
                 // Add the new user to the list
                 this.usersList.unshift(newUser);
                 this.user = newUser;
-                
+
                 cache.setItem('usersList', this.usersList);
                 cache.setItem('user', this.user);
                 this.success = true;
                 this.message = 'Usuario creado exitosamente';
-                
+
                 return newUser;
             } catch (error) {
                 this.error = error;
@@ -84,7 +85,7 @@ export const useUsersStore = defineStore('usersStore', {
                 this.loading = false;
             }
         },
-        
+
         async updateUser(id, payload) {
             this.loading = true;
             this.error = null;
@@ -93,20 +94,20 @@ export const useUsersStore = defineStore('usersStore', {
                 const response = await usersApi.updateUser(id, payload);
                 const processed = handleProcessSuccess(response, this);
                 const updatedUser = processed.data.user || processed.data;
-                
+
                 // Update the user in the list
-                const index = this.usersList.findIndex(user => user.id == id);
+                const index = this.usersList.findIndex((user) => user.id == id);
                 if (index !== -1) {
                     this.usersList[index] = updatedUser;
                 }
-                
+
                 this.user = updatedUser;
-                
+
                 cache.setItem('usersList', this.usersList);
                 cache.setItem('user', this.user);
                 this.success = true;
                 this.message = 'Usuario actualizado exitosamente';
-                
+
                 return updatedUser;
             } catch (error) {
                 this.error = error;
@@ -116,27 +117,27 @@ export const useUsersStore = defineStore('usersStore', {
                 this.loading = false;
             }
         },
-        
+
         async deleteUser(id) {
             this.loading = true;
             this.error = null;
             try {
                 const response = await usersApi.deleteUser(id);
                 const processed = handleProcessSuccess(response, this);
-                
+
                 // Remove the user from the list
-                this.usersList = this.usersList.filter(user => user.id != id);
-                
+                this.usersList = this.usersList.filter((user) => user.id != id);
+
                 // Clear current user if it was the deleted one
                 if (this.user && this.user.id == id) {
                     this.user = null;
                     cache.removeItem('user');
                 }
-                
+
                 cache.setItem('usersList', this.usersList);
                 this.success = true;
                 this.message = 'Usuario eliminado exitosamente';
-                
+
                 return processed;
             } catch (error) {
                 this.error = error;
@@ -145,23 +146,6 @@ export const useUsersStore = defineStore('usersStore', {
             } finally {
                 this.loading = false;
             }
-        },
-        
-        // Additional utility actions
-        clearError() {
-            this.error = null;
-            this.validationErrors = [];
-            this.message = '';
-        },
-        
-        clearUser() {
-            this.user = null;
-            cache.removeItem('user');
-        },
-        
-        setUser(user) {
-            this.user = user;
-            cache.setItem('user', user);
         }
     }
 });
