@@ -39,7 +39,11 @@ export const useAuthStore = defineStore('authStore', {
                     this.setExpiration(processed.data.expiresIn);
                     this.setUser(processed.data.user);
                     this.startRefreshInterval();
-                    this.setUserRole(processed.data.user.role_name.toLowerCase());
+                    if (processed.data.user.role_name) {
+                        this.setUserRole(processed.data.user.role_name.toLowerCase());
+                    } else {
+                        this.setUserRole('client');
+                    }
                 }
             } catch (error) {
                 this.error = error;
@@ -97,7 +101,11 @@ export const useAuthStore = defineStore('authStore', {
                 const processed = handleProcessSuccess(response, this);
                 this.token = processed.data.access_token;
                 this.user = processed.data.user;
-                this.setUserRole(processed.data.user.role_name.toLowerCase());
+                if (processed.data.user.role_name) {
+                    this.setUserRole(processed.data.user.role_name.toLowerCase());
+                } else {
+                    this.setUserRole('client');
+                }
                 cache.setItem('token', this.token);
                 cache.setItem('currentUser', this.user);
             } catch (error) {
@@ -115,7 +123,11 @@ export const useAuthStore = defineStore('authStore', {
 
                 const processed = handleProcessSuccess(response, this);
                 this.user = processed.data.user;
-                this.setUserRole(processed.data.user.role_name.toLowerCase());
+                if (processed.data.user.role_name) {
+                    this.setUserRole(processed.data.user.role_name.toLowerCase());
+                } else {
+                    this.setUserRole('client');
+                }
                 cache.setItem('currentUser', this.user);
             } catch (error) {
                 this.error = error;

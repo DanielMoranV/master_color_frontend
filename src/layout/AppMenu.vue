@@ -55,18 +55,36 @@ const menuConfig = ref([
         ]
     },
     {
+        label: 'Inventario',
+        roles: [ROLES.ALMACEN, ROLES.ADMIN],
+        items: [
+            {
+                label: 'Ordenes de compra',
+                icon: 'pi pi-fw pi-cart-plus',
+                to: '/orders',
+                roles: [ROLES.ADMIN, ROLES.ALMACEN]
+            },
+            {
+                label: 'Stock',
+                icon: 'pi pi-fw pi-chart-bar',
+                to: '/stock',
+                roles: [ROLES.ADMIN, ROLES.ALMACEN]
+            }
+        ]
+    },
+    {
         label: 'Mis Compras',
         roles: [ROLES.CLIENT],
         items: [
             {
                 label: 'Mis Compras',
-                icon: 'pi pi-fw pi-shopping-cart',
+                icon: 'pi pi-fw pi-cart-plus',
                 to: '/my-purchases',
                 roles: [ROLES.CLIENT]
             },
             {
                 label: 'Mis Productos',
-                icon: 'pi pi-fw pi-box',
+                icon: 'pi pi-fw pi-chart-bar',
                 to: '/my-products',
                 roles: [ROLES.CLIENT]
             }
