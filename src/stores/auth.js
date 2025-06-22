@@ -5,9 +5,10 @@ import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
 export const useAuthStore = defineStore('authStore', {
     state: () => ({
-        userType: cache.getItem('userType') || 'user', // 'user' o 'client'
+        userType: cache.getItem('userType') || 'client', // 'user' o 'client'
         token: cache.getItem('token') || null,
         user: cache.getItem('currentUser') || null,
+        userRole: cache.getItem('userRole') || 'client',
         expiresAt: cache.getItem('expiresAt') || null,
         loading: false,
         error: null,
@@ -20,10 +21,11 @@ export const useAuthStore = defineStore('authStore', {
         currentUser: (state) => state.user,
         isLoading: (state) => state.loading,
         getToken: (state) => state.token,
-        getUserType: (state) => state.userType
+        getUserType: (state) => state.userType,
+        getUserRole: (state) => state.userRole
     },
     actions: {
-        async login(payload, type = 'user') {
+        async login(payload, type = 'client') {
             this.resetState();
             this.setUserType(type);
             try {
@@ -37,6 +39,7 @@ export const useAuthStore = defineStore('authStore', {
                     this.setExpiration(processed.data.expiresIn);
                     this.setUser(processed.data.user);
                     this.startRefreshInterval();
+                    this.setUserRole(processed.data.user.role_name.toLowerCase());
                 }
             } catch (error) {
                 this.error = error;
@@ -45,7 +48,7 @@ export const useAuthStore = defineStore('authStore', {
                 this.loading = false;
             }
         },
-        async register(payload, type = 'user') {
+        async register(payload, type = 'client') {
             this.loading = true;
             this.setUserType(type);
             try {
@@ -55,6 +58,7 @@ export const useAuthStore = defineStore('authStore', {
                 const processed = handleProcessSuccess(response, this);
                 this.token = processed.data.access_token;
                 this.user = processed.data.user;
+                this.setUserRole(processed.data.user.role_name.toLowerCase());
                 cache.setItem('token', this.token);
                 cache.setItem('currentUser', this.user);
             } catch (error) {
@@ -76,6 +80,7 @@ export const useAuthStore = defineStore('authStore', {
                 cache.removeItem('token');
                 cache.removeItem('currentUser');
                 cache.removeItem('userType');
+                cache.removeItem('userRole');
             } catch (error) {
                 this.error = error;
                 handleProcessError(error, this);
@@ -92,6 +97,7 @@ export const useAuthStore = defineStore('authStore', {
                 const processed = handleProcessSuccess(response, this);
                 this.token = processed.data.access_token;
                 this.user = processed.data.user;
+                this.setUserRole(processed.data.user.role_name.toLowerCase());
                 cache.setItem('token', this.token);
                 cache.setItem('currentUser', this.user);
             } catch (error) {
@@ -109,6 +115,7 @@ export const useAuthStore = defineStore('authStore', {
 
                 const processed = handleProcessSuccess(response, this);
                 this.user = processed.data.user;
+                this.setUserRole(processed.data.user.role_name.toLowerCase());
                 cache.setItem('currentUser', this.user);
             } catch (error) {
                 this.error = error;
@@ -147,6 +154,10 @@ export const useAuthStore = defineStore('authStore', {
                 this.userType = type;
                 cache.setItem('userType', type);
             }
+        },
+        setUserRole(role) {
+            this.userRole = role;
+            cache.setItem('userRole', role);
         },
 
         getUserTypeFromCache() {

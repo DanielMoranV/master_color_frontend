@@ -71,7 +71,7 @@ const login = async () => {
 
     if (authStore.success) {
         toast.add({ severity: 'success', summary: 'Inicio de sesión exitoso', detail: 'Bienvenido.', life: 3000 });
-        router.push('/dashboard');
+        router.push('/profile');
     } else {
         if (authStore.validationErrors && authStore.validationErrors.length > 0) {
             authStore.validationErrors.forEach((err) => {

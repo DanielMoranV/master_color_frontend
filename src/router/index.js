@@ -1,4 +1,6 @@
 import AppLayout from '@/layout/AppLayout.vue';
+import { useAuthStore } from '@/stores/auth';
+import { computed } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
 
 const router = createRouter({
@@ -11,22 +13,26 @@ const router = createRouter({
                 {
                     path: '/dashboard',
                     name: 'dashboard',
-                    component: () => import('@/views/Dashboard.vue')
+                    component: () => import('@/views/Dashboard.vue'),
+                    meta: { roles: ['admin'] }
                 },
                 {
                     path: '/profile',
                     name: 'profile',
-                    component: () => import('@/views/auth/Profile.vue')
+                    component: () => import('@/views/auth/Profile.vue'),
+                    meta: { public: true }
                 },
                 {
                     path: '/products',
                     name: 'products',
-                    component: () => import('@/views/products/Products.vue')
+                    component: () => import('@/views/products/Products.vue'),
+                    meta: { roles: ['admin', 'almacen'] }
                 },
                 {
                     path: '/users',
                     name: 'users',
-                    component: () => import('@/views/users/Users.vue')
+                    component: () => import('@/views/users/Users.vue'),
+                    meta: { roles: ['admin'] }
                 }
             ]
         },
@@ -97,6 +103,39 @@ const router = createRouter({
             meta: { public: true } // Ruta pública
         }
     ]
+});
+
+router.beforeEach(async (to, from, next) => {
+    const authStore = useAuthStore();
+
+    // Si la ruta es pública, permite acceso
+    if (to.meta.public) {
+        return next();
+    }
+
+    // Verificar autenticación
+    if (!authStore.currentUser) {
+        console.log(authStore.currentUser);
+        return next({ name: 'login' });
+    }
+
+    // Verificar usuario activo
+    if (!authStore.currentUser?.is_active) {
+        console.log(authStore.currentUser?.is_active);
+        return next({ name: 'login' });
+    }
+
+    // Verificar permisos por rol
+    const userRole = authStore.userRole?.toLowerCase();
+    const allowedRoles = to.meta.roles || [];
+
+    if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
+        console.log(userRole);
+        console.log(allowedRoles);
+        return next({ name: 'accessDenied' });
+    }
+
+    next();
 });
 
 export default router;

@@ -114,7 +114,11 @@ const filteredProducts = computed(() => {
                 product.name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                 product.sku?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                 product.barcode?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                product.brand?.toLowerCase().includes(searchQuery.value.toLowerCase())
+                product.brand?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                product.category?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                product.presentation?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                product.unidad?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                product.description?.toLowerCase().includes(searchQuery.value.toLowerCase())
         ) || []
     );
 });
