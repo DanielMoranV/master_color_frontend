@@ -33,6 +33,12 @@ const router = createRouter({
                     name: 'users',
                     component: () => import('@/views/users/Users.vue'),
                     meta: { roles: ['admin'] }
+                },
+                {
+                    path: '/stock-movements',
+                    name: 'stock-movements',
+                    component: () => import('@/views/stock-movements/StockMovements.vue'),
+                    meta: { roles: ['admin', 'almacen'] }
                 }
             ]
         },

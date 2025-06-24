@@ -5,7 +5,7 @@ const layoutConfig = reactive({
     preset: 'Aura',
     primary: 'emerald',
     surface: null,
-    darkTheme: false,
+    darkTheme: cache.getItem('darkMode') === true,
     menuMode: 'static'
 });
 

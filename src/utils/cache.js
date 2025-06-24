@@ -73,6 +73,7 @@ export default {
         const token = storage.getItem('token');
         const currentUser = storage.getItem('currentUser');
         const userType = storage.getItem('userType');
+        const darkMode = storage.getItem('darkMode');
 
         storage.clear(); // Clear all items first
 
@@ -84,6 +85,9 @@ export default {
         }
         if (userType) {
             storage.setItem('userType', userType); // Restore userType if it exists
+        }
+        if (darkMode) {
+            storage.setItem('darkMode', darkMode); // Restore darkMode if it exists
         }
     }
 };

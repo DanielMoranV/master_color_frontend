@@ -67,3 +67,12 @@ export const productsApi = {
         }),
     deleteProduct: (id) => axios.delete(`/products/${id}`)
 };
+
+// Funciones para stock movements
+export const stockMovementsApi = {
+    getStockMovements: () => axios.get('/stock-movements'),
+    getStockMovementById: (id) => axios.get(`/stock-movements/${id}`),
+    createStockMovement: (payload) => axios.post('/stock-movements', payload),
+    updateStockMovement: (id, payload) => axios.put(`/stock-movements/${id}`, payload),
+    deleteStockMovement: (id) => axios.delete(`/stock-movements/${id}`)
+};

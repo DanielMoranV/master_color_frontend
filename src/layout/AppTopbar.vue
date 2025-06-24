@@ -43,7 +43,7 @@ onMounted(async () => {
 
 onBeforeMount(() => {
     if (cache.getItem('darkMode') === true) {
-        document.documentElement.classList.toggle('app-dark');
+        document.documentElement.classList.add('app-dark');
     }
 });
 </script>

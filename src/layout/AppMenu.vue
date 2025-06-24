@@ -59,6 +59,12 @@ const menuConfig = ref([
         roles: [ROLES.ALMACEN, ROLES.ADMIN],
         items: [
             {
+                label: 'Movimientos de Stock',
+                icon: 'pi pi-fw pi-arrows-v',
+                to: '/stock-movements',
+                roles: [ROLES.ADMIN, ROLES.ALMACEN]
+            },
+            {
                 label: 'Ordenes de compra',
                 icon: 'pi pi-fw pi-cart-plus',
                 to: '/orders',

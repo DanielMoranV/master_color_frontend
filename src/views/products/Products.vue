@@ -48,38 +48,22 @@
             <ProductForm :product="selectedProduct" :loading="productsStore.loading" @submit="handleSaveProduct" @cancel="hideDialog" />
         </Dialog>
 
-        <!-- Enhanced Delete Dialog -->
-        <Dialog v-model:visible="deleteProductDialog" :style="{ width: '480px' }" header="Confirmar Eliminación" :modal="true" class="delete-dialog">
-            <template #header>
-                <div class="dialog-header danger">
-                    <div class="dialog-icon danger">
-                        <i class="pi pi-exclamation-triangle"></i>
-                    </div>
-                    <div>
-                        <h3>Confirmar Eliminación</h3>
-                        <p>Esta acción no se puede deshacer</p>
-                    </div>
+        <!-- Compact Delete Dialog -->
+        <Dialog v-model:visible="deleteProductDialog" :style="{ width: '400px' }" header="Confirmar Eliminación" :modal="true" class="delete-dialog-compact">
+            <div class="delete-content-compact">
+                <div class="warning-icon">
+                    <i class="pi pi-exclamation-triangle"></i>
                 </div>
-            </template>
-
-            <div class="delete-content">
-                <div class="warning-box">
-                    <i class="pi pi-info-circle"></i>
-                    <div>
-                        <p class="warning-text">
-                            ¿Estás seguro de que quieres eliminar el producto
-                            <strong>{{ selectedProduct.name }}</strong
-                            >?
-                        </p>
-                        <p class="warning-subtext">Se perderán todos los datos asociados al producto.</p>
-                    </div>
+                <div class="warning-message">
+                    <p>¿Eliminar el producto <strong>{{ selectedProduct?.name || 'seleccionado' }}</strong>?</p>
+                    <small>Esta acción no se puede deshacer</small>
                 </div>
             </div>
 
             <template #footer>
-                <div class="dialog-actions">
-                    <Button label="Cancelar" icon="pi pi-times" class="cancel-button" @click="deleteProductDialog = false" outlined />
-                    <Button label="Eliminar" icon="pi pi-trash" class="delete-button" @click="deleteProduct" :loading="productsStore.loading" />
+                <div class="dialog-actions-compact">
+                    <Button label="Cancelar" class="p-button-text" @click="deleteProductDialog = false" />
+                    <Button label="Eliminar" icon="pi pi-trash" severity="danger" @click="deleteProduct" :loading="productsStore.loading" />
                 </div>
             </template>
         </Dialog>
@@ -211,8 +195,6 @@ async function deleteProduct() {
             detail: 'El producto se ha eliminado correctamente',
             life: 4000
         });
-
-        await productsStore.fetchProducts();
     } catch (error) {
         if (productsStore.validationErrors) {
             for (let i = 0; i < productsStore.validationErrors.length; i++) {
@@ -375,131 +357,65 @@ onMounted(async () => {
     padding: 0;
 }
 
-.delete-dialog :deep(.p-dialog-content) {
-    padding: 0;
+/* Compact Delete Dialog */
+.delete-dialog-compact :deep(.p-dialog-content) {
+    padding: 1.5rem;
 }
 
-.dialog-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1.5rem 2rem;
-    background: var(--surface-section);
-    margin: -1.5rem -2rem 1.5rem -2rem;
-    border-radius: 12px 12px 0 0;
-    border-bottom: 1px solid var(--surface-border);
-}
-
-.dialog-header.danger {
-    background: var(--red-50);
-    border-bottom: 1px solid var(--red-200);
-}
-
-/* Dark mode specific styles for danger dialog */
-[data-theme='dark'] .dialog-header.danger {
-    background: rgba(239, 68, 68, 0.1);
-    border-bottom: 1px solid rgba(239, 68, 68, 0.2);
-}
-
-.dialog-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-}
-
-.dialog-icon.danger {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-}
-
-.dialog-header h3 {
-    margin: 0;
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--text-color);
-}
-
-.dialog-header p {
-    margin: 0.25rem 0 0 0;
-    color: var(--text-color-secondary);
-    font-size: 0.85rem;
-}
-
-.delete-content {
-    padding: 0 2rem 1.5rem 2rem;
-}
-
-.warning-box {
+.delete-content-compact {
     display: flex;
     align-items: flex-start;
     gap: 1rem;
-    padding: 1.5rem;
-    background: var(--yellow-50);
-    border: 1px solid var(--yellow-200);
-    border-radius: 12px;
+    margin-bottom: 1.5rem;
 }
 
-.warning-box i {
-    color: var(--yellow-600);
-    font-size: 1.2rem;
-    margin-top: 0.2rem;
+.warning-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--red-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
-.warning-text {
+.warning-icon i {
+    color: var(--red-600);
+    font-size: 1.5rem;
+}
+
+.warning-message {
+    flex: 1;
+}
+
+.warning-message p {
     margin: 0 0 0.5rem 0;
-    font-weight: 500;
-    color: var(--yellow-800);
+    font-size: 1rem;
+    color: var(--text-color);
+    line-height: 1.4;
 }
 
-.warning-subtext {
-    margin: 0;
-    font-size: 0.85rem;
-    color: var(--yellow-700);
+.warning-message small {
+    color: var(--text-color-secondary);
+    font-size: 0.875rem;
 }
 
-/* Dark mode specific styles for warning box */
-[data-theme='dark'] .warning-box {
-    background: rgba(245, 158, 11, 0.1);
-    border: 1px solid rgba(245, 158, 11, 0.2);
-}
-
-[data-theme='dark'] .warning-box i {
-    color: var(--yellow-400);
-}
-
-[data-theme='dark'] .warning-text {
-    color: var(--yellow-200);
-}
-
-[data-theme='dark'] .warning-subtext {
-    color: var(--yellow-300);
-}
-
-.dialog-actions {
+.dialog-actions-compact {
     display: flex;
     gap: 0.75rem;
-    padding: 1.5rem 2rem;
-    background: var(--surface-section);
-    margin: 1.5rem -2rem -1.5rem -2rem;
-    border-radius: 0 0 12px 12px;
     justify-content: flex-end;
+    padding-top: 1rem;
     border-top: 1px solid var(--surface-border);
 }
 
-.cancel-button {
-    background: transparent !important;
-    color: var(--text-color-secondary) !important;
-    border: 2px solid var(--surface-border) !important;
+/* Dark mode specific styles for compact dialog */
+[data-theme='dark'] .warning-icon {
+    background: rgba(239, 68, 68, 0.15);
 }
 
-.delete-button {
-    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
-    border: none !important;
-    color: white !important;
+[data-theme='dark'] .warning-icon i {
+    color: var(--red-400);
 }
 
 /* CSS Variables for Dark Mode Support */
