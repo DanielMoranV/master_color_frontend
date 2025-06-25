@@ -22,6 +22,10 @@ const goToConfig = () => {
     router.push({ name: 'config' });
 };
 
+const goToCart = () => {
+    router.push('/');
+};
+
 const goToRefresh = () => {
     cache.refresh();
     window.location.reload();
@@ -62,6 +66,17 @@ onBeforeMount(() => {
         </button>
 
         <div class="layout-topbar-actions">
+            <!-- Cart icon for clients only -->
+            <button 
+                v-if="authStore.userRole === 'client'" 
+                type="button" 
+                class="layout-topbar-action cart-button" 
+                @click="goToCart"
+                v-tooltip="'Ir a la tienda'"
+            >
+                <i class="pi pi-shopping-cart"></i>
+            </button>
+            
             <div class="layout-config-menu">
                 <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
                     <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
@@ -117,3 +132,60 @@ onBeforeMount(() => {
         </template>
     </Dialog>
 </template>
+
+<style scoped>
+.cart-button {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.cart-button:hover {
+    background: var(--primary-100) !important;
+    color: var(--primary-600) !important;
+    transform: scale(1.1);
+}
+
+.cart-button i {
+    font-size: 1.2rem;
+}
+
+/* Efecto de pulso para llamar la atención */
+.cart-button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--primary-200);
+    opacity: 0;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(0.95);
+        opacity: 0.7;
+    }
+    70% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 0;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 0;
+    }
+}
+
+/* Dark mode support */
+[data-theme='dark'] .cart-button:hover {
+    background: var(--primary-800) !important;
+    color: var(--primary-300) !important;
+}
+
+[data-theme='dark'] .cart-button::after {
+    background: var(--primary-700);
+}
+</style>

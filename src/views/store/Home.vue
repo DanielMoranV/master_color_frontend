@@ -1,7 +1,10 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import { useRouter } from 'vue-router';
+import { productsApi } from '@/api/index';
+import { useAuthStore } from '@/stores/auth';
+import { useProductsStore } from '@/stores/products';
 import { useToast } from 'primevue/usetoast';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 // Router setup
 const router = useRouter();
@@ -9,9 +12,16 @@ const router = useRouter();
 // Toast setup
 const toast = useToast();
 
+// Auth setup
+const authStore = useAuthStore();
+
+// Products setup
+const productsStore = useProductsStore();
+
 // State
 const searchQuery = ref('');
 const selectedCategory = ref(null);
+const sortOption = ref('name-asc'); // Default sorting
 const cartVisible = ref(false);
 const cartItems = ref([]);
 const loading = ref(false);
@@ -22,121 +32,122 @@ const checkScreenSize = () => {
     isSmallScreen.value = window.innerWidth < 640;
 };
 
-// Sample categories
+// Categories - these will be populated dynamically from loaded products
 const categories = ref([
-    { id: 1, name: 'Impresoras', icon: 'pi-print' },
-    { id: 2, name: 'Tintas', icon: 'pi-palette' },
-    { id: 3, name: 'Tóners', icon: 'pi-inbox' },
-    { id: 4, name: 'Papel', icon: 'pi-file' },
-    { id: 5, name: 'Repuestos', icon: 'pi-cog' },
-    { id: 6, name: 'Accesorios', icon: 'pi-star' }
+    { id: 1, name: 'impresoras', label: 'Impresoras', icon: 'pi-print' },
+    { id: 2, name: 'tintas', label: 'Tintas', icon: 'pi-palette' },
+    { id: 3, name: 'toners', label: 'Tóners', icon: 'pi-inbox' },
+    { id: 4, name: 'papel', label: 'Papel', icon: 'pi-file' },
+    { id: 5, name: 'repuestos', label: 'Repuestos', icon: 'pi-cog' },
+    { id: 6, name: 'accesorios', label: 'Accesorios', icon: 'pi-star' }
 ]);
 
-// Sample products (in a real app, this would come from an API)
-const products = ref([
-    {
-        id: 1,
-        name: 'Impresora HP LaserJet Pro M404dn',
-        category: 'Impresoras',
-        price: 1299.9,
-        originalPrice: 1499.9,
-        image: 'https://placehold.co/300x200/4F46E5/FFFFFF?text=HP+LaserJet',
-        rating: 4.5,
-        inStock: true,
-        description: 'Impresora láser monocromática de alta velocidad para oficina'
-    },
-    {
-        id: 2,
-        name: 'Impresora Multifuncional Epson EcoTank L3250',
-        category: 'Impresoras',
-        price: 899.9,
-        originalPrice: 999.9,
-        image: 'https://placehold.co/300x200/059669/FFFFFF?text=Epson+EcoTank',
-        rating: 4.8,
-        inStock: true,
-        description: 'Impresora multifuncional con sistema de tanque de tinta de alta capacidad'
-    },
-    {
-        id: 3,
-        name: 'Kit de Tintas Epson 664 (4 colores)',
-        category: 'Tintas',
-        price: 159.9,
-        originalPrice: 189.9,
-        image: 'https://placehold.co/300x200/DC2626/FFFFFF?text=Tintas+Epson',
-        rating: 4.3,
-        inStock: true,
-        description: 'Tintas originales Epson para impresoras EcoTank'
-    },
-    {
-        id: 4,
-        name: 'Tóner HP 26A Negro Original',
-        category: 'Tóners',
-        price: 299.9,
-        originalPrice: 349.9,
-        image: 'https://placehold.co/300x200/7C3AED/FFFFFF?text=Toner+HP',
-        rating: 4.6,
-        inStock: true,
-        description: 'Tóner original HP para impresoras LaserJet Pro'
-    },
-    {
-        id: 5,
-        name: 'Papel Bond A4 75g (Paquete 500 hojas)',
-        category: 'Papel',
-        price: 24.9,
-        originalPrice: 29.9,
-        image: 'https://placehold.co/300x200/F59E0B/FFFFFF?text=Papel+Bond',
-        rating: 4.2,
-        inStock: true,
-        description: 'Papel multipropósito ideal para impresiones diarias'
-    },
-    {
-        id: 6,
-        name: 'Kit de Mantenimiento HP LaserJet',
-        category: 'Repuestos',
-        price: 249.9,
-        originalPrice: 299.9,
-        image: 'https://placehold.co/300x200/10B981/FFFFFF?text=Kit+Mantenimiento',
-        rating: 4.4,
-        inStock: false,
-        description: 'Kit completo para mantenimiento de impresoras HP LaserJet'
-    },
-    {
-        id: 7,
-        name: 'Escáner Portátil Epson WorkForce ES-200',
-        category: 'Accesorios',
-        price: 599.9,
-        originalPrice: 699.9,
-        image: 'https://placehold.co/300x200/EC4899/FFFFFF?text=Scanner+Epson',
-        rating: 4.7,
-        inStock: true,
-        description: 'Escáner portátil de alta velocidad con alimentador automático'
-    },
-    {
-        id: 8,
-        name: 'Papel Fotográfico Brillante A4 (20 hojas)',
-        category: 'Papel',
-        price: 34.9,
-        originalPrice: 39.9,
-        image: 'https://placehold.co/300x200/6366F1/FFFFFF?text=Papel+Foto',
-        rating: 4.1,
-        inStock: true,
-        description: 'Papel fotográfico de alta calidad para impresiones profesionales'
+// Dynamic categories computed from loaded products
+const availableCategories = computed(() => {
+    const productCategories = [...new Set((productsStore.productsList || []).map(p => p.category).filter(Boolean))];
+    return categories.value.filter(cat => productCategories.includes(cat.name));
+});
+
+// Sort options
+const sortOptions = [
+    { label: 'Nombre (A-Z)', value: 'name-asc' },
+    { label: 'Nombre (Z-A)', value: 'name-desc' },
+    { label: 'Precio (Menor a Mayor)', value: 'price-asc' },
+    { label: 'Precio (Mayor a Menor)', value: 'price-desc' },
+    { label: 'Stock (Menor a Mayor)', value: 'stock-asc' },
+    { label: 'Stock (Mayor a Menor)', value: 'stock-desc' }
+];
+
+// Load products from backend using public endpoint
+const loadProducts = async () => {
+    try {
+        loading.value = true;
+        // Use public products endpoint for store view
+        const response = await productsApi.getPublicProducts();
+        
+        if (response.data) {
+            // Transform backend data to match frontend format
+            const transformedProducts = (response.data.products || response.data.data || response.data || []).map(product => ({
+                id: product.id,
+                name: product.name,
+                category: product.category,
+                price: parseFloat(product.sale_price || product.price || 0),
+                originalPrice: parseFloat(product.purchase_price || product.sale_price || 0),
+                image: product.image_url || `https://placehold.co/300x200/4F46E5/FFFFFF?text=${encodeURIComponent(product.name)}`,
+                inStock: (product.stock_quantity || 0) > 0,
+                description: product.description || '',
+                brand: product.brand || '',
+                sku: product.sku || '',
+                stockQuantity: product.stock_quantity || 0,
+                minStock: product.min_stock || 5,
+                maxStock: product.max_stock || 100,
+                presentation: product.presentation || '',
+                unidad: product.unidad || ''
+            }));
+            
+            productsStore.productsList = transformedProducts;
+            
+            console.log('Products loaded:', transformedProducts.length);
+        }
+    } catch (error) {
+        console.error('Error loading products:', error);
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudieron cargar los productos',
+            life: 5000
+        });
+    } finally {
+        loading.value = false;
     }
-]);
+};
 
 // Computed properties
 const filteredProducts = computed(() => {
-    let result = products.value;
+    let result = productsStore.productsList || [];
 
-    // Filter by search query
+    // Filter by search query - comprehensive search
     if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase();
-        result = result.filter((product) => product.name.toLowerCase().includes(query) || product.category.toLowerCase().includes(query) || product.description.toLowerCase().includes(query));
+        const query = searchQuery.value.toLowerCase().trim();
+        result = result.filter((product) => 
+            (product.name || '').toLowerCase().includes(query) ||
+            (product.category || '').toLowerCase().includes(query) ||
+            (product.description || '').toLowerCase().includes(query) ||
+            (product.brand || '').toLowerCase().includes(query) ||
+            (product.sku || '').toLowerCase().includes(query) ||
+            (product.presentation || '').toLowerCase().includes(query) ||
+            (product.unidad || '').toLowerCase().includes(query)
+        );
     }
 
     // Filter by category
     if (selectedCategory.value) {
         result = result.filter((product) => product.category === selectedCategory.value.name);
+    }
+
+    // Sort products
+    switch (sortOption.value) {
+        case 'name-asc':
+            result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            break;
+        case 'name-desc':
+            result.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+            break;
+        case 'price-asc':
+            result.sort((a, b) => (a.price || 0) - (b.price || 0));
+            break;
+        case 'price-desc':
+            result.sort((a, b) => (b.price || 0) - (a.price || 0));
+            break;
+        case 'stock-asc':
+            result.sort((a, b) => (a.stockQuantity || 0) - (b.stockQuantity || 0));
+            break;
+        case 'stock-desc':
+            result.sort((a, b) => (b.stockQuantity || 0) - (a.stockQuantity || 0));
+            break;
+        default:
+            // Default to name ascending
+            result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
 
     return result;
@@ -159,6 +170,15 @@ const totalSavings = computed(() => {
     }, 0);
 });
 
+// Auth computed properties
+const isClientAuthenticated = computed(() => {
+    return authStore.isAuthenticated && authStore.userRole === 'client';
+});
+
+const currentUserName = computed(() => {
+    return authStore.currentUser?.name || 'Usuario';
+});
+
 // Methods
 const selectCategory = (category) => {
     if (selectedCategory.value === category) {
@@ -171,6 +191,7 @@ const selectCategory = (category) => {
 const clearFilters = () => {
     selectedCategory.value = null;
     searchQuery.value = '';
+    sortOption.value = 'name-asc';
 };
 
 const toggleCart = () => {
@@ -281,22 +302,36 @@ const navigateToRegister = () => {
     router.push('/auth/register');
 };
 
-const generateStars = (rating) => {
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
-    const emptyStars = 5 - Math.ceil(rating);
-
-    return {
-        full: fullStars,
-        half: hasHalfStar,
-        empty: emptyStars
-    };
+const logout = async () => {
+    try {
+        await authStore.logout();
+        toast.add({
+            severity: 'success',
+            summary: 'Sesión cerrada',
+            detail: 'Has cerrado sesión exitosamente',
+            life: 3000
+        });
+        // Refresh the page or redirect if needed
+        router.push('/auth/login');
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo cerrar la sesión',
+            life: 3000
+        });
+    }
 };
 
+
 // Lifecycle hooks
-onMounted(() => {
+onMounted(async () => {
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
+    console.log(isClientAuthenticated.value);
+    
+    // Load products on component mount
+    await loadProducts();
 });
 
 onBeforeUnmount(() => {
@@ -326,14 +361,36 @@ onBeforeUnmount(() => {
 
                     <!-- Auth buttons and cart -->
                     <div class="flex items-center space-x-2 sm:space-x-4 order-2 sm:order-3">
-                        <Button icon="pi pi-sign-in" :label="isSmallScreen ? undefined : 'Iniciar sesión'" class="p-button-outlined p-button-sm font-medium" :class="{ 'p-button-icon-only': isSmallScreen }" @click="navigateToLogin" />
-                        <Button
-                            icon="pi pi-user-plus"
-                            :label="isSmallScreen ? undefined : 'Registrarse'"
-                            class="p-button-sm bg-blue-600 border-blue-600 hover:bg-blue-700 font-medium shadow-md"
-                            :class="{ 'p-button-icon-only': isSmallScreen }"
-                            @click="navigateToRegister"
-                        />
+                        <!-- Show login/register buttons when NOT authenticated as client -->
+                        <template v-if="!isClientAuthenticated">
+                            <Button icon="pi pi-sign-in" :label="isSmallScreen ? undefined : 'Iniciar sesión'" class="p-button-outlined p-button-sm font-medium" :class="{ 'p-button-icon-only': isSmallScreen }" @click="navigateToLogin" />
+                            <Button
+                                icon="pi pi-user-plus"
+                                :label="isSmallScreen ? undefined : 'Registrarse'"
+                                class="p-button-sm bg-blue-600 border-blue-600 hover:bg-blue-700 font-medium shadow-md"
+                                :class="{ 'p-button-icon-only': isSmallScreen }"
+                                @click="navigateToRegister"
+                            />
+                        </template>
+
+                        <!-- Show user info and logout when authenticated as client -->
+                        <template v-else>
+                            <!-- User info button -->
+                            <div class="relative">
+                                <Button
+                                    icon="pi pi-user"
+                                    :label="isSmallScreen ? undefined : currentUserName"
+                                    class="p-button-outlined p-button-lg shadow-md user-button"
+                                    :class="{ 'p-button-icon-only': isSmallScreen }"
+                                    v-tooltip="isSmallScreen ? currentUserName : 'Usuario autenticado'"
+                                />
+                            </div>
+
+                            <!-- Logout button -->
+                            <div class="relative">
+                                <Button icon="pi pi-sign-out" class="p-button-rounded p-button-danger p-button-lg shadow-md logout-button" @click="logout" v-tooltip="'Cerrar sesión'" />
+                            </div>
+                        </template>
 
                         <!-- Cart button -->
                         <div class="relative">
@@ -354,33 +411,66 @@ onBeforeUnmount(() => {
                     <div class="bg-white rounded-lg shadow-sm p-3 sm:p-4 sticky top-[4.5rem] md:top-24">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-semibold text-gray-800">Categorías</h2>
-                            <Button v-if="selectedCategory || searchQuery" v-tooltip="'Limpiar filtros'" icon="pi pi-filter-slash" class="p-button-rounded p-button-outlined p-button-sm p-button-danger" @click="clearFilters" />
+                            <Button v-if="selectedCategory || searchQuery || sortOption !== 'name-asc'" v-tooltip="'Limpiar filtros'" icon="pi pi-filter-slash" class="p-button-rounded p-button-outlined p-button-sm p-button-danger" @click="clearFilters" />
                         </div>
 
                         <div class="flex flex-wrap md:flex-col md:space-y-2 gap-2 md:gap-0">
                             <div
-                                v-for="category in categories"
+                                v-for="category in availableCategories"
                                 :key="category.id"
                                 @click="selectCategory(category)"
                                 class="flex items-center p-2 sm:p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-50 text-sm sm:text-base"
                                 :class="selectedCategory === category ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-600' : 'text-gray-700 hover:text-blue-600'"
                             >
                                 <i :class="['pi', category.icon, 'mr-3']"></i>
-                                <span class="font-medium">{{ category.name }}</span>
+                                <span class="font-medium">{{ category.label }}</span>
                             </div>
                         </div>
 
                         <!-- Filter summary -->
-                        <div v-if="selectedCategory || searchQuery" class="mt-4 pt-4 border-t border-gray-200">
-                            <p class="text-sm text-gray-600">Mostrando {{ filteredProducts.length }} de {{ products.length }} productos</p>
+                        <div v-if="selectedCategory || searchQuery || sortOption !== 'name-asc'" class="mt-4 pt-4 border-t border-gray-200">
+                            <p class="text-sm text-gray-600">Mostrando {{ filteredProducts.length }} de {{ (productsStore.productsList || []).length }} productos</p>
+                            <div v-if="sortOption !== 'name-asc'" class="mt-2">
+                                <span class="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                                    <i class="pi pi-sort-alt mr-1"></i>
+                                    {{ sortOptions.find(opt => opt.value === sortOption)?.label }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Products grid -->
                 <div class="flex-1">
+                    <!-- Filter and sort bar -->
+                    <div class="bg-white rounded-lg shadow-sm p-3 sm:p-4 mb-4">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <div class="flex items-center space-x-2">
+                                <i class="pi pi-sort-alt text-gray-500"></i>
+                                <span class="text-sm font-medium text-gray-700">Ordenar por:</span>
+                            </div>
+                            <div class="w-full sm:w-auto">
+                                <Select 
+                                    v-model="sortOption" 
+                                    :options="sortOptions" 
+                                    optionLabel="label" 
+                                    optionValue="value" 
+                                    placeholder="Seleccionar orden" 
+                                    class="w-full sm:w-64 sort-select"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading state -->
+                    <div v-if="loading" class="text-center py-16 bg-white rounded-lg shadow-sm">
+                        <i class="pi pi-spin pi-spinner text-6xl text-blue-500 mb-4"></i>
+                        <h3 class="text-xl text-gray-500 mb-2">Cargando productos...</h3>
+                        <p class="text-gray-400">Por favor espera mientras cargamos los productos</p>
+                    </div>
+
                     <!-- No results -->
-                    <div v-if="filteredProducts.length === 0" class="text-center py-16 bg-white rounded-lg shadow-sm">
+                    <div v-else-if="filteredProducts.length === 0" class="text-center py-16 bg-white rounded-lg shadow-sm">
                         <i class="pi pi-search text-6xl text-gray-300 mb-4"></i>
                         <h3 class="text-xl text-gray-500 mb-2">No se encontraron productos</h3>
                         <p class="text-gray-400 mb-4">Intenta ajustar tu búsqueda o filtros</p>
@@ -419,14 +509,20 @@ onBeforeUnmount(() => {
                                     {{ product.description }}
                                 </p>
 
-                                <!-- Rating -->
-                                <div class="flex items-center mb-3">
-                                    <div class="flex items-center">
-                                        <i v-for="n in generateStars(product.rating).full" :key="'full-' + n" class="pi pi-star-fill text-yellow-400 text-sm"></i>
-                                        <i v-if="generateStars(product.rating).half" class="pi pi-star-half-fill text-yellow-400 text-sm"></i>
-                                        <i v-for="n in generateStars(product.rating).empty" :key="'empty-' + n" class="pi pi-star text-gray-300 text-sm"></i>
+                                <!-- Stock info -->
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center space-x-2">
+                                        <i class="pi pi-box text-gray-500 text-sm"></i>
+                                        <span class="text-sm text-gray-600 font-medium">Stock: {{ product.stockQuantity }}</span>
                                     </div>
-                                    <span class="text-sm text-gray-500 ml-2">({{ product.rating }})</span>
+                                    
+                                    <!-- Low stock warning -->
+                                    <div v-if="product.inStock && product.stockQuantity <= (product.minStock || 5)" class="flex items-center">
+                                        <span class="bg-orange-100 text-orange-800 text-xs font-medium px-2 py-1 rounded-full border border-orange-200">
+                                            <i class="pi pi-exclamation-triangle mr-1"></i>
+                                            ¡Quedan pocos!
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <!-- Price -->
@@ -600,5 +696,123 @@ onBeforeUnmount(() => {
 /* Smooth transitions */
 .group:hover .group-hover\:scale-105 {
     transform: scale(1.05);
+}
+
+/* User authentication styles - unified with cart button */
+.user-button {
+    background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+    border: none !important;
+    color: white !important;
+    transition: all 0.3s ease;
+    font-weight: 500 !important;
+    height: 3rem !important;
+    min-height: 3rem !important;
+    min-width: 3rem !important;
+    padding: 0 1rem !important;
+}
+
+/* When showing only icon (small screen), make it circular */
+.user-button.p-button-icon-only {
+    width: 3rem !important;
+    min-width: 3rem !important;
+    padding: 0 !important;
+}
+
+.user-button:hover {
+    background: linear-gradient(135deg, #4338ca, #4f46e5) !important;
+    transform: scale(1.05);
+}
+
+.logout-button {
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    border: none !important;
+    color: white !important;
+    transition: all 0.3s ease;
+    width: 3rem !important;
+    height: 3rem !important;
+    min-width: 3rem !important;
+    min-height: 3rem !important;
+}
+
+.logout-button:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+    transform: scale(1.05);
+}
+
+/* Ensure consistency with cart button styling */
+.user-button i,
+.logout-button i {
+    font-size: 1.2rem;
+}
+
+/* Ensure cart button has consistent sizing */
+:deep(.p-button-rounded.p-button-lg) {
+    width: 3rem !important;
+    height: 3rem !important;
+    min-width: 3rem !important;
+    min-height: 3rem !important;
+}
+
+/* Sort select styling */
+.sort-select :deep(.p-dropdown) {
+    border-radius: 8px;
+    border: 2px solid var(--surface-border);
+    transition: all 0.3s ease;
+}
+
+.sort-select :deep(.p-dropdown:focus) {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.sort-select :deep(.p-dropdown-label) {
+    font-size: 0.875rem;
+    color: var(--text-color);
+}
+
+/* Low stock warning styles */
+.bg-orange-100 {
+    background-color: #fed7aa;
+}
+
+.text-orange-800 {
+    color: #9a3412;
+}
+
+.border-orange-200 {
+    border-color: #fed7aa;
+}
+
+/* Dark mode support for low stock warning */
+@media (prefers-color-scheme: dark) {
+    .bg-orange-100 {
+        background-color: rgba(251, 146, 60, 0.2);
+    }
+    
+    .text-orange-800 {
+        color: #fb923c;
+    }
+    
+    .border-orange-200 {
+        border-color: rgba(251, 146, 60, 0.3);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .user-button.p-button-icon-only,
+    .logout-button,
+    :deep(.p-button-rounded.p-button-lg) {
+        width: 2.75rem !important;
+        height: 2.75rem !important;
+        min-width: 2.75rem !important;
+        min-height: 2.75rem !important;
+        padding: 0 !important;
+    }
+
+    .user-button i,
+    .logout-button i {
+        font-size: 1.1rem;
+    }
 }
 </style>

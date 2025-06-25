@@ -39,6 +39,12 @@ const router = createRouter({
                     name: 'stock-movements',
                     component: () => import('@/views/stock-movements/StockMovements.vue'),
                     meta: { roles: ['admin', 'almacen'] }
+                },
+                {
+                    path: '/stock',
+                    name: 'stock',
+                    component: () => import('@/views/stock/Stock.vue'),
+                    meta: { roles: ['admin', 'almacen'] }
                 }
             ]
         },

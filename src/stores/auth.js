@@ -1,7 +1,7 @@
+import { authApi } from '@/api/index';
+import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 import cache from '@/utils/cache';
 import { defineStore } from 'pinia';
-import { authApi } from '@/api/index';
-import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
 export const useAuthStore = defineStore('authStore', {
     state: () => ({
@@ -17,7 +17,7 @@ export const useAuthStore = defineStore('authStore', {
         validationErrors: []
     }),
     getters: {
-        isAuthenticated: (state) => !!state.user && !!state.success,
+        isAuthenticated: (state) => !!state.user,
         currentUser: (state) => state.user,
         isLoading: (state) => state.loading,
         getToken: (state) => state.token,
@@ -62,7 +62,11 @@ export const useAuthStore = defineStore('authStore', {
                 const processed = handleProcessSuccess(response, this);
                 this.token = processed.data.access_token;
                 this.user = processed.data.user;
-                this.setUserRole(processed.data.user.role_name.toLowerCase());
+                if (processed.data.user.role_name) {
+                    this.setUserRole(processed.data.user.role_name.toLowerCase());
+                } else {
+                    this.setUserRole('client');
+                }
                 cache.setItem('token', this.token);
                 cache.setItem('currentUser', this.user);
             } catch (error) {

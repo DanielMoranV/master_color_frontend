@@ -200,10 +200,10 @@ const formatNumber = (value) => {
 };
 
 const formatCurrency = (value) => {
-    if (!value) return '$0.00';
-    return new Intl.NumberFormat('es-ES', {
+    if (!value) return 'S/ 0.00';
+    return new Intl.NumberFormat('es-PE', {
         style: 'currency',
-        currency: 'USD'
+        currency: 'PEN'
     }).format(value);
 };
 

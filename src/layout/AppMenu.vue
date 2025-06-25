@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { computed, ref } from 'vue';
 import AppMenuItem from './AppMenuItem.vue';
 
 const authStore = useAuthStore();
@@ -56,7 +56,7 @@ const menuConfig = ref([
     },
     {
         label: 'Inventario',
-        roles: [ROLES.ALMACEN, ROLES.ADMIN],
+        roles: [ROLES.ALMACEN, ROLES.ADMIN, ROLES.VENDEDOR],
         items: [
             {
                 label: 'Movimientos de Stock',
@@ -65,16 +65,10 @@ const menuConfig = ref([
                 roles: [ROLES.ADMIN, ROLES.ALMACEN]
             },
             {
-                label: 'Ordenes de compra',
-                icon: 'pi pi-fw pi-cart-plus',
-                to: '/orders',
-                roles: [ROLES.ADMIN, ROLES.ALMACEN]
-            },
-            {
                 label: 'Stock',
                 icon: 'pi pi-fw pi-chart-bar',
                 to: '/stock',
-                roles: [ROLES.ADMIN, ROLES.ALMACEN]
+                roles: [ROLES.ADMIN, ROLES.ALMACEN, ROLES.VENDEDOR]
             }
         ]
     },

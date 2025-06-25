@@ -89,12 +89,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { useUsersStore } from '@/stores/users';
 import { useRolesStore } from '@/stores/roles';
+import { useUsersStore } from '@/stores/users';
 import { useToast } from 'primevue/usetoast';
-import UsersTable from './UsersTable.vue';
+import { computed, onMounted, ref } from 'vue';
 import UserForm from './UserForm.vue';
+import UsersTable from './UsersTable.vue';
 
 const usersStore = useUsersStore();
 const rolesStore = useRolesStore();
@@ -240,7 +240,7 @@ onMounted(async () => {
     justify-content: space-between;
     align-items: center;
     background: rgba(255, 255, 255, 0.95);
-    padding: 2rem;
+    padding: 1rem;
     border-radius: 20px;
     backdrop-filter: blur(10px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
@@ -371,7 +371,7 @@ onMounted(async () => {
     gap: 1rem;
     padding: 1.5rem 2rem;
     background: var(--surface-section);
-    margin: -1.5rem -2rem 1.5rem -2rem;
+    margin: -1.5rem -2rem 0.2rem -1.2rem;
     border-radius: 12px 12px 0 0;
     border-bottom: 1px solid var(--surface-border);
 }

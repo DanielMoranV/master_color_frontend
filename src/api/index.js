@@ -52,6 +52,7 @@ export const rolesApi = {
 // Funciones para productos
 export const productsApi = {
     getProducts: () => axios.get('/products'),
+    getPublicProducts: () => axios.get('/products/public'),
     getProductById: (id) => axios.get(`/products/${id}`),
     createProduct: (formData) =>
         axios.post('/products', formData, {

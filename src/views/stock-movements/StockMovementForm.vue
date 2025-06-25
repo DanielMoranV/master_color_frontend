@@ -182,8 +182,8 @@
                                         :class="{ 'p-invalid': errors[`stocks.${index}.unit_price`] }"
                                         class="form-input"
                                         mode="currency"
-                                        currency="USD"
-                                        locale="en-US"
+                                        currency="PEN"
+                                        locale="es-PE"
                                     />
                                     <small v-if="errors[`stocks.${index}.unit_price`]" class="p-error">
                                         {{ errors[`stocks.${index}.unit_price`] }}
@@ -435,9 +435,9 @@ const getTotalValue = () => {
 };
 
 const formatCurrency = (value) => {
-    return new Intl.NumberFormat('es-ES', {
+    return new Intl.NumberFormat('es-PE', {
         style: 'currency',
-        currency: 'USD'
+        currency: 'PEN'
     }).format(value || 0);
 };
 

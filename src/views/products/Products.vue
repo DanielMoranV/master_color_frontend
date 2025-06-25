@@ -55,7 +55,10 @@
                     <i class="pi pi-exclamation-triangle"></i>
                 </div>
                 <div class="warning-message">
-                    <p>¿Eliminar el producto <strong>{{ selectedProduct?.name || 'seleccionado' }}</strong>?</p>
+                    <p>
+                        ¿Eliminar el producto <strong>{{ selectedProduct?.name || 'seleccionado' }}</strong
+                        >?
+                    </p>
                     <small>Esta acción no se puede deshacer</small>
                 </div>
             </div>
@@ -73,11 +76,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
 import { useProductsStore } from '@/stores/products';
 import { useToast } from 'primevue/usetoast';
-import ProductsTable from './ProductsTable.vue';
+import { computed, onMounted, ref } from 'vue';
 import ProductForm from './ProductForm.vue';
+import ProductsTable from './ProductsTable.vue';
 
 const productsStore = useProductsStore();
 const toast = useToast();
@@ -118,7 +121,12 @@ function openNew() {
         category: '',
         presentation: '',
         unidad: '',
-        user_id: ''
+        user_id: '',
+        quantity: 0,
+        min_stock: 0,
+        max_stock: 0,
+        purchase_price: null,
+        sale_price: null
     };
     productDialog.value = true;
     dialogMode.value = 'create';
@@ -235,7 +243,7 @@ onMounted(async () => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 2rem;
+    padding: 1rem;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 18px;
     margin-bottom: 2rem;
@@ -355,6 +363,56 @@ onMounted(async () => {
 /* Dialog Enhancements */
 .product-dialog :deep(.p-dialog-content) {
     padding: 0;
+}
+
+.dialog-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem 2rem;
+    background: var(--surface-section);
+    margin: -1.5rem -2rem 0.2rem -1.2rem;
+    border-radius: 12px 12px 0 0;
+    border-bottom: 1px solid var(--surface-border);
+}
+
+.dialog-header.danger {
+    background: var(--red-50);
+    border-bottom: 1px solid var(--red-200);
+}
+
+/* Dark mode specific styles for danger dialog */
+[data-theme='dark'] .dialog-header.danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.dialog-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.dialog-icon.danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.dialog-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.dialog-header p {
+    margin: 0.25rem 0 0 0;
+    color: var(--text-color-secondary);
+    font-size: 0.85rem;
 }
 
 /* Compact Delete Dialog */
