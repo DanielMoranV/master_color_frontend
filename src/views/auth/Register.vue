@@ -1,8 +1,9 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { useAuthStore } from '@/stores/auth';
+import { UbigeoUtil } from '@/utils/ubigeo';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -23,6 +24,19 @@ const loading = ref(false);
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
 
+// Campos de dirección
+const addressFull = ref('');
+const selectedDepartment = ref(null);
+const selectedProvince = ref(null);
+const selectedDistrict = ref(null);
+const postalCode = ref('');
+const reference = ref('');
+
+// Datos de ubigeo
+const departments = ref([]);
+const provinces = ref([]);
+const districts = ref([]);
+
 // Estado para verificación de email
 const registrationComplete = ref(false);
 const verificationSent = ref(false);
@@ -37,6 +51,14 @@ const confirmPasswordError = ref('');
 const identityDocumentError = ref('');
 const phoneError = ref('');
 const termsError = ref('');
+
+// Errores de dirección
+const addressFullError = ref('');
+const departmentError = ref('');
+const provinceError = ref('');
+const districtError = ref('');
+const postalCodeError = ref('');
+const referenceError = ref('');
 
 // Opciones de tipo de cliente
 const clientTypeOptions = [
@@ -68,6 +90,80 @@ const onClientTypeChange = () => {
     identityDocumentError.value = '';
 };
 
+// Crear instancia de ubigeo
+const ubigeo = new UbigeoUtil();
+
+// Funciones para manejar ubigeo
+const loadDepartments = () => {
+    try {
+        departments.value = ubigeo.getDepartments();
+    } catch (error) {
+        console.error('Error loading departments:', error);
+        // Fallback con datos básicos
+        departments.value = [
+            { label: 'Lima', value: '15', code: '15', name: 'Lima' },
+            { label: 'Callao', value: '07', code: '07', name: 'Callao' },
+            { label: 'Arequipa', value: '04', code: '04', name: 'Arequipa' }
+        ];
+    }
+};
+
+const onDepartmentChange = () => {
+    selectedProvince.value = null;
+    selectedDistrict.value = null;
+    provinces.value = [];
+    districts.value = [];
+    
+    if (selectedDepartment.value) {
+        try {
+            provinces.value = ubigeo.getProvincesByDepartment(selectedDepartment.value);
+        } catch (error) {
+            console.error('Error loading provinces:', error);
+            provinces.value = [];
+        }
+    }
+    
+    // Clear errors
+    departmentError.value = '';
+    provinceError.value = '';
+    districtError.value = '';
+};
+
+const onProvinceChange = () => {
+    selectedDistrict.value = null;
+    districts.value = [];
+    
+    if (selectedProvince.value) {
+        try {
+            districts.value = ubigeo.getDistrictsByProvince(selectedProvince.value);
+        } catch (error) {
+            console.error('Error loading districts:', error);
+            districts.value = [];
+        }
+    }
+    
+    // Clear errors
+    provinceError.value = '';
+    districtError.value = '';
+};
+
+const onDistrictChange = () => {
+    // Auto-fill postal code if available
+    if (selectedDistrict.value) {
+        const district = districts.value.find(d => d.value === selectedDistrict.value);
+        if (district && district.postalCode) {
+            postalCode.value = district.postalCode;
+        }
+    }
+    
+    districtError.value = '';
+};
+
+// Helper function to get location name by code
+const getLocationName = (locations, code) => {
+    return ubigeo.getLocationName(locations, code);
+};
+
 // Validaciones
 const validateForm = () => {
     let isValid = true;
@@ -80,6 +176,14 @@ const validateForm = () => {
     identityDocumentError.value = '';
     phoneError.value = '';
     termsError.value = '';
+    
+    // Limpiar errores de dirección
+    addressFullError.value = '';
+    districtError.value = '';
+    provinceError.value = '';
+    departmentError.value = '';
+    postalCodeError.value = '';
+    referenceError.value = '';
 
     // Validar nombre
     if (!name.value.trim()) {
@@ -153,6 +257,39 @@ const validateForm = () => {
         isValid = false;
     }
 
+    // Validar dirección completa
+    if (!addressFull.value.trim()) {
+        addressFullError.value = 'La dirección completa es requerida';
+        isValid = false;
+    } else if (addressFull.value.trim().length < 10) {
+        addressFullError.value = 'La dirección debe ser más específica (mínimo 10 caracteres)';
+        isValid = false;
+    }
+
+    // Validar departamento
+    if (!selectedDepartment.value) {
+        departmentError.value = 'El departamento es requerido';
+        isValid = false;
+    }
+
+    // Validar provincia
+    if (!selectedProvince.value) {
+        provinceError.value = 'La provincia es requerida';
+        isValid = false;
+    }
+
+    // Validar distrito
+    if (!selectedDistrict.value) {
+        districtError.value = 'El distrito es requerido';
+        isValid = false;
+    }
+
+    // Validar código postal (opcional pero si se ingresa debe ser válido)
+    if (postalCode.value.trim() && !/^\d{5}$/.test(postalCode.value.trim())) {
+        postalCodeError.value = 'El código postal debe tener 5 dígitos';
+        isValid = false;
+    }
+
     return isValid;
 };
 
@@ -177,7 +314,15 @@ const register = async () => {
         client_type: clientType.value,
         identity_document: identityDocument.value,
         document_type: documentType.value,
-        phone: phone.value
+        phone: phone.value,
+        
+        // Campos de dirección
+        address_full: addressFull.value.trim(),
+        district: getLocationName(districts.value, selectedDistrict.value),
+        province: getLocationName(provinces.value, selectedProvince.value),
+        department: getLocationName(departments.value, selectedDepartment.value),
+        postal_code: postalCode.value.trim() || null,
+        reference: reference.value.trim() || null
     };
 
     await authStore.register(payload, 'client');
@@ -189,6 +334,11 @@ const register = async () => {
             detail: 'Cuenta creada correctamente. Por favor verifica tu correo electrónico.',
             life: 5000
         });
+
+        // Save checkout flow flag if applicable
+        if (isCheckoutFlow.value) {
+            localStorage.setItem('wasCheckoutFlow', 'true');
+        }
 
         // Mostrar pantalla de verificación en lugar de redirigir
         registrationComplete.value = true;
@@ -271,9 +421,27 @@ const verifyEmail = async () => {
                 detail: 'Tu correo electrónico ha sido verificado correctamente',
                 life: 3000
             });
-            // Redirigir al dashboard después de verificar
+            
+            // Check if this was from checkout flow
+            const wasCheckoutFlow = localStorage.getItem('wasCheckoutFlow') === 'true';
+            
             setTimeout(() => {
-                router.push('/dashboard');
+                if (wasCheckoutFlow) {
+                    // Clear the checkout flow flag
+                    localStorage.removeItem('wasCheckoutFlow');
+                    
+                    // Redirect to store with cart restoration
+                    toast.add({
+                        severity: 'info',
+                        summary: 'Registro Completado',
+                        detail: 'Ahora puedes continuar con tu compra. Tu carrito se restaurará.',
+                        life: 4000
+                    });
+                    router.push('/');
+                } else {
+                    // Normal flow - redirect to dashboard
+                    router.push('/dashboard');
+                }
             }, 1500);
         } else {
             toast.add({
@@ -303,6 +471,11 @@ const toggleConfirmPasswordVisibility = () => {
     showConfirmPassword.value = !showConfirmPassword.value;
 };
 
+// Check if coming from checkout flow
+const isCheckoutFlow = computed(() => {
+    return route.query.checkout === 'true';
+});
+
 // Verificar si hay un token de verificación en la URL al cargar la página
 onMounted(() => {
     const token = route.query.token;
@@ -310,6 +483,19 @@ onMounted(() => {
         verificationToken.value = token;
         // Intentar verificar el email automáticamente
         verifyEmail();
+    }
+    
+    // Load departments on component mount
+    loadDepartments();
+    
+    // Show checkout flow message if applicable
+    if (isCheckoutFlow.value) {
+        toast.add({
+            severity: 'info',
+            summary: 'Finalizar Compra',
+            detail: 'Completa tu registro para continuar con la compra. Tu carrito se mantendrá guardado.',
+            life: 6000
+        });
     }
 });
 </script>
@@ -522,6 +708,123 @@ onMounted(() => {
                                                 </IconField>
                                             </div>
                                             <small v-if="confirmPasswordError" class="p-error text-red-600 text-xs mt-1 block">{{ confirmPasswordError }}</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Sección de Dirección -->
+                                    <div class="bg-gray-50 p-3 sm:p-4 rounded-lg border">
+                                        <h3 class="text-sm sm:text-base font-semibold text-gray-800 mb-3 flex items-center">
+                                            <i class="pi pi-map-marker mr-2 text-blue-600"></i>
+                                            Dirección de Entrega
+                                        </h3>
+                                        
+                                        <!-- Dirección completa -->
+                                        <div class="mb-4">
+                                            <label for="addressFull" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Dirección Completa *</label>
+                                            <IconField>
+                                                <InputIcon class="pi pi-home" />
+                                                <InputText 
+                                                    id="addressFull" 
+                                                    v-model="addressFull" 
+                                                    type="text" 
+                                                    placeholder="Ej: Av. Los Olivos 123, Mz A Lt 5" 
+                                                    class="w-full compact-input" 
+                                                    :class="addressFullError ? 'p-invalid' : ''" 
+                                                    @input="addressFullError = ''" 
+                                                />
+                                            </IconField>
+                                            <small v-if="addressFullError" class="p-error text-red-600 text-xs mt-1 block">{{ addressFullError }}</small>
+                                        </div>
+
+                                        <!-- Primera fila: Departamento y Provincia -->
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            <div>
+                                                <label for="department" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Departamento *</label>
+                                                <Select 
+                                                    id="department"
+                                                    v-model="selectedDepartment" 
+                                                    :options="departments" 
+                                                    optionLabel="label" 
+                                                    optionValue="value" 
+                                                    placeholder="Selecciona el departamento" 
+                                                    class="w-full compact-select" 
+                                                    :class="departmentError ? 'p-invalid' : ''"
+                                                    @change="onDepartmentChange"
+                                                />
+                                                <small v-if="departmentError" class="p-error text-red-600 text-xs mt-1 block">{{ departmentError }}</small>
+                                            </div>
+
+                                            <div>
+                                                <label for="province" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Provincia *</label>
+                                                <Select 
+                                                    id="province"
+                                                    v-model="selectedProvince" 
+                                                    :options="provinces" 
+                                                    optionLabel="label" 
+                                                    optionValue="value" 
+                                                    placeholder="Selecciona la provincia" 
+                                                    class="w-full compact-select" 
+                                                    :class="provinceError ? 'p-invalid' : ''"
+                                                    :disabled="!selectedDepartment || provinces.length === 0"
+                                                    @change="onProvinceChange"
+                                                />
+                                                <small v-if="provinceError" class="p-error text-red-600 text-xs mt-1 block">{{ provinceError }}</small>
+                                            </div>
+                                        </div>
+
+                                        <!-- Segunda fila: Distrito y Código Postal -->
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            <div>
+                                                <label for="district" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Distrito *</label>
+                                                <Select 
+                                                    id="district"
+                                                    v-model="selectedDistrict" 
+                                                    :options="districts" 
+                                                    optionLabel="label" 
+                                                    optionValue="value" 
+                                                    placeholder="Selecciona el distrito" 
+                                                    class="w-full compact-select" 
+                                                    :class="districtError ? 'p-invalid' : ''"
+                                                    :disabled="!selectedProvince || districts.length === 0"
+                                                    @change="onDistrictChange"
+                                                />
+                                                <small v-if="districtError" class="p-error text-red-600 text-xs mt-1 block">{{ districtError }}</small>
+                                            </div>
+
+                                            <div>
+                                                <label for="postalCode" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Código Postal</label>
+                                                <IconField>
+                                                    <InputIcon class="pi pi-hashtag" />
+                                                    <InputText 
+                                                        id="postalCode" 
+                                                        v-model="postalCode" 
+                                                        type="text" 
+                                                        placeholder="Ej: 15434" 
+                                                        class="w-full compact-input" 
+                                                        :class="postalCodeError ? 'p-invalid' : ''" 
+                                                        @input="postalCodeError = ''" 
+                                                    />
+                                                </IconField>
+                                                <small v-if="postalCodeError" class="p-error text-red-600 text-xs mt-1 block">{{ postalCodeError }}</small>
+                                            </div>
+                                        </div>
+
+                                        <!-- Referencia -->
+                                        <div>
+                                            <label for="reference" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Referencia</label>
+                                            <IconField>
+                                                <InputIcon class="pi pi-info-circle" />
+                                                <InputText 
+                                                    id="reference" 
+                                                    v-model="reference" 
+                                                    type="text" 
+                                                    placeholder="Ej: Frente al parque, casa verde" 
+                                                    class="w-full compact-input" 
+                                                    :class="referenceError ? 'p-invalid' : ''" 
+                                                    @input="referenceError = ''" 
+                                                />
+                                            </IconField>
+                                            <small v-if="referenceError" class="p-error text-red-600 text-xs mt-1 block">{{ referenceError }}</small>
                                         </div>
                                     </div>
 

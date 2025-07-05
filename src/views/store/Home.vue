@@ -270,28 +270,37 @@ const clearCart = () => {
 };
 
 const checkout = () => {
-    loading.value = true;
-
-    toast.add({
-        severity: 'success',
-        summary: 'Processing Order',
-        detail: `Processing ${cartItemsCount.value} items worth $${(cartTotal.value || 0).toFixed(2)}`,
-        life: 3000
-    });
-
-    // Simulate checkout process
-    setTimeout(() => {
-        cartItems.value = [];
-        cartVisible.value = false;
-        loading.value = false;
-
+    // Check if user is authenticated as client
+    if (!isClientAuthenticated.value) {
+        // Save cart to localStorage for persistence
+        localStorage.setItem('pendingCart', JSON.stringify(cartItems.value));
+        
         toast.add({
-            severity: 'success',
-            summary: 'Order Confirmed',
-            detail: 'Your order has been placed successfully!',
+            severity: 'info',
+            summary: 'Registro Requerido',
+            detail: 'Necesitas registrarte para continuar con la compra. Tu carrito se guardará.',
             life: 5000
         });
-    }, 2000);
+        
+        // Redirect to registration with a flag to indicate checkout flow
+        router.push('/auth/register?checkout=true');
+        return;
+    }
+
+    // User is authenticated, redirect to orders view
+    // Save current cart to localStorage (will be processed in orders view)
+    localStorage.setItem('checkoutCart', JSON.stringify(cartItems.value));
+    
+    toast.add({
+        severity: 'success',
+        summary: 'Procesando Orden',
+        detail: 'Redirigiendo al proceso de compra...',
+        life: 3000
+    });
+    
+    // Close cart and redirect to orders view
+    cartVisible.value = false;
+    router.push('/orders');
 };
 
 const navigateToLogin = () => {
@@ -324,6 +333,29 @@ const logout = async () => {
 };
 
 
+// Restore cart from localStorage
+const restoreCart = () => {
+    try {
+        // Check for pending cart (from registration flow)
+        const pendingCart = localStorage.getItem('pendingCart');
+        if (pendingCart) {
+            cartItems.value = JSON.parse(pendingCart);
+            localStorage.removeItem('pendingCart');
+            
+            if (cartItems.value.length > 0) {
+                toast.add({
+                    severity: 'success',
+                    summary: 'Carrito Restaurado',
+                    detail: `Se restauraron ${cartItems.value.length} productos en tu carrito`,
+                    life: 4000
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error restoring cart:', error);
+    }
+};
+
 // Lifecycle hooks
 onMounted(async () => {
     checkScreenSize();
@@ -332,6 +364,9 @@ onMounted(async () => {
     
     // Load products on component mount
     await loadProducts();
+    
+    // Restore cart if there's a pending one
+    restoreCart();
 });
 
 onBeforeUnmount(() => {
