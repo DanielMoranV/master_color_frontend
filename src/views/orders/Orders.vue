@@ -8,18 +8,34 @@
                         <i class="pi pi-shopping-cart"></i>
                     </div>
                     <div>
-                        <h1 class="main-title">�rdenes de Compra</h1>
+                        <h1 class="main-title">Órdenes de Compra</h1>
                         <p class="subtitle">Gestiona tus pedidos y completa tu compra</p>
                     </div>
                 </div>
-                <Button 
-                    v-if="!showOrderForm" 
-                    label="Volver a la Tienda" 
-                    icon="pi pi-arrow-left" 
-                    @click="goBackToStore" 
-                    class="back-button" 
-                    outlined 
-                />
+                <div class="header-actions">
+                    <Button 
+                        v-if="!showOrderForm && !showOrdersList" 
+                        label="Volver a la Tienda" 
+                        icon="pi pi-arrow-left" 
+                        @click="goBackToStore" 
+                        class="back-button" 
+                        outlined 
+                    />
+                    <Button 
+                        v-if="!showOrderForm && !showOrdersList"
+                        label="Ver Mis Órdenes" 
+                        icon="pi pi-list" 
+                        @click="viewMyOrders" 
+                        class="orders-button" 
+                    />
+                    <Button 
+                        v-if="showOrdersList"
+                        label="Nueva Orden" 
+                        icon="pi pi-plus" 
+                        @click="startNewOrder" 
+                        class="new-order-button" 
+                    />
+                </div>
             </div>
         </div>
 
@@ -30,14 +46,14 @@
                     <i class="pi pi-plus-circle"></i>
                     Nueva Orden de Compra
                 </h2>
-                <p class="form-subtitle">Revisa tu pedido y completa la informaci�n de entrega</p>
+                <p class="form-subtitle">Revisa tu pedido y completa la información de entrega</p>
             </div>
 
             <!-- Cart Summary -->
             <div class="cart-summary-section">
                 <h3 class="section-title">
                     <i class="pi pi-shopping-bag"></i>
-                    Resumen del Pedido
+                    Resumen del Pedido ({{ totalQuantity }} productos)
                 </h3>
                 
                 <div class="cart-items">
@@ -71,7 +87,7 @@
                 <!-- Order Totals -->
                 <div class="order-totals">
                     <div class="totals-row">
-                        <span class="totals-label">Subtotal ({{ totalQuantity }} productos):</span>
+                        <span class="totals-label">Subtotal:</span>
                         <span class="totals-value">S/ {{ (orderTotal || 0).toFixed(2) }}</span>
                     </div>
                     <div v-if="totalSavings > 0" class="totals-row savings">
@@ -79,7 +95,7 @@
                         <span class="totals-value">-S/ {{ (totalSavings || 0).toFixed(2) }}</span>
                     </div>
                     <div class="totals-row shipping">
-                        <span class="totals-label">Env�o:</span>
+                        <span class="totals-label">Envío:</span>
                         <span class="totals-value">{{ shippingCost > 0 ? `S/ ${shippingCost.toFixed(2)}` : 'Gratis' }}</span>
                     </div>
                     <div class="totals-row final">
@@ -92,59 +108,66 @@
             <!-- Order Form -->
             <form @submit.prevent="submitOrder" class="order-form">
                 <div class="form-sections">
-                    <!-- Customer Information -->
-                    <div class="form-section">
-                        <h3 class="section-title">
-                            <i class="pi pi-user"></i>
-                            Informaci�n del Cliente
-                        </h3>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">Nombre completo</label>
-                                <InputText 
-                                    v-model="orderForm.customerName" 
-                                    :value="currentUser?.name"
-                                    readonly 
-                                    class="readonly-input"
-                                />
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Email</label>
-                                <InputText 
-                                    v-model="orderForm.customerEmail" 
-                                    :value="currentUser?.email"
-                                    readonly 
-                                    class="readonly-input"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Delivery Information -->
+                    <!-- Delivery Address Selection -->
                     <div class="form-section">
                         <h3 class="section-title">
                             <i class="pi pi-map-marker"></i>
-                            Informaci�n de Entrega
+                            Dirección de Entrega
                         </h3>
-                        <div class="form-grid">
+                        
+                        <div v-if="addresses.length === 0" class="no-addresses">
+                            <p class="no-addresses-text">No tienes direcciones guardadas</p>
+                            <Button 
+                                label="Agregar Dirección" 
+                                icon="pi pi-plus" 
+                                @click="showNewAddressForm = true"
+                                class="add-address-button"
+                            />
+                        </div>
+                        
+                        <div v-else class="addresses-selection">
                             <div class="form-group">
-                                <label class="form-label required">Direcci�n de entrega</label>
-                                <Textarea 
-                                    v-model="orderForm.deliveryAddress" 
-                                    placeholder="Ingresa la direcci�n completa de entrega..."
-                                    rows="3"
-                                    :class="{ 'p-invalid': errors.deliveryAddress }"
-                                />
-                                <small v-if="errors.deliveryAddress" class="p-error">{{ errors.deliveryAddress }}</small>
+                                <label class="form-label required">Selecciona dirección de entrega</label>
+                                <div class="addresses-grid">
+                                    <div 
+                                        v-for="address in addresses" 
+                                        :key="address.id"
+                                        @click="selectedAddressId = address.id"
+                                        class="address-card"
+                                        :class="{ 'selected': selectedAddressId === address.id }"
+                                    >
+                                        <div class="address-header">
+                                            <div class="address-indicator">
+                                                <i class="pi pi-check" v-if="selectedAddressId === address.id"></i>
+                                                <i class="pi pi-circle" v-else></i>
+                                            </div>
+                                            <span v-if="address.is_main" class="main-badge">Principal</span>
+                                        </div>
+                                        <div class="address-content">
+                                            <p class="address-full">{{ address.address_full }}</p>
+                                            <p class="address-location">
+                                                {{ address.district }}, {{ address.province }}, {{ address.department }}
+                                            </p>
+                                            <p v-if="address.postal_code" class="address-postal">
+                                                CP: {{ address.postal_code }}
+                                            </p>
+                                            <p v-if="address.reference" class="address-reference">
+                                                Ref: {{ address.reference }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <small v-if="errors.address" class="p-error">{{ errors.address }}</small>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label required">Tel�fono de contacto</label>
-                                <InputText 
-                                    v-model="orderForm.phone" 
-                                    placeholder="Ej: +51 999 888 777"
-                                    :class="{ 'p-invalid': errors.phone }"
+                            
+                            <div class="address-actions">
+                                <Button 
+                                    label="Agregar Nueva Dirección" 
+                                    icon="pi pi-plus" 
+                                    @click="showNewAddressForm = true"
+                                    class="p-button-outlined"
+                                    type="button"
                                 />
-                                <small v-if="errors.phone" class="p-error">{{ errors.phone }}</small>
                             </div>
                         </div>
                     </div>
@@ -153,12 +176,12 @@
                     <div class="form-section">
                         <h3 class="section-title">
                             <i class="pi pi-comment"></i>
-                            Informaci�n Adicional
+                            Información Adicional
                         </h3>
                         <div class="form-group">
-                            <label class="form-label">Notas del pedido (opcional)</label>
+                            <label class="form-label">Observaciones del pedido (opcional)</label>
                             <Textarea 
-                                v-model="orderForm.notes" 
+                                v-model="orderForm.observations" 
                                 placeholder="Instrucciones especiales, preferencias de entrega, etc."
                                 rows="3"
                             />
@@ -178,34 +201,27 @@
                     />
                     <Button 
                         type="submit"
-                        label="Confirmar Pedido" 
-                        icon="pi pi-check" 
+                        label="Proceder al Pago" 
+                        icon="pi pi-credit-card" 
                         class="submit-button" 
-                        :loading="loading"
+                        :loading="loading || paymentLoading"
+                        :disabled="!selectedAddressId || orderItems.length === 0"
                     />
                 </div>
             </form>
         </div>
 
-        <!-- Orders List (when no order form is shown) -->
-        <div v-else class="content-card">
+        <!-- Orders List -->
+        <div v-else-if="showOrdersList" class="content-card">
             <div class="orders-header">
-                <h2 class="table-title">Mis �rdenes de Compra</h2>
-                <div class="header-actions">
-                    <Button 
-                        label="Nueva Orden" 
-                        icon="pi pi-plus" 
-                        @click="startNewOrder" 
-                        class="new-order-button"
-                    />
-                </div>
+                <h2 class="table-title">Mis Órdenes de Compra</h2>
             </div>
 
             <!-- Orders table or empty state -->
             <div v-if="orders.length === 0" class="empty-orders">
                 <i class="pi pi-shopping-cart empty-icon"></i>
-                <h3>No tienes �rdenes de compra</h3>
-                <p>Cuando realices tu primera compra, aparecer� aqu�</p>
+                <h3>No tienes órdenes de compra</h3>
+                <p>Cuando realices tu primera compra, aparecerá aquí</p>
                 <Button 
                     label="Ir a la Tienda" 
                     icon="pi pi-shopping-bag" 
@@ -214,17 +230,185 @@
                 />
             </div>
 
-            <!-- Future: Orders table would go here -->
+            <!-- Orders table -->
+            <div v-else class="orders-table">
+                <DataTable :value="orders" responsiveLayout="scroll" class="orders-datatable">
+                    <Column field="id" header="Orden #" style="min-width:100px">
+                        <template #body="slotProps">
+                            <strong>#{{ slotProps.data.id }}</strong>
+                        </template>
+                    </Column>
+                    
+                    <Column field="created_at" header="Fecha" style="min-width:150px">
+                        <template #body="slotProps">
+                            {{ formatDate(slotProps.data.created_at) }}
+                        </template>
+                    </Column>
+                    
+                    <Column field="status" header="Estado" style="min-width:120px">
+                        <template #body="slotProps">
+                            <Tag 
+                                :value="getOrderStatusLabel(slotProps.data.status)" 
+                                :severity="getOrderStatusSeverity(slotProps.data.status)"
+                            />
+                        </template>
+                    </Column>
+                    
+                    <Column field="total" header="Total" style="min-width:100px">
+                        <template #body="slotProps">
+                            <strong>S/ {{ (slotProps.data.total || 0).toFixed(2) }}</strong>
+                        </template>
+                    </Column>
+                    
+                    <Column header="Acciones" style="min-width:150px">
+                        <template #body="slotProps">
+                            <div class="order-actions">
+                                <Button 
+                                    v-if="slotProps.data.status === 'pendiente_pago' || slotProps.data.status === 'pago_fallido'"
+                                    icon="pi pi-credit-card" 
+                                    class="p-button-rounded p-button-sm"
+                                    @click="retryPayment(slotProps.data.id)"
+                                    v-tooltip="'Pagar'"
+                                />
+                                <Button 
+                                    icon="pi pi-eye" 
+                                    class="p-button-rounded p-button-outlined p-button-sm"
+                                    @click="viewOrderDetails(slotProps.data)"
+                                    v-tooltip="'Ver detalles'"
+                                />
+                            </div>
+                        </template>
+                    </Column>
+                </DataTable>
+            </div>
         </div>
+
+        <!-- Welcome screen when no action is selected -->
+        <div v-else class="content-card welcome-screen">
+            <div class="welcome-content">
+                <i class="pi pi-shopping-cart welcome-icon"></i>
+                <h2>¡Bienvenido a tus Órdenes!</h2>
+                <p>Aquí puedes gestionar tus pedidos y realizar nuevas compras</p>
+                
+                <div class="welcome-actions">
+                    <Button 
+                        v-if="orderItems.length > 0"
+                        label="Procesar Carrito" 
+                        icon="pi pi-shopping-cart" 
+                        @click="startNewOrder"
+                        class="primary-action"
+                    />
+                    <Button 
+                        label="Ver Mis Órdenes" 
+                        icon="pi pi-list" 
+                        @click="viewMyOrders"
+                        class="secondary-action"
+                        outlined
+                    />
+                </div>
+            </div>
+        </div>
+
+        <!-- New Address Dialog -->
+        <Dialog 
+            v-model:visible="showNewAddressForm" 
+            modal 
+            header="Agregar Nueva Dirección" 
+            :style="{ width: '90vw', maxWidth: '600px' }"
+        >
+            <form @submit.prevent="addNewAddress" class="new-address-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label required">Dirección completa</label>
+                        <InputText 
+                            v-model="newAddressForm.address_full" 
+                            placeholder="Ej: Av. Los Olivos 123, Mz A Lt 5"
+                            required
+                        />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label required">Distrito</label>
+                        <InputText 
+                            v-model="newAddressForm.district" 
+                            placeholder="Ej: San Juan de Lurigancho"
+                            required
+                        />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label required">Provincia</label>
+                        <InputText 
+                            v-model="newAddressForm.province" 
+                            placeholder="Ej: Lima"
+                            required
+                        />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label required">Departamento</label>
+                        <InputText 
+                            v-model="newAddressForm.department" 
+                            placeholder="Ej: Lima"
+                            required
+                        />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Código postal</label>
+                        <InputText 
+                            v-model="newAddressForm.postal_code" 
+                            placeholder="Ej: 15434"
+                        />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Referencia</label>
+                        <InputText 
+                            v-model="newAddressForm.reference" 
+                            placeholder="Ej: Frente al parque, casa verde"
+                        />
+                    </div>
+                </div>
+                
+                <div class="form-group checkbox-group">
+                    <Checkbox 
+                        v-model="newAddressForm.is_main" 
+                        :binary="true" 
+                        id="isMain"
+                    />
+                    <label for="isMain" class="checkbox-label">
+                        Establecer como dirección principal
+                    </label>
+                </div>
+                
+                <div class="dialog-actions">
+                    <Button 
+                        type="button"
+                        label="Cancelar" 
+                        icon="pi pi-times" 
+                        @click="showNewAddressForm = false"
+                        class="p-button-outlined" 
+                    />
+                    <Button 
+                        type="submit"
+                        label="Agregar Dirección" 
+                        icon="pi pi-check" 
+                        :loading="loading"
+                    />
+                </div>
+            </form>
+        </Dialog>
 
         <Toast position="top-right" />
     </div>
 </template>
 
 <script setup>
+import { ordersApi, addressesApi } from '@/api/index';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from 'primevue/usetoast';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, onBeforeUnmount, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -233,19 +417,36 @@ const authStore = useAuthStore();
 
 // State
 const loading = ref(false);
+const paymentLoading = ref(false);
 const showOrderForm = ref(false);
+const showOrdersList = ref(false);
 const orderItems = ref([]);
-const orders = ref([]); // Future: load from API
+const orders = ref([]);
+const addresses = ref([]);
 const errors = reactive({});
+const selectedAddressId = ref(null);
+const showNewAddressForm = ref(false);
 
 // Order form data
 const orderForm = reactive({
-    customerName: '',
-    customerEmail: '',
-    deliveryAddress: '',
-    phone: '',
-    notes: ''
+    selectedAddressId: null,
+    observations: ''
 });
+
+// New address form
+const newAddressForm = reactive({
+    address_full: '',
+    district: '',
+    province: '',
+    department: '',
+    postal_code: '',
+    reference: '',
+    is_main: false
+});
+
+// Payment tracking
+const paymentStatus = ref(null);
+const paymentPollingInterval = ref(null);
 
 // Computed properties
 const currentUser = computed(() => authStore.currentUser);
@@ -278,35 +479,19 @@ const finalTotal = computed(() => {
     return orderTotal.value + shippingCost.value;
 });
 
+const getSelectedAddress = computed(() => {
+    return addresses.value.find(addr => addr.id === selectedAddressId.value);
+});
+
 // Methods
 const loadCheckoutCart = () => {
     try {
         const checkoutCart = localStorage.getItem('checkoutCart');
         if (checkoutCart) {
             orderItems.value = JSON.parse(checkoutCart);
-            localStorage.removeItem('checkoutCart');
             
             if (orderItems.value.length > 0) {
                 showOrderForm.value = true;
-                
-                // Initialize form with user data
-                orderForm.customerName = currentUser.value?.name || '';
-                orderForm.customerEmail = currentUser.value?.email || '';
-                
-                // Initialize with main address if available
-                if (currentUser.value?.main_address) {
-                    const mainAddress = currentUser.value.main_address;
-                    orderForm.deliveryAddress = [
-                        mainAddress.address_full,
-                        mainAddress.district,
-                        mainAddress.province,
-                        mainAddress.department,
-                        mainAddress.reference ? `Ref: ${mainAddress.reference}` : ''
-                    ].filter(Boolean).join(', ');
-                    
-                    // You could also pre-fill phone if it's available in user profile
-                    orderForm.phone = currentUser.value?.phone || '';
-                }
                 
                 toast.add({
                     severity: 'success',
@@ -333,96 +518,149 @@ const validateForm = () => {
     
     let isValid = true;
     
-    if (!orderForm.deliveryAddress?.trim()) {
-        errors.deliveryAddress = 'La direcci�n de entrega es requerida';
+    if (!selectedAddressId.value) {
+        errors.address = 'Debes seleccionar una dirección de entrega';
         isValid = false;
+        
+        toast.add({
+            severity: 'warn',
+            summary: 'Dirección Requerida',
+            detail: 'Por favor selecciona una dirección de entrega',
+            life: 4000
+        });
     }
     
-    if (!orderForm.phone?.trim()) {
-        errors.phone = 'El tel�fono de contacto es requerido';
+    if (orderItems.value.length === 0) {
+        errors.items = 'No hay productos en el carrito';
         isValid = false;
-    } else if (!/^[+]?[\d\s\-()]{9,}$/.test(orderForm.phone.trim())) {
-        errors.phone = 'Ingresa un n�mero de tel�fono v�lido';
-        isValid = false;
+        
+        toast.add({
+            severity: 'warn',
+            summary: 'Carrito Vacío',
+            detail: 'Agrega productos al carrito antes de crear la orden',
+            life: 4000
+        });
     }
     
     return isValid;
 };
 
+// Submit order - Step 1: Create Order
 const submitOrder = async () => {
     if (!validateForm()) {
-        toast.add({
-            severity: 'warn',
-            summary: 'Formulario Incompleto',
-            detail: 'Por favor completa todos los campos requeridos',
-            life: 4000
-        });
         return;
     }
     
     loading.value = true;
     
     try {
-        // Simulate API call to create order
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Create order object
-        const order = {
-            id: Date.now(), // Temporary ID
-            items: [...orderItems.value],
-            customer: {
-                name: orderForm.customerName,
-                email: orderForm.customerEmail
-            },
-            delivery: {
-                address: orderForm.deliveryAddress,
-                phone: orderForm.phone
-            },
-            notes: orderForm.notes,
-            totals: {
-                subtotal: orderTotal.value,
-                shipping: shippingCost.value,
-                savings: totalSavings.value,
-                total: finalTotal.value
-            },
-            status: 'pending',
-            createdAt: new Date().toISOString()
+        // Prepare order payload
+        const orderPayload = {
+            delivery_address_id: selectedAddressId.value,
+            products: orderItems.value.map(item => ({
+                product_id: item.id,
+                quantity: item.quantity
+            })),
+            observations: orderForm.observations || null
         };
         
-        // Future: Send to API
-        console.log('Order created:', order);
+        // Create order
+        const response = await ordersApi.createOrder(orderPayload);
         
-        toast.add({
-            severity: 'success',
-            summary: 'Orden Creada',
-            detail: `Tu orden ha sido creada exitosamente. Total: S/ ${finalTotal.value.toFixed(2)}`,
-            life: 6000
-        });
-        
-        // Reset form
-        resetForm();
+        if (response.data && response.data.success) {
+            const createdOrder = response.data.data;
+            
+            toast.add({
+                severity: 'success',
+                summary: 'Orden Creada',
+                detail: `Orden #${createdOrder.id} creada exitosamente`,
+                life: 4000
+            });
+            
+            // Proceed to payment
+            await generatePaymentLink(createdOrder.id);
+            
+        } else {
+            throw new Error(response.data?.message || 'Error al crear la orden');
+        }
         
     } catch (error) {
         console.error('Error creating order:', error);
+        
+        const errorMessage = error.response?.data?.message || error.message || 'Error al crear la orden';
+        
         toast.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'No se pudo crear la orden. Int�ntalo nuevamente.',
+            detail: errorMessage,
+            life: 5000
+        });
+        
+        // Handle validation errors
+        if (error.response?.data?.errors) {
+            const validationErrors = error.response.data.errors;
+            Object.keys(validationErrors).forEach(field => {
+                errors[field] = validationErrors[field][0];
+            });
+        }
+    } finally {
+        loading.value = false;
+    }
+};
+
+// Step 2: Generate Payment Link
+const generatePaymentLink = async (orderId) => {
+    paymentLoading.value = true;
+    
+    try {
+        const response = await ordersApi.generatePaymentLink(orderId);
+        
+        if (response.data && response.data.success) {
+            const paymentData = response.data.data;
+            
+            toast.add({
+                severity: 'info',
+                summary: 'Redirigiendo a Pago',
+                detail: 'Serás redirigido a MercadoPago para completar el pago',
+                life: 3000
+            });
+            
+            // Clear cart items as they're now in an order
+            localStorage.removeItem('checkoutCart');
+            
+            // Redirect to MercadoPago
+            // Use sandbox for development, production for live
+            const paymentUrl = paymentData.sandbox_init_point || paymentData.init_point;
+            
+            // Store order ID for status checking when user returns
+            localStorage.setItem('currentOrderId', orderId);
+            
+            // Redirect to payment
+            window.location.href = paymentUrl;
+            
+        } else {
+            throw new Error(response.data?.message || 'Error al generar el link de pago');
+        }
+        
+    } catch (error) {
+        console.error('Error generating payment link:', error);
+        
+        toast.add({
+            severity: 'error',
+            summary: 'Error en Pago',
+            detail: error.response?.data?.message || 'No se pudo generar el link de pago',
             life: 5000
         });
     } finally {
-        loading.value = false;
+        paymentLoading.value = false;
     }
 };
 
 const resetForm = () => {
     showOrderForm.value = false;
     orderItems.value = [];
-    Object.keys(orderForm).forEach(key => {
-        if (key !== 'customerName' && key !== 'customerEmail') {
-            orderForm[key] = '';
-        }
-    });
+    selectedAddressId.value = null;
+    orderForm.observations = '';
     Object.keys(errors).forEach(key => delete errors[key]);
 };
 
@@ -450,22 +688,290 @@ const startNewOrder = () => {
     if (orderItems.value.length === 0) {
         toast.add({
             severity: 'info',
-            summary: 'Carrito Vac�o',
-            detail: 'A�ade productos a tu carrito desde la tienda',
+            summary: 'Carrito Vacío',
+            detail: 'Añade productos a tu carrito desde la tienda',
             life: 4000
         });
         router.push('/');
+    } else {
+        showOrdersList.value = false;
     }
+};
+
+const viewMyOrders = () => {
+    showOrderForm.value = false;
+    showOrdersList.value = true;
+    loadOrders();
+};
+
+const viewOrderDetails = (order) => {
+    // Future: Implement order details modal or page
+    console.log('View order details:', order);
+    toast.add({
+        severity: 'info',
+        summary: 'Próximamente',
+        detail: 'La vista de detalles estará disponible pronto',
+        life: 3000
+    });
 };
 
 const goBackToStore = () => {
     router.push('/');
 };
 
+const getOrderStatusSeverity = (status) => {
+    const statusMap = {
+        'pendiente_pago': 'warning',
+        'pendiente': 'info', 
+        'confirmado': 'info',
+        'procesando': 'info',
+        'enviado': 'success',
+        'entregado': 'success',
+        'pago_fallido': 'danger',
+        'cancelado': 'secondary'
+    };
+    return statusMap[status] || 'secondary';
+};
+
+const getOrderStatusLabel = (status) => {
+    const statusMap = {
+        'pendiente_pago': 'Pendiente de Pago',
+        'pendiente': 'Pendiente',
+        'confirmado': 'Confirmado',
+        'procesando': 'En Proceso',
+        'enviado': 'Enviado',
+        'entregado': 'Entregado',
+        'pago_fallido': 'Pago Fallido',
+        'cancelado': 'Cancelado'
+    };
+    return statusMap[status] || status;
+};
+
+const retryPayment = async (orderId) => {
+    try {
+        await generatePaymentLink(orderId);
+    } catch (error) {
+        console.error('Error retrying payment:', error);
+    }
+};
+
+const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('es-PE', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+};
+
+// Load addresses
+const loadAddresses = async () => {
+    try {
+        const response = await addressesApi.getMyAddresses();
+        
+        if (response.data && response.data.success) {
+            addresses.value = response.data.data || [];
+            
+            // Auto-select main address if available
+            const mainAddress = addresses.value.find(addr => addr.is_main);
+            if (mainAddress && !selectedAddressId.value) {
+                selectedAddressId.value = mainAddress.id;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading addresses:', error);
+        
+        toast.add({
+            severity: 'warn',
+            summary: 'Direcciones',
+            detail: 'No se pudieron cargar las direcciones. Puedes agregar una nueva.',
+            life: 4000
+        });
+    }
+};
+
+// Load orders
+const loadOrders = async () => {
+    try {
+        const response = await ordersApi.getMyOrders();
+        
+        if (response.data && response.data.success) {
+            orders.value = response.data.data || [];
+        }
+    } catch (error) {
+        console.error('Error loading orders:', error);
+    }
+};
+
+// Check payment status on return
+const checkPaymentStatus = async () => {
+    const orderId = localStorage.getItem('currentOrderId');
+    if (!orderId) return;
+    
+    try {
+        const response = await ordersApi.getPaymentStatus(orderId);
+        
+        if (response.data && response.data.success) {
+            const status = response.data.data;
+            
+            if (status.payment_status === 'approved') {
+                toast.add({
+                    severity: 'success',
+                    summary: 'Pago Exitoso',
+                    detail: `Tu pago ha sido confirmado. Orden #${orderId}`,
+                    life: 6000
+                });
+                
+                // Clear stored order ID
+                localStorage.removeItem('currentOrderId');
+                
+                // Reload orders to show updated status
+                await loadOrders();
+                showOrdersList.value = true;
+                
+            } else if (status.payment_status === 'rejected' || status.payment_status === 'cancelled') {
+                toast.add({
+                    severity: 'error',
+                    summary: 'Pago Fallido',
+                    detail: 'El pago no pudo ser procesado. Puedes intentar nuevamente.',
+                    life: 6000
+                });
+                
+                localStorage.removeItem('currentOrderId');
+                
+            } else if (status.payment_status === 'pending') {
+                toast.add({
+                    severity: 'info',
+                    summary: 'Pago Pendiente',
+                    detail: 'Tu pago está siendo procesado. Te notificaremos cuando sea confirmado.',
+                    life: 6000
+                });
+                
+                // Start polling for status updates
+                startPaymentPolling(orderId);
+            }
+        }
+    } catch (error) {
+        console.error('Error checking payment status:', error);
+        localStorage.removeItem('currentOrderId');
+    }
+};
+
+// Poll payment status for pending payments
+const startPaymentPolling = (orderId) => {
+    if (paymentPollingInterval.value) {
+        clearInterval(paymentPollingInterval.value);
+    }
+    
+    paymentPollingInterval.value = setInterval(async () => {
+        try {
+            const response = await ordersApi.getPaymentStatus(orderId);
+            
+            if (response.data && response.data.success) {
+                const status = response.data.data;
+                
+                if (status.payment_status === 'approved') {
+                    clearInterval(paymentPollingInterval.value);
+                    localStorage.removeItem('currentOrderId');
+                    
+                    toast.add({
+                        severity: 'success',
+                        summary: 'Pago Confirmado',
+                        detail: 'Tu pago ha sido confirmado exitosamente',
+                        life: 6000
+                    });
+                    
+                    await loadOrders();
+                    
+                } else if (status.payment_status === 'rejected' || status.payment_status === 'cancelled') {
+                    clearInterval(paymentPollingInterval.value);
+                    localStorage.removeItem('currentOrderId');
+                    
+                    toast.add({
+                        severity: 'error',
+                        summary: 'Pago Rechazado',
+                        detail: 'El pago ha sido rechazado',
+                        life: 6000
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error polling payment status:', error);
+        }
+    }, 10000); // Check every 10 seconds
+};
+
+// Stop polling when component unmounts
+const stopPaymentPolling = () => {
+    if (paymentPollingInterval.value) {
+        clearInterval(paymentPollingInterval.value);
+        paymentPollingInterval.value = null;
+    }
+};
+
+// Add new address
+const addNewAddress = async () => {
+    try {
+        const response = await addressesApi.createAddress(newAddressForm);
+        
+        if (response.data && response.data.success) {
+            toast.add({
+                severity: 'success',
+                summary: 'Dirección Agregada',
+                detail: 'Nueva dirección creada exitosamente',
+                life: 4000
+            });
+            
+            // Reload addresses
+            await loadAddresses();
+            
+            // Reset form and close modal
+            Object.keys(newAddressForm).forEach(key => {
+                if (typeof newAddressForm[key] === 'boolean') {
+                    newAddressForm[key] = false;
+                } else {
+                    newAddressForm[key] = '';
+                }
+            });
+            
+            showNewAddressForm.value = false;
+            
+            // Auto-select the new address if it's set as main
+            if (response.data.data.is_main) {
+                selectedAddressId.value = response.data.data.id;
+            }
+        }
+    } catch (error) {
+        console.error('Error adding address:', error);
+        
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: error.response?.data?.message || 'No se pudo agregar la dirección',
+            life: 5000
+        });
+    }
+};
+
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
     // Check if coming from checkout
     loadCheckoutCart();
+    
+    // Load user addresses
+    await loadAddresses();
+    
+    // Check payment status if returning from payment
+    await checkPaymentStatus();
+    
+    // Load existing orders
+    await loadOrders();
+});
+
+// Cleanup
+onBeforeUnmount(() => {
+    stopPaymentPolling();
 });
 </script>
 
@@ -527,7 +1033,15 @@ onMounted(() => {
     margin: 0.5rem 0 0 0;
 }
 
-.back-button {
+.header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.back-button,
+.orders-button,
+.new-order-button {
     background: transparent;
     color: #64748b;
     border: 2px solid #e2e8f0;
@@ -537,7 +1051,9 @@ onMounted(() => {
     transition: all 0.3s ease;
 }
 
-.back-button:hover {
+.back-button:hover,
+.orders-button:hover,
+.new-order-button:hover {
     background: #f8fafc;
     border-color: #cbd5e1;
     color: #475569;
@@ -777,16 +1293,11 @@ onMounted(() => {
     border: 1px solid #e2e8f0;
 }
 
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1rem;
-}
-
 .form-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    margin-bottom: 1rem;
 }
 
 .form-label {
@@ -800,10 +1311,97 @@ onMounted(() => {
     color: #ef4444;
 }
 
-.readonly-input {
-    background: #f9fafb !important;
-    color: #6b7280 !important;
-    cursor: not-allowed;
+/* Address Selection */
+.no-addresses {
+    text-align: center;
+    padding: 2rem;
+    color: #64748b;
+}
+
+.no-addresses-text {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.add-address-button {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: 12px;
+}
+
+.addresses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.address-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.address-card:hover {
+    border-color: #10b981;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.address-card.selected {
+    border-color: #10b981;
+    background: #ecfdf5;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.address-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.address-indicator {
+    color: #10b981;
+    font-size: 1.2rem;
+}
+
+.main-badge {
+    background: #10b981;
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.address-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.address-full {
+    font-weight: 600;
+    color: #374151;
+    margin: 0;
+}
+
+.address-location,
+.address-postal,
+.address-reference {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.address-actions {
+    margin-top: 1rem;
 }
 
 /* Form Actions */
@@ -844,6 +1442,12 @@ onMounted(() => {
     box-shadow: 0 12px 24px rgba(16, 185, 129, 0.4);
 }
 
+.submit-button:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
 /* Orders List */
 .orders-header {
     display: flex;
@@ -859,20 +1463,6 @@ onMounted(() => {
     font-weight: 600;
     color: #2c3e50;
     margin: 0;
-}
-
-.new-order-button {
-    background: linear-gradient(135deg, #10b981, #059669);
-    border: none;
-    color: white;
-    padding: 0.75rem 1.5rem;
-    font-weight: 600;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.new-order-button:hover {
-    background: linear-gradient(135deg, #059669, #047857);
 }
 
 /* Empty State */
@@ -913,6 +1503,108 @@ onMounted(() => {
     background: linear-gradient(135deg, #5a67d8, #667eea);
 }
 
+/* Orders Table */
+.orders-table {
+    margin-top: 1rem;
+}
+
+.order-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+/* Welcome Screen */
+.welcome-screen {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.welcome-content {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.welcome-icon {
+    font-size: 4rem;
+    color: #10b981;
+    margin-bottom: 2rem;
+}
+
+.welcome-content h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 1rem 0;
+}
+
+.welcome-content p {
+    color: #64748b;
+    font-size: 1.1rem;
+    margin: 0 0 2rem 0;
+}
+
+.welcome-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.primary-action {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    color: white;
+    padding: 1rem 2rem;
+    font-weight: 600;
+    border-radius: 12px;
+    font-size: 1rem;
+}
+
+.secondary-action {
+    background: transparent;
+    color: #10b981;
+    border: 2px solid #10b981;
+    padding: 1rem 2rem;
+    font-weight: 600;
+    border-radius: 12px;
+    font-size: 1rem;
+}
+
+/* New Address Form */
+.new-address-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.checkbox-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.checkbox-label {
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #374151;
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .header-content {
@@ -939,11 +1631,13 @@ onMounted(() => {
         text-align: center;
     }
 
-    .form-grid {
+    .addresses-grid {
         grid-template-columns: 1fr;
     }
 
-    .form-actions {
+    .form-actions,
+    .welcome-actions,
+    .dialog-actions {
         flex-direction: column;
     }
 
@@ -951,6 +1645,11 @@ onMounted(() => {
         flex-direction: column;
         gap: 1rem;
         align-items: stretch;
+    }
+
+    .header-actions {
+        flex-direction: column;
+        gap: 0.5rem;
     }
 }
 </style>

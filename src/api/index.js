@@ -89,3 +89,42 @@ export const stockMovementsApi = {
     deleteStockMovement: (id) => axios.delete(`/stock-movements/${id}`),
     cancelStockMovement: (id) => axios.patch(`/stock-movements/${id}/cancel`)
 };
+
+// Funciones para órdenes de clientes
+export const ordersApi = {
+    // Crear orden desde carrito
+    createOrder: (payload) => axios.post('/client/orders', payload),
+    
+    // Obtener órdenes del cliente autenticado
+    getMyOrders: () => axios.get('/client/orders'),
+    
+    // Obtener orden específica del cliente
+    getOrderById: (id) => axios.get(`/client/orders/${id}`),
+    
+    // Generar link de pago para una orden
+    generatePaymentLink: (orderId) => axios.post(`/client/orders/${orderId}/payment`),
+    
+    // Consultar estado de pago
+    getPaymentStatus: (orderId) => axios.get(`/payment-status/${orderId}`),
+    
+    // Cancelar orden (solo si está en pendiente_pago)
+    cancelOrder: (orderId) => axios.patch(`/client/orders/${orderId}/cancel`)
+};
+
+// Funciones para direcciones de entrega del cliente
+export const addressesApi = {
+    // Obtener direcciones del cliente autenticado
+    getMyAddresses: () => axios.get('/client/addresses'),
+    
+    // Crear nueva dirección
+    createAddress: (payload) => axios.post('/client/addresses', payload),
+    
+    // Actualizar dirección
+    updateAddress: (id, payload) => axios.put(`/client/addresses/${id}`, payload),
+    
+    // Eliminar dirección
+    deleteAddress: (id) => axios.delete(`/client/addresses/${id}`),
+    
+    // Marcar dirección como principal
+    setMainAddress: (id) => axios.patch(`/client/addresses/${id}/set-main`)
+};
