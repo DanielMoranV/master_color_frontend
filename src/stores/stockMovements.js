@@ -150,6 +150,42 @@ export const useStockMovementsStore = defineStore('stockMovementsStore', {
             }
         },
 
+        async cancelStockMovement(id) {
+            this.loading = true;
+            this.error = null;
+            this.validationErrors = [];
+            try {
+                const response = await stockMovementsApi.cancelStockMovement(id);
+                const processed = handleProcessSuccess(response, this);
+
+                // El backend devuelve tanto el movimiento original cancelado como el nuevo movimiento de anulación
+                const result = processed.data;
+                
+                // Actualizar el movimiento original en la lista (marcado como cancelado)
+                const originalIndex = this.stockMovementsList.findIndex((movement) => movement.id == id);
+                if (originalIndex !== -1 && result.original_movement) {
+                    this.stockMovementsList[originalIndex] = result.original_movement;
+                }
+
+                // Agregar el nuevo movimiento de anulación al inicio de la lista
+                if (result.cancellation_movement) {
+                    this.stockMovementsList.unshift(result.cancellation_movement);
+                }
+
+                cache.setItem('stockMovementsList', this.stockMovementsList);
+                this.success = true;
+                this.message = result.message || 'Movimiento cancelado exitosamente';
+
+                return result;
+            } catch (error) {
+                this.error = error;
+                handleProcessError(error, this);
+                throw error;
+            } finally {
+                this.loading = false;
+            }
+        },
+
         resetState() {
             this.error = null;
             this.success = false;

@@ -275,7 +275,7 @@ const checkout = () => {
     toast.add({
         severity: 'success',
         summary: 'Processing Order',
-        detail: `Processing ${cartItemsCount.value} items worth $${cartTotal.value.toFixed(2)}`,
+        detail: `Processing ${cartItemsCount.value} items worth $${(cartTotal.value || 0).toFixed(2)}`,
         life: 3000
     });
 
@@ -482,7 +482,7 @@ onBeforeUnmount(() => {
                         <div v-for="product in filteredProducts" :key="product.id" class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group">
                             <!-- Product image -->
                             <div class="relative overflow-hidden">
-                                <img :src="product.image" :alt="product.name" class="w-full h-36 sm:h-40 md:h-48 object-cover group-hover:scale-105 transition-transform duration-300" />
+                                <img :src="product.image" :alt="product.name" class="w-full h-36 sm:h-40 md:h-48 object-contain bg-gray-50 group-hover:scale-105 transition-transform duration-300" />
 
                                 <!-- Discount badge -->
                                 <div v-if="product.originalPrice > product.price" class="absolute top-2 left-2">
@@ -505,7 +505,7 @@ onBeforeUnmount(() => {
                                     {{ product.name }}
                                 </h3>
 
-                                <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+                                <p class="text-sm text-gray-600 mb-3 line-clamp-2" v-tooltip.top="product.description && product.description.length > 100 ? product.description : null">
                                     {{ product.description }}
                                 </p>
 
@@ -528,8 +528,8 @@ onBeforeUnmount(() => {
                                 <!-- Price -->
                                 <div class="flex items-center justify-between mb-3 sm:mb-4">
                                     <div class="flex items-center space-x-2">
-                                        <span class="text-xl font-bold text-blue-600"> S/ {{ product.price.toFixed(2) }} </span>
-                                        <span v-if="product.originalPrice > product.price" class="text-sm text-gray-400 line-through"> S/ {{ product.originalPrice.toFixed(2) }} </span>
+                                        <span class="text-xl font-bold text-blue-600"> S/ {{ (product.price || 0).toFixed(2) }} </span>
+                                        <span v-if="product.originalPrice && product.price && product.originalPrice > product.price" class="text-sm text-gray-400 line-through"> S/ {{ (product.originalPrice || 0).toFixed(2) }} </span>
                                     </div>
                                 </div>
 
@@ -562,15 +562,15 @@ onBeforeUnmount(() => {
                 <div class="max-h-[60vh] sm:max-h-96 overflow-y-auto mb-4">
                     <div v-for="(item, index) in cartItems" :key="index" class="flex flex-wrap sm:flex-nowrap items-center p-3 sm:p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors gap-2">
                         <!-- Product image -->
-                        <img :src="item.image" :alt="item.name" class="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg flex-shrink-0" />
+                        <img :src="item.image" :alt="item.name" class="w-12 h-12 sm:w-16 sm:h-16 object-contain bg-gray-50 rounded-lg flex-shrink-0" />
 
                         <!-- Product info -->
                         <div class="flex-1 ml-0 sm:ml-4 w-[calc(100%-3.5rem)] sm:w-auto">
                             <h4 class="font-semibold text-gray-800 text-sm sm:text-base line-clamp-1 sm:line-clamp-none">{{ item.name }}</h4>
                             <p class="text-sm text-gray-500">{{ item.category }}</p>
                             <div class="flex items-center space-x-2 mt-1">
-                                <span class="text-sm font-medium text-blue-600">S/ {{ item.price.toFixed(2) }}</span>
-                                <span v-if="item.originalPrice > item.price" class="text-xs text-gray-400 line-through"> S/ {{ item.originalPrice.toFixed(2) }} </span>
+                                <span class="text-sm font-medium text-blue-600">S/ {{ (item.price || 0).toFixed(2) }}</span>
+                                <span v-if="item.originalPrice && item.price && item.originalPrice > item.price" class="text-xs text-gray-400 line-through"> S/ {{ (item.originalPrice || 0).toFixed(2) }} </span>
                             </div>
                         </div>
 
@@ -583,7 +583,7 @@ onBeforeUnmount(() => {
 
                         <!-- Item total and remove -->
                         <div class="flex flex-col items-end ml-auto sm:ml-4 order-2 sm:order-none">
-                            <span class="font-bold text-gray-800">S/ {{ (item.price * item.quantity).toFixed(2) }}</span>
+                            <span class="font-bold text-gray-800">S/ {{ ((item.price || 0) * (item.quantity || 0)).toFixed(2) }}</span>
                             <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text p-button-sm mt-1" @click="removeFromCart(index)" />
                         </div>
                     </div>
@@ -593,18 +593,18 @@ onBeforeUnmount(() => {
                 <div class="bg-gray-50 rounded-lg p-4 space-y-3">
                     <div class="flex justify-between items-center">
                         <span class="text-gray-600">Artículos ({{ cartItemsCount }}):</span>
-                        <span class="font-medium">S/ {{ cartTotal.toFixed(2) }}</span>
+                        <span class="font-medium">S/ {{ (cartTotal || 0).toFixed(2) }}</span>
                     </div>
 
                     <div v-if="totalSavings > 0" class="flex justify-between items-center text-green-600">
                         <span>Ahorras:</span>
-                        <span class="font-medium">-S/ {{ totalSavings.toFixed(2) }}</span>
+                        <span class="font-medium">-S/ {{ (totalSavings || 0).toFixed(2) }}</span>
                     </div>
 
                     <div class="border-t border-gray-200 pt-3">
                         <div class="flex justify-between items-center">
                             <span class="text-lg font-semibold text-gray-800">Total:</span>
-                            <span class="text-xl font-bold text-blue-600">S/ {{ cartTotal.toFixed(2) }}</span>
+                            <span class="text-xl font-bold text-blue-600">S/ {{ (cartTotal || 0).toFixed(2) }}</span>
                         </div>
                     </div>
                 </div>

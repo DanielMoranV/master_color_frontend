@@ -40,12 +40,21 @@
 
             <Column field="movement_type" header="Tipo" sortable class="type-column">
                 <template #body="{ data }">
-                    <Tag 
-                        :value="getMovementTypeLabel(data.movement_type)" 
-                        :severity="getMovementTypeSeverity(data.movement_type)"
-                        :icon="getMovementTypeIcon(data.movement_type)"
-                        class="movement-type-tag"
-                    />
+                    <div class="type-cell">
+                        <Tag 
+                            :value="getMovementTypeLabel(data.movement_type)" 
+                            :severity="getMovementTypeSeverity(data.movement_type)"
+                            :icon="getMovementTypeIcon(data.movement_type)"
+                            class="movement-type-tag"
+                        />
+                        <Tag 
+                            v-if="isCancellationMovement(data)"
+                            value="CANCELADO" 
+                            severity="warning"
+                            icon="pi pi-times-circle"
+                            class="cancellation-tag"
+                        />
+                    </div>
                 </template>
             </Column>
 
@@ -122,10 +131,11 @@
                             rounded
                         />
                         <Button
-                            icon="pi pi-trash"
-                            @click="$emit('delete', data)"
-                            class="action-button delete-button"
-                            v-tooltip.top="'Eliminar'"
+                            v-if="canBeCancelled(data)"
+                            icon="pi pi-times-circle"
+                            @click="$emit('correct', data)"
+                            class="action-button cancel-button"
+                            v-tooltip.top="'Cancelar movimiento'"
                             text
                             rounded
                         />
@@ -150,7 +160,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['view', 'edit', 'delete']);
+const emit = defineEmits(['view', 'edit', 'correct']);
 
 // Movement type configuration
 const movementTypeConfig = {
@@ -224,6 +234,40 @@ const formatTime = (dateString) => {
         hour: '2-digit',
         minute: '2-digit'
     });
+};
+
+const isCancellationMovement = (movement) => {
+    // Verificar por el campo canceled_at (forma principal)
+    if (movement.canceled_at) {
+        return true;
+    }
+    
+    // Verificar por convención de nombres (fallback)
+    return movement.reason?.includes('CANCELACIÓN') || 
+           movement.voucher_number?.startsWith('CANCEL-') ||
+           movement.reason?.includes('ANULACIÓN') ||
+           movement.voucher_number?.startsWith('ANUL-') ||
+           movement.reason?.includes('CORRECCIÓN');
+};
+
+const canBeCancelled = (movement) => {
+    // Solo permitir cancelar: entrada, salida, y devolución
+    // Los ajustes no se pueden cancelar
+    if (!['entrada', 'salida', 'devolucion'].includes(movement.movement_type)) {
+        return false;
+    }
+    
+    // No permitir cancelar movimientos que ya están cancelados (canceled_at)
+    if (movement.canceled_at) {
+        return false;
+    }
+    
+    // No permitir cancelar movimientos que ya son cancelaciones
+    if (isCancellationMovement(movement)) {
+        return false;
+    }
+    
+    return true;
 };
 </script>
 
@@ -317,9 +361,20 @@ const formatTime = (dateString) => {
     font-weight: 600;
 }
 
+.type-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
 .movement-type-tag {
     font-size: 0.8rem;
     font-weight: 600;
+}
+
+.cancellation-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
 }
 
 .reason-cell {
@@ -448,13 +503,13 @@ const formatTime = (dateString) => {
     color: #d97706;
 }
 
-.delete-button {
-    color: #ef4444;
+.cancel-button {
+    color: #f97316;
 }
 
-.delete-button:hover {
-    background: #fecaca;
-    color: #dc2626;
+.cancel-button:hover {
+    background: #fed7aa;
+    color: #ea580c;
 }
 
 /* Responsive styles */

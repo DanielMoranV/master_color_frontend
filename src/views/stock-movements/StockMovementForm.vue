@@ -73,6 +73,7 @@
                     />
                 </div>
 
+
                 <div v-if="formData.stocks.length === 0" class="empty-stocks">
                     <i class="pi pi-inbox empty-icon"></i>
                     <p>No hay productos agregados</p>
@@ -128,8 +129,8 @@
                                                     <span class="product-name">{{ item.name }}</span>
                                                     <div class="product-badges">
                                                         <span v-if="item.brand" class="badge brand-badge">{{ item.brand }}</span>
-                                                        <span class="badge stock-badge" :class="getStockBadgeClass(item.stock?.quantity || 0)">
-                                                            Stock: {{ item.stock?.quantity || 0 }}
+                                                        <span class="badge stock-badge" :class="getStockBadgeClass(getStockQuantity(item))">
+                                                            Stock: {{ getStockQuantity(item) }}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -194,7 +195,7 @@
                             <div v-if="stock.selectedProduct" class="stock-info">
                                 <div class="info-item">
                                     <span class="info-label">Stock Actual:</span>
-                                    <span class="info-value">{{ stock.selectedProduct.stock?.quantity || 0 }}</span>
+                                    <span class="info-value">{{ getStockQuantity(stock.selectedProduct) }}</span>
                                 </div>
                                 <div v-if="stock.quantity && stock.unit_price" class="info-item">
                                     <span class="info-label">Subtotal:</span>
@@ -368,13 +369,34 @@ const addStockItem = () => {
 };
 
 const removeStockItem = (index) => {
-    formData.stocks.splice(index, 1);
-    // Clean up errors for removed item
-    Object.keys(errors.value).forEach(key => {
-        if (key.startsWith(`stocks.${index}.`)) {
-            delete errors.value[key];
+    // Validación básica
+    if (index < 0 || index >= formData.stocks.length) {
+        return;
+    }
+
+    const productName = formData.stocks[index].selectedProduct?.name || 'producto';
+    
+    // Confirmación simple (opcional)
+    if (formData.stocks.length > 1) {
+        const confirmed = confirm(`¿Estás seguro de que quieres eliminar "${productName}" del movimiento?`);
+        if (!confirmed) {
+            return;
         }
+    }
+
+    // Remover el item del array
+    formData.stocks.splice(index, 1);
+
+    // Limpiar todos los errores relacionados con stocks para reindexar correctamente
+    const stockErrors = Object.keys(errors.value).filter(key => key.startsWith('stocks.'));
+    stockErrors.forEach(key => {
+        delete errors.value[key];
     });
+
+    // Prevenir eliminar el último producto (opcional)
+    if (formData.stocks.length === 0) {
+        addStockItem();
+    }
 };
 
 const searchProducts = async (event) => {
@@ -386,6 +408,7 @@ const searchProducts = async (event) => {
     loadingProducts.value = true;
     try {
         await productsStore.fetchProducts();
+
         const query = event.query.toLowerCase();
         filteredProducts.value = productsStore.productsList.filter(product =>
             product.name?.toLowerCase().includes(query) ||
@@ -406,19 +429,36 @@ const searchProducts = async (event) => {
 
 const onProductSelect = (event, index) => {
     const product = event.value;
-    formData.stocks[index].stock_id = product.stock?.id || product.id;
-    formData.stocks[index].selectedProduct = product;
+    
+    // Usar el stock_id del producto (ya viene del backend)
+    if (product.stock_id) {
+        formData.stocks[index].stock_id = product.stock_id;
+    } else {
+        // Fallback si por alguna razón no viene el stock_id
+        formData.stocks[index].stock_id = product.id;
+    }
+    
+    // Guardar la información completa para mostrar en la UI
+    formData.stocks[index].selectedProduct = {
+        ...product,
+        stock: {
+            id: product.stock_id || product.id,
+            quantity: product.stock_quantity || 0
+        }
+    };
     
     // Clear related errors
     delete errors.value[`stocks.${index}.stock_id`];
 };
 
 const getMaxQuantity = (stock, index) => {
-    if (!stock.selectedProduct?.stock?.quantity) return 999999;
+    const stockQuantity = getStockQuantity(stock.selectedProduct);
+    
+    if (!stockQuantity) return 999999;
     
     // For 'salida' movements, limit to current stock
     if (formData.movement_type === 'salida') {
-        return stock.selectedProduct.stock.quantity;
+        return stockQuantity;
     }
     
     return 999999;
@@ -475,6 +515,21 @@ const getStockBadgeClass = (quantity) => {
     return 'stock-good';
 };
 
+const getStockQuantity = (product) => {
+    if (!product) return 0;
+    
+    // Prioridad: stock.quantity > stock_quantity > 0
+    if (product.stock && typeof product.stock.quantity === 'number') {
+        return product.stock.quantity;
+    }
+    
+    if (typeof product.stock_quantity === 'number') {
+        return product.stock_quantity;
+    }
+    
+    return 0;
+};
+
 const validateForm = () => {
     errors.value = {};
 
@@ -496,13 +551,16 @@ const validateForm = () => {
         formData.stocks.forEach((stock, index) => {
             if (!stock.stock_id) {
                 errors.value[`stocks.${index}.stock_id`] = 'Selecciona un producto';
+            } else if (!stock.selectedProduct) {
+                errors.value[`stocks.${index}.stock_id`] = 'Producto no válido';
             }
 
             if (!stock.quantity || stock.quantity <= 0) {
                 errors.value[`stocks.${index}.quantity`] = 'La cantidad debe ser mayor a 0';
-            } else if (formData.movement_type === 'salida' && stock.selectedProduct?.stock?.quantity) {
-                if (stock.quantity > stock.selectedProduct.stock.quantity) {
-                    errors.value[`stocks.${index}.quantity`] = 'Cantidad excede el stock disponible';
+            } else if (formData.movement_type === 'salida' && stock.selectedProduct) {
+                const stockQuantity = getStockQuantity(stock.selectedProduct);
+                if (stock.quantity > stockQuantity) {
+                    errors.value[`stocks.${index}.quantity`] = `Cantidad excede el stock disponible (${stockQuantity})`;
                 }
             }
 

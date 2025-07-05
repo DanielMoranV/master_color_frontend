@@ -148,7 +148,7 @@ function getStockSeverity(product) {
     const minStock = product.min_stock || 0;
 
     if (quantity === 0) return 'danger';
-    if (quantity <= minStock) return 'warning';
+    if (quantity <= minStock) return 'danger';
     return 'success';
 }
 
@@ -166,7 +166,7 @@ function getStockStatusSeverity(product) {
     const minStock = product.min_stock || 0;
 
     if (quantity === 0) return 'danger';
-    if (quantity <= minStock) return 'warning';
+    if (quantity <= minStock) return 'danger';
     return 'success';
 }
 

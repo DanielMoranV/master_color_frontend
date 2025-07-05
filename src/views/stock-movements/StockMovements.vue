@@ -32,7 +32,7 @@
                 </div>
             </div>
 
-            <StockMovementsTable :movements="filteredMovements" :loading="stockMovementsStore.loading" @view="viewMovement" @edit="editMovement" @delete="confirmDeleteMovement" />
+            <StockMovementsTable :movements="filteredMovements" :loading="stockMovementsStore.loading" @view="viewMovement" @edit="editMovement" @correct="createCorrectionMovement" />
         </div>
 
         <!-- Enhanced Movement Dialog -->
@@ -64,38 +64,83 @@
             </template>
         </Dialog>
 
-        <!-- Enhanced Delete Dialog -->
-        <Dialog v-model:visible="deleteMovementDialog" :style="{ width: '480px' }" header="Confirmar Eliminación" :modal="true" class="delete-dialog">
+        <!-- Cancel Movement Dialog -->
+        <Dialog v-model:visible="correctionDialog" :style="{ width: '800px' }" :header="getDialogTitle()" :modal="true" class="cancel-dialog">
             <template #header>
-                <div class="dialog-header danger">
-                    <div class="dialog-icon danger">
-                        <i class="pi pi-exclamation-triangle"></i>
+                <div class="dialog-header cancel">
+                    <div class="dialog-icon cancel">
+                        <i class="pi pi-times-circle"></i>
                     </div>
                     <div>
-                        <h3>Confirmar Eliminación</h3>
-                        <p>Esta acción no se puede deshacer</p>
+                        <h3>{{ getDialogTitle() }}</h3>
+                        <p>{{ getDialogSubtitle() }}</p>
                     </div>
                 </div>
             </template>
 
-            <div class="delete-content">
+            <div class="cancel-content">
                 <div class="warning-box">
-                    <i class="pi pi-info-circle"></i>
+                    <i class="pi pi-exclamation-triangle"></i>
                     <div>
                         <p class="warning-text">
-                            ¿Estás seguro de que quieres eliminar el movimiento
-                            <strong>#{{ selectedMovement?.id }}</strong
-                            >?
+                            <strong>{{ getCancellationMessage() }}</strong>
                         </p>
-                        <p class="warning-subtext">Se perderán todos los datos asociados al movimiento.</p>
+                        <p class="warning-subtext">El backend se encargará automáticamente de crear el movimiento inverso y actualizar el inventario.</p>
                     </div>
+                </div>
+
+                <!-- Readonly products list -->
+                <div class="products-readonly">
+                    <h4 class="products-title">Productos que serán reestablecidos automáticamente:</h4>
+                    <div class="products-list">
+                        <div v-for="(detail, index) in selectedMovement?.details || []" :key="index" class="product-item-readonly">
+                            <div class="product-info">
+                                <span class="product-name">{{ detail.stock?.product?.name || 'Producto' }}</span>
+                                <span class="product-sku">SKU: {{ detail.stock?.product?.sku || 'N/A' }}</span>
+                            </div>
+                            <div class="product-quantity">
+                                <span class="quantity-label">Cantidad:</span>
+                                <span class="quantity-value">{{ detail.quantity }}</span>
+                            </div>
+                            <div class="product-price" v-if="detail.unit_price">
+                                <span class="price-label">Precio:</span>
+                                <span class="price-value">S/ {{ parseFloat(detail.unit_price).toFixed(2) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info about backend process -->
+                <div class="info-box">
+                    <i class="pi pi-info-circle"></i>
+                    <div>
+                        <p><strong>Proceso automático del sistema:</strong></p>
+                        <ul>
+                            <li>✅ El movimiento original será marcado como cancelado</li>
+                            <li>✅ Se creará automáticamente un movimiento de {{ getInverseTypeLabel() }}</li>
+                            <li>✅ El inventario se actualizará en una transacción atómica</li>
+                            <li>✅ Se mantendrá la trazabilidad completa</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Final confirmation -->
+                <div class="confirmation-box">
+                    <p><strong>¿Confirmas que deseas cancelar este movimiento?</strong></p>
+                    <p>Esta acción no se puede deshacer, pero mantendrá la trazabilidad completa.</p>
                 </div>
             </div>
 
             <template #footer>
                 <div class="dialog-actions">
-                    <Button label="Cancelar" icon="pi pi-times" class="cancel-button" @click="deleteMovementDialog = false" outlined />
-                    <Button label="Eliminar" icon="pi pi-trash" class="delete-button" @click="deleteMovement" :loading="stockMovementsStore.loading" />
+                    <Button label="No, mantener movimiento" icon="pi pi-times" @click="correctionDialog = false" outlined />
+                    <Button 
+                        label="Sí, cancelar movimiento" 
+                        icon="pi pi-check" 
+                        @click="confirmCancellation" 
+                        :loading="stockMovementsStore.loading"
+                        severity="danger" 
+                    />
                 </div>
             </template>
         </Dialog>
@@ -118,7 +163,7 @@ const toast = useToast();
 // Reactive variables
 const movementDialog = ref(false);
 const detailDialog = ref(false);
-const deleteMovementDialog = ref(false);
+const correctionDialog = ref(false);
 const selectedMovement = ref({});
 const searchQuery = ref('');
 const selectedType = ref(null);
@@ -207,9 +252,20 @@ const editFromDetail = () => {
     movementDialog.value = true;
 };
 
-const confirmDeleteMovement = (movement) => {
+const createCorrectionMovement = async (movement) => {
+    // Verificar si el movimiento ya está cancelado
+    if (isAlreadyCancelled(movement)) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Movimiento ya cancelado',
+            detail: 'Este movimiento ya ha sido cancelado y no puede volver a cancelarse',
+            life: 4000
+        });
+        return;
+    }
+    
     selectedMovement.value = { ...movement };
-    deleteMovementDialog.value = true;
+    correctionDialog.value = true;
 };
 
 const hideDialog = () => {
@@ -261,23 +317,129 @@ const handleSaveMovement = async (movementData) => {
     }
 };
 
-const deleteMovement = async () => {
+const getInverseMovementType = (movementType) => {
+    const inverseMap = {
+        'entrada': 'salida',
+        'salida': 'entrada',
+        'devolucion': 'salida' // Las devoluciones se anulan con salida
+    };
+    return inverseMap[movementType] || 'ajuste';
+};
+
+const getDialogTitle = () => {
+    if (!selectedMovement.value?.movement_type) return 'Cancelar Movimiento';
+    
+    const titles = {
+        'entrada': 'Cancelar Movimiento de Entrada',
+        'salida': 'Cancelar Movimiento de Salida', 
+        'devolucion': 'Cancelar Devolución'
+    };
+    
+    return titles[selectedMovement.value.movement_type] || 'Cancelar Movimiento';
+};
+
+const getDialogSubtitle = () => {
+    const inverseType = getInverseMovementType(selectedMovement.value?.movement_type);
+    const typeLabels = {
+        'entrada': 'entrada',
+        'salida': 'salida',
+        'devolucion': 'salida'
+    };
+    
+    return `Se creará un movimiento de ${typeLabels[inverseType]} para reestablecer el stock`;
+};
+
+const getInverseTypeLabel = () => {
+    const movement = selectedMovement.value;
+    if (!movement) return '';
+    
+    const inverseType = getInverseMovementType(movement.movement_type);
+    const typeLabels = {
+        'entrada': 'entrada',
+        'salida': 'salida',
+        'devolucion': 'salida'
+    };
+    
+    return typeLabels[inverseType] || 'ajuste';
+};
+
+const getCancellationMessage = () => {
+    const movement = selectedMovement.value;
+    if (!movement) return '';
+    
+    const inverseType = getInverseMovementType(movement.movement_type);
+    const typeLabels = {
+        'salida': 'salida de productos',
+        'entrada': 'entrada de productos'
+    };
+    
+    const actionText = typeLabels[inverseType] || 'movimiento';
+    
+    return `Se va a crear un movimiento de ${actionText} con la finalidad de reestablecer el stock y cancelar el movimiento número ${movement.id}`;
+};
+
+const isAlreadyCancelled = (movement) => {
+    // Verificar por el campo canceled_at (forma principal)
+    if (movement.canceled_at) {
+        return true;
+    }
+    
+    // Verificar por convención de nombres (fallback)
+    if (movement.reason?.includes('CANCELACIÓN') || 
+        movement.voucher_number?.startsWith('CANCEL-') ||
+        movement.reason?.includes('ANULACIÓN') ||
+        movement.voucher_number?.startsWith('ANUL-') ||
+        movement.reason?.includes('CORRECCIÓN')) {
+        return true;
+    }
+    
+    // Si hay un campo específico para estado (fallback)
+    if (movement.status === 'cancelled' || movement.is_cancelled || movement.status === 'annulled' || movement.is_annulled) {
+        return true;
+    }
+    
+    return false;
+};
+
+
+const confirmCancellation = async () => {
     try {
-        await stockMovementsStore.deleteStockMovement(selectedMovement.value.id);
-        deleteMovementDialog.value = false;
+        stockMovementsStore.resetState();
+        
+        const movement = selectedMovement.value;
+        
+        // Usar el endpoint seguro del backend
+        await stockMovementsStore.cancelStockMovement(movement.id);
+        
+        // Refrescar la lista de movimientos para mostrar el movimiento correctivo
+        await fetchMovements();
+        
         toast.add({
             severity: 'success',
-            summary: 'Éxito',
-            detail: stockMovementsStore.message,
-            life: 3000
-        });
-    } catch (error) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: stockMovementsStore.error?.message || 'Error al eliminar el movimiento',
+            summary: 'Movimiento cancelado',
+            detail: stockMovementsStore.message || `Movimiento #${movement.id} cancelado exitosamente`,
             life: 5000
         });
+        
+        correctionDialog.value = false;
+        selectedMovement.value = {};
+        
+    } catch (error) {
+        if (stockMovementsStore.validationErrors && stockMovementsStore.validationErrors.length > 0) {
+            toast.add({
+                severity: 'warn',
+                summary: 'Errores de Validación',
+                detail: 'Error en los datos del movimiento de cancelación',
+                life: 4000
+            });
+        } else {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: stockMovementsStore.error?.message || 'Error al cancelar el movimiento',
+                life: 5000
+            });
+        }
     }
 };
 
@@ -328,6 +490,7 @@ onMounted(() => {
     color: #2c3e50;
     margin: 0;
     background: linear-gradient(135deg, #667eea, #764ba2);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -451,6 +614,10 @@ onMounted(() => {
     background: linear-gradient(135deg, #ef4444, #dc2626);
 }
 
+.dialog-icon.cancel {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
 .dialog-header h3 {
     margin: 0;
     font-size: 1.3rem;
@@ -463,8 +630,8 @@ onMounted(() => {
     font-size: 0.9rem;
 }
 
-.delete-content {
-    padding: 1rem 0;
+.cancel-content {
+    padding: 0;
 }
 
 .warning-box {
@@ -475,6 +642,7 @@ onMounted(() => {
     border: 1px solid #f59e0b;
     border-radius: 12px;
     align-items: flex-start;
+    margin-bottom: 1.5rem;
 }
 
 .warning-box i {
@@ -493,6 +661,107 @@ onMounted(() => {
     color: #b45309;
     font-size: 0.9rem;
     margin: 0;
+}
+
+.products-readonly {
+    margin-bottom: 1.5rem;
+}
+
+.products-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 1rem 0;
+}
+
+.products-list {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f9fafb;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.product-item-readonly {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    gap: 1rem;
+}
+
+.product-item-readonly:last-child {
+    border-bottom: none;
+}
+
+.product-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.product-name {
+    font-weight: 600;
+    color: #374151;
+}
+
+.product-sku {
+    font-size: 0.8rem;
+    color: #6b7280;
+    background: #f3f4f6;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    display: inline-block;
+    width: fit-content;
+}
+
+.product-quantity, .product-price {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.quantity-label, .price-label {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.quantity-value {
+    font-weight: 600;
+    color: #059669;
+    background: #ecfdf5;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.price-value {
+    font-weight: 600;
+    color: #0369a1;
+    background: #f0f9ff;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.confirmation-box {
+    background: #f0f9ff;
+    border: 1px solid #3b82f6;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.confirmation-box p {
+    margin: 0 0 0.5rem 0;
+    color: #1e40af;
+}
+
+.confirmation-box p:last-child {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #3730a3;
 }
 
 .dialog-actions {

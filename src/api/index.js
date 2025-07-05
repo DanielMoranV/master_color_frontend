@@ -69,11 +69,23 @@ export const productsApi = {
     deleteProduct: (id) => axios.delete(`/products/${id}`)
 };
 
+// Funciones para stock
+export const stockApi = {
+    getStocks: () => axios.get('/stocks'),
+    getStockById: (id) => axios.get(`/stocks/${id}`),
+    getStocksForMovements: () => axios.get('/stocks/for-movements'),
+    // Intentar obtener stocks por producto específico
+    getStockByProductId: (productId) => axios.get(`/stocks/product/${productId}`),
+    // Alternativa: obtener todos los stocks con información de productos
+    getAllStocksWithProducts: () => axios.get('/stocks/with-products')
+};
+
 // Funciones para stock movements
 export const stockMovementsApi = {
     getStockMovements: () => axios.get('/stock-movements'),
     getStockMovementById: (id) => axios.get(`/stock-movements/${id}`),
     createStockMovement: (payload) => axios.post('/stock-movements', payload),
     updateStockMovement: (id, payload) => axios.put(`/stock-movements/${id}`, payload),
-    deleteStockMovement: (id) => axios.delete(`/stock-movements/${id}`)
+    deleteStockMovement: (id) => axios.delete(`/stock-movements/${id}`),
+    cancelStockMovement: (id) => axios.patch(`/stock-movements/${id}/cancel`)
 };

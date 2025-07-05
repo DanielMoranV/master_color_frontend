@@ -2,7 +2,7 @@
     <DataTable :value="products" :loading="loading" class="products-table" responsiveLayout="scroll">
         <Column field="image_url" header="Imagen" style="width: 80px">
             <template #body="{ data }">
-                <img v-if="data.image_url" :src="data.image_url" alt="Imagen" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px" />
+                <img v-if="data.image_url" :src="data.image_url" alt="Imagen" style="width: 48px; height: 48px; object-fit: contain; background-color: #f9fafb; border-radius: 6px" />
                 <span v-else class="no-image">-</span>
             </template>
         </Column>
