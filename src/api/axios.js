@@ -19,6 +19,17 @@ api.interceptors.request.use(
         if (getToken) {
             config.headers.Authorization = 'Bearer ' + getToken;
         }
+        
+        // Debug log para órdenes
+        if (config.url && config.url.includes('/client/orders')) {
+            console.log('🌐 API Request:', {
+                method: config.method,
+                url: config.url,
+                baseURL: config.baseURL,
+                fullUrl: config.baseURL + config.url
+            });
+        }
+        
         return config;
     },
     (error) => {
@@ -32,6 +43,16 @@ api.interceptors.response.use(
         if (response.config.responseType === 'blob') {
             return response; // Devolver la respuesta completa para blobs
         }
+        
+        // Debug log para órdenes
+        if (response.config.url && response.config.url.includes('/client/orders')) {
+            console.log('🌐 API Response:', {
+                url: response.config.url,
+                status: response.status,
+                data: response.data
+            });
+        }
+        
         // Si el backend ya responde con la estructura estándar, solo retorna response.data
         // Si algún endpoint no cumple, aquí puedes adaptarlo
         return response.data;
