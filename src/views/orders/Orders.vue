@@ -86,18 +86,14 @@ const finalTotal = computed(() => {
 // Methods
 const loadCheckoutCart = () => {
     try {
-        console.log('📋 Orders: Loading checkout cart from localStorage...');
         const checkoutCart = localStorage.getItem('checkoutCart');
-        console.log('📋 Orders: Raw checkout data:', checkoutCart);
 
         if (checkoutCart) {
             const parsedData = JSON.parse(checkoutCart);
-            console.log('📋 Orders: Parsed checkout data:', parsedData);
             orderItems.value = parsedData;
 
             if (orderItems.value.length > 0) {
                 showOrderForm.value = true;
-                console.log('📋 Orders: Order form shown, items loaded:', orderItems.value.length);
 
                 toast.add({
                     severity: 'success',
@@ -105,14 +101,10 @@ const loadCheckoutCart = () => {
                     detail: `Se cargaron ${orderItems.value.length} productos para tu orden`,
                     life: 4000
                 });
-            } else {
-                console.log('📋 Orders: No items found in checkout data');
             }
-        } else {
-            console.log('📋 Orders: No checkout cart found in localStorage');
         }
     } catch (error) {
-        console.error('📋 Orders: Error loading checkout cart:', error);
+        console.error('Error loading checkout cart:', error);
         toast.add({
             severity: 'error',
             summary: 'Error',
@@ -164,10 +156,6 @@ const submitOrder = async () => {
     loading.value = true;
 
     try {
-        console.log('📋 Orders: Creating order with items:', orderItems.value);
-        console.log('📋 Orders: Selected address:', selectedAddressId.value);
-
-        // Prepare order payload
         const orderPayload = {
             delivery_address_id: selectedAddressId.value,
             products: orderItems.value.map((item) => ({
@@ -177,9 +165,6 @@ const submitOrder = async () => {
             observations: orderForm.observations || null
         };
 
-        console.log('📋 Orders: Order payload:', orderPayload);
-
-        // Create order using store
         const result = await ordersStore.createOrder(orderPayload);
 
         if (result.success) {
@@ -192,10 +177,7 @@ const submitOrder = async () => {
                 life: 4000
             });
 
-            // Clear cart and proceed to payment
             localStorage.removeItem('checkoutCart');
-
-            // Open payment modal
             selectedOrderForPayment.value = createdOrder;
             showPaymentModal.value = true;
         } else {
@@ -206,7 +188,6 @@ const submitOrder = async () => {
                 life: 5000
             });
 
-            // Handle validation errors from store
             if (ordersStore.validationErrors && ordersStore.validationErrors.length > 0) {
                 ordersStore.validationErrors.forEach((error) => {
                     toast.add({
@@ -281,14 +262,6 @@ const viewMyOrders = () => {
 };
 
 const viewOrderDetails = (order) => {
-    console.log('📝 Orders: View order details clicked:', order);
-    console.log('📝 Orders: Order structure:', {
-        id: order.id,
-        keys: Object.keys(order),
-        items: order.items,
-        products: order.products,
-        order_details: order.order_details
-    });
     selectedOrderId.value = order.id;
     showOrderDetailsModal.value = true;
 };
@@ -297,41 +270,11 @@ const goBackToStore = () => {
     router.push('/');
 };
 
-// Test functions (for development)
-const createTestOrder = async () => {
-    console.log('🧪 Orders: Creating test order...');
-
-    // Simulae some test items
-    orderItems.value = [
-        {
-            id: 1,
-            name: 'Producto de prueba 1',
-            quantity: 2,
-            price: 50.0
-        },
-        {
-            id: 2,
-            name: 'Producto de prueba 2',
-            quantity: 1,
-            price: 30.0
-        }
-    ];
-
-    showOrderForm.value = true;
-
-    toast.add({
-        severity: 'info',
-        summary: 'Modo de prueba',
-        detail: 'Orden de prueba creada. Selecciona una dirección para continuar.',
-        life: 5000
-    });
-};
-
 const getOrderStatusSeverity = (status) => {
     const statusMap = {
         pendiente_pago: 'warning',
         pendiente: 'info',
-        confirmado: 'info',
+        confirmado: 'success',
         procesando: 'info',
         enviado: 'success',
         entregado: 'success',
@@ -344,15 +287,43 @@ const getOrderStatusSeverity = (status) => {
 const getOrderStatusLabel = (status) => {
     const statusMap = {
         pendiente_pago: 'Pendiente de Pago',
-        pendiente: 'Pendiente',
+        pendiente: 'Pagado - Preparando Envío',
         confirmado: 'Confirmado',
-        procesando: 'En Proceso',
+        procesando: 'En Preparación',
         enviado: 'Enviado',
         entregado: 'Entregado',
         pago_fallido: 'Pago Fallido',
         cancelado: 'Cancelado'
     };
     return statusMap[status] || status;
+};
+
+const getOrderStatusIcon = (status) => {
+    const iconMap = {
+        pendiente_pago: 'pi pi-clock',
+        pendiente: 'pi pi-check-circle',
+        confirmado: 'pi pi-verified',
+        procesando: 'pi pi-cog',
+        enviado: 'pi pi-send',
+        entregado: 'pi pi-check',
+        pago_fallido: 'pi pi-times-circle',
+        cancelado: 'pi pi-ban'
+    };
+    return iconMap[status] || 'pi pi-info-circle';
+};
+
+const getOrderStatusDescription = (status) => {
+    const descriptionMap = {
+        pendiente_pago: 'Tu orden está esperando el pago para ser procesada',
+        pendiente: 'Tu pago fue exitoso. Estamos preparando tu pedido para el envío',
+        confirmado: 'Tu orden ha sido confirmada y está siendo preparada',
+        procesando: 'Tu orden está siendo preparada en nuestro almacén',
+        enviado: 'Tu orden ha sido enviada y está en camino',
+        entregado: 'Tu orden ha sido entregada exitosamente',
+        pago_fallido: 'Hubo un problema con el pago. Puedes intentar nuevamente',
+        cancelado: 'Esta orden ha sido cancelada'
+    };
+    return descriptionMap[status] || 'Estado de la orden';
 };
 
 const retryPayment = (orderId) => {
@@ -396,8 +367,6 @@ const loadAddresses = async () => {
 // Load orders
 const loadOrders = async () => {
     const result = await ordersStore.fetchOrders();
-
-    console.log('📋 Orders: Loaded orders:', result);
 
     if (!result.success) {
         toast.add({
@@ -608,20 +577,9 @@ const handleCancelOrderFromDetails = async (order) => {
     }
 };
 
-// Utility methods for order display
 const getOrderProducts = (order) => {
-    // Try different possible product locations
     const products = order.items || order.products || order.order_details || [];
-    
-    console.log('📝 Orders: Getting products for order:', {
-        orderId: order.id,
-        items: order.items,
-        products: order.products,
-        order_details: order.order_details,
-        foundProducts: products
-    });
 
-    // Map to ensure we have the necessary properties with fallbacks
     return products.map((product) => ({
         name: product.name || product.product_name || product.product?.name || 'Producto sin nombre',
         quantity: product.quantity || product.pivot?.quantity || product.qty || 1
@@ -630,24 +588,16 @@ const getOrderProducts = (order) => {
 
 // Lifecycle
 onMounted(async () => {
-    // Check if coming from checkout
     loadCheckoutCart();
-
-    // Load user addresses
     await loadAddresses();
-
-    // Check payment status if returning from payment
     await checkPaymentStatus();
 
-    // Check if we should redirect to payment return page
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('collection_status') || urlParams.has('payment_id') || urlParams.has('status')) {
-        console.log('📱 Orders: Payment return detected, redirecting to payment return page');
         router.push(`/payment-return${window.location.search}`);
         return;
     }
 
-    // Load existing orders
     await loadOrders();
 });
 
@@ -693,54 +643,35 @@ onBeforeUnmount(() => {
             <div class="cart-summary-section">
                 <h3 class="section-title">
                     <i class="pi pi-shopping-bag"></i>
-                    Resumen del Pedido ({{ totalQuantity }} productos)
+                    {{ totalQuantity }} productos - S/ {{ (parseFloat(finalTotal) || 0).toFixed(2) }}
                 </h3>
 
-                <div class="cart-items">
-                    <div v-for="(item, index) in orderItems" :key="index" class="cart-item">
-                        <img :src="item.image" :alt="item.name" class="item-image" />
-                        <div class="item-details">
-                            <h4 class="item-name">{{ item.name }}</h4>
-                            <p class="item-category">{{ item.category }}</p>
-                            <div class="item-meta">
-                                <span class="item-sku">SKU: {{ item.sku }}</span>
-                                <span v-if="item.brand" class="item-brand">{{ item.brand }}</span>
-                            </div>
-                        </div>
-                        <div class="item-quantity">
-                            <span class="quantity-label">Cantidad:</span>
-                            <span class="quantity-value">{{ item.quantity }}</span>
-                        </div>
-                        <div class="item-pricing">
-                            <div class="unit-price">
-                                <span class="price-label">Precio unitario:</span>
-                                <span class="price-value">S/ {{ (parseFloat(item.price) || 0).toFixed(2) }}</span>
-                            </div>
-                            <div class="total-price">
-                                <span class="total-label">Subtotal:</span>
-                                <span class="total-value">S/ {{ ((parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0)).toFixed(2) }}</span>
-                            </div>
+                <!-- Compact Items List -->
+                <div class="cart-items-compact">
+                    <div v-for="(item, index) in orderItems" :key="index" class="cart-item-compact">
+                        <img :src="item.image" :alt="item.name" class="item-image-compact" />
+                        <div class="item-info">
+                            <h4 class="item-name-compact">{{ item.name }}</h4>
+                            <span class="item-details-compact">
+                                {{ item.quantity }}x S/ {{ (parseFloat(item.price) || 0).toFixed(2) }} =
+                                <strong>S/ {{ ((parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0)).toFixed(2) }}</strong>
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Order Totals -->
-                <div class="order-totals">
-                    <div class="totals-row">
-                        <span class="totals-label">Subtotal:</span>
-                        <span class="totals-value">S/ {{ (parseFloat(orderTotal) || 0).toFixed(2) }}</span>
+                <!-- Compact Totals -->
+                <div class="order-totals-compact">
+                    <div v-if="totalSavings > 0" class="totals-row-compact savings">
+                        <span>Descuentos: -S/ {{ (parseFloat(totalSavings) || 0).toFixed(2) }}</span>
                     </div>
-                    <div v-if="totalSavings > 0" class="totals-row savings">
-                        <span class="totals-label">Descuentos:</span>
-                        <span class="totals-value">-S/ {{ (parseFloat(totalSavings) || 0).toFixed(2) }}</span>
+                    <div class="totals-row-compact shipping">
+                        <span>Envío: {{ shippingCost > 0 ? `S/ ${(parseFloat(shippingCost) || 0).toFixed(2)}` : 'Gratis' }}</span>
                     </div>
-                    <div class="totals-row shipping">
-                        <span class="totals-label">Envío:</span>
-                        <span class="totals-value">{{ shippingCost > 0 ? `S/ ${(parseFloat(shippingCost) || 0).toFixed(2)}` : 'Gratis' }}</span>
-                    </div>
-                    <div class="totals-row final">
-                        <span class="totals-label">Total a pagar:</span>
-                        <span class="totals-value">S/ {{ (parseFloat(finalTotal) || 0).toFixed(2) }}</span>
+                    <div class="totals-row-compact final">
+                        <span
+                            ><strong>Total: S/ {{ (parseFloat(finalTotal) || 0).toFixed(2) }}</strong></span
+                        >
                     </div>
                 </div>
             </div>
@@ -839,9 +770,21 @@ onBeforeUnmount(() => {
                         </template>
                     </Column>
 
-                    <Column field="status" header="Estado" style="min-width: 120px">
+                    <Column field="status" header="Estado" style="min-width: 200px">
                         <template #body="slotProps">
-                            <Tag :value="getOrderStatusLabel(slotProps.data.status)" :severity="getOrderStatusSeverity(slotProps.data.status)" />
+                            <div class="order-status-cell">
+                                <div class="status-tag-container">
+                                    <Tag :value="getOrderStatusLabel(slotProps.data.status)" :severity="getOrderStatusSeverity(slotProps.data.status)" class="status-tag-enhanced">
+                                        <template #default>
+                                            <i :class="getOrderStatusIcon(slotProps.data.status)" class="status-icon"></i>
+                                            <span>{{ getOrderStatusLabel(slotProps.data.status) }}</span>
+                                        </template>
+                                    </Tag>
+                                </div>
+                                <small class="status-description">
+                                    {{ getOrderStatusDescription(slotProps.data.status) }}
+                                </small>
+                            </div>
                         </template>
                     </Column>
 
@@ -1219,6 +1162,92 @@ onBeforeUnmount(() => {
     color: #10b981;
 }
 
+/* Compact Cart Items */
+.cart-items-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.cart-item-compact {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.item-image-compact {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    background: #f8fafc;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.item-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.item-name-compact {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.item-details-compact {
+    font-size: 0.75rem;
+    color: #6b7280;
+    line-height: 1.2;
+}
+
+.item-details-compact strong {
+    color: #10b981;
+    font-weight: 600;
+}
+
+/* Compact Order Totals */
+.order-totals-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    padding: 0.75rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.totals-row-compact {
+    display: flex;
+    justify-content: flex-end;
+    font-size: 0.875rem;
+}
+
+.totals-row-compact.savings {
+    color: #059669;
+}
+
+.totals-row-compact.shipping {
+    color: #6b7280;
+}
+
+.totals-row-compact.final {
+    font-size: 1rem;
+    color: #10b981;
+    margin-top: 0.25rem;
+    padding-top: 0.375rem;
+    border-top: 1px solid #e2e8f0;
+}
+
 /* Order Totals */
 .order-totals {
     padding: 1rem;
@@ -1499,6 +1528,110 @@ onBeforeUnmount(() => {
     align-items: center;
 }
 
+/* Enhanced Order Status Styles */
+.order-status-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 220px;
+}
+
+.status-tag-container {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.status-tag-enhanced {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    min-width: fit-content;
+}
+
+.status-icon {
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.status-description {
+    color: #6b7280;
+    font-size: 0.75rem;
+    line-height: 1.3;
+    margin: 0;
+    display: block;
+    text-align: left;
+}
+
+/* Status-specific colors and animations */
+.status-tag-enhanced[data-pc-severity='info'] {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    color: #1e40af;
+    border: 1px solid #60a5fa;
+}
+
+.status-tag-enhanced[data-pc-severity='success'] {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    color: #059669;
+    border: 1px solid #34d399;
+}
+
+.status-tag-enhanced[data-pc-severity='warning'] {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #d97706;
+    border: 1px solid #f59e0b;
+}
+
+.status-tag-enhanced[data-pc-severity='danger'] {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    color: #dc2626;
+    border: 1px solid #f87171;
+}
+
+.status-tag-enhanced[data-pc-severity='secondary'] {
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    color: #64748b;
+    border: 1px solid #94a3b8;
+}
+
+/* Special styling for "pendiente" status to make it more prominent */
+.status-tag-enhanced[data-pc-severity='info'] .status-icon {
+    color: #10b981;
+    animation: pulse-success 2s infinite;
+}
+
+@keyframes pulse-success {
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: scale(1.1);
+    }
+}
+
+/* Processing animation for "procesando" status */
+.status-tag-enhanced:has(.pi-cog) .status-icon {
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* Products column styles */
 .order-products-summary {
     display: flex;
@@ -1692,6 +1825,54 @@ onBeforeUnmount(() => {
     .header-actions {
         flex-direction: column;
         gap: 0.5rem;
+    }
+
+    /* Responsive status styles */
+    .order-status-cell {
+        max-width: 100%;
+    }
+
+    .status-tag-enhanced {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        min-width: 100%;
+    }
+
+    .status-description {
+        font-size: 0.6875rem;
+        text-align: center;
+    }
+
+    /* Responsive compact cart styles */
+    .cart-item-compact {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        text-align: center;
+        padding: 1rem;
+    }
+
+    .item-image-compact {
+        width: 60px;
+        height: 60px;
+        align-self: center;
+    }
+
+    .item-info {
+        align-items: center;
+        text-align: center;
+        gap: 0.375rem;
+    }
+
+    .order-totals-compact {
+        padding: 1rem;
+    }
+
+    .totals-row-compact {
+        justify-content: center;
+        font-size: 0.9rem;
     }
 }
 </style>
