@@ -31,6 +31,16 @@ export const authApi = {
     resetPassword: (payload) => resetPassword(payload) // Solo disponible para clientes
 };
 
+// Funciones para direcciones de clientes
+export const clientAddressesApi = {
+    getAddresses: () => axios.get('/client/addresses'),
+    getAddressById: (id) => axios.get(`/client/addresses/${id}`),
+    createAddress: (payload) => axios.post('/client/addresses', payload),
+    updateAddress: (id, payload) => axios.put(`/client/addresses/${id}`, payload),
+    deleteAddress: (id) => axios.delete(`/client/addresses/${id}`),
+    setMainAddress: (id) => axios.put(`/client/addresses/${id}/set-main`)
+};
+
 // Funciones para usuarios
 export const usersApi = {
     getUsers: () => axios.get('/users'),
@@ -94,37 +104,52 @@ export const stockMovementsApi = {
 export const ordersApi = {
     // Crear orden desde carrito
     createOrder: (payload) => axios.post('/client/orders', payload),
-    
+
     // Obtener órdenes del cliente autenticado
-    getMyOrders: () => axios.get('/client/orders'),
-    
+    getMyOrders: () => axios.get('/client/orders?include=products,order_details'),
+
     // Obtener orden específica del cliente
-    getOrderById: (id) => axios.get(`/client/orders/${id}`),
-    
+    getOrderById: (id) => axios.get(`/client/orders/${id}?include=products,order_details`),
+
     // Generar link de pago para una orden
     generatePaymentLink: (orderId) => axios.post(`/client/orders/${orderId}/payment`),
-    
-    // Consultar estado de pago
+
+    // Consultar estado de pago (endpoint correcto según la guía)
     getPaymentStatus: (orderId) => axios.get(`/payment-status/${orderId}`),
-    
+
     // Cancelar orden (solo si está en pendiente_pago)
     cancelOrder: (orderId) => axios.patch(`/client/orders/${orderId}/cancel`)
+};
+
+// Funciones para pagos con MercadoPago Bricks
+export const paymentsApi = {
+    // Procesar pago con datos de Checkout Bricks
+    processPayment: (payload) => axios.post('/client/payments/process', payload),
+
+    // Crear preferencia de pago para Bricks
+    createPaymentPreference: (orderId) => axios.post(`/client/orders/${orderId}/payment-preference`),
+
+    // Verificar estado de pago
+    verifyPayment: (paymentId) => axios.get(`/client/payments/${paymentId}/verify`),
+
+    // Obtener historial de pagos
+    getPaymentHistory: () => axios.get('/client/payments/history')
 };
 
 // Funciones para direcciones de entrega del cliente
 export const addressesApi = {
     // Obtener direcciones del cliente autenticado
     getMyAddresses: () => axios.get('/client/addresses'),
-    
+
     // Crear nueva dirección
     createAddress: (payload) => axios.post('/client/addresses', payload),
-    
+
     // Actualizar dirección
     updateAddress: (id, payload) => axios.put(`/client/addresses/${id}`, payload),
-    
+
     // Eliminar dirección
     deleteAddress: (id) => axios.delete(`/client/addresses/${id}`),
-    
+
     // Marcar dirección como principal
     setMainAddress: (id) => axios.patch(`/client/addresses/${id}/set-main`)
 };

@@ -1,3 +1,67 @@
+<script setup>
+import { useRouter } from 'vue-router';
+
+const props = defineProps({
+    products: {
+        type: Array,
+        default: () => []
+    },
+    loading: {
+        type: Boolean,
+        default: false
+    }
+});
+
+const router = useRouter();
+
+function getStockSeverity(product) {
+    const quantity = product.stock_quantity || 0;
+    const minStock = product.min_stock || 0;
+
+    if (quantity === 0) return 'danger';
+    if (quantity <= minStock) return 'danger';
+    return 'success';
+}
+
+function getStockStatus(product) {
+    const quantity = product.stock_quantity || 0;
+    const minStock = product.min_stock || 0;
+
+    if (quantity === 0) return 'Sin Stock';
+    if (quantity <= minStock) return 'Stock Bajo';
+    return 'Disponible';
+}
+
+function getStockStatusSeverity(product) {
+    const quantity = product.stock_quantity || 0;
+    const minStock = product.min_stock || 0;
+
+    if (quantity === 0) return 'danger';
+    if (quantity <= minStock) return 'danger';
+    return 'success';
+}
+
+function formatPrice(price) {
+    if (!price) return '0.00';
+    return parseFloat(price).toFixed(2);
+}
+
+function calculateStockValue(product) {
+    const quantity = product.stock_quantity || 0;
+    const purchasePrice = parseFloat(product.purchase_price) || 0;
+    return (quantity * purchasePrice).toFixed(2);
+}
+
+function handleImageError(event) {
+    event.target.style.display = 'none';
+    event.target.nextElementSibling?.classList.add('show');
+}
+
+function viewMovements(product) {
+    router.push(`/stock-movements?product_id=${product.id}`);
+}
+</script>
+
 <template>
     <div class="stock-table-container">
         <DataTable
@@ -126,70 +190,6 @@
         </DataTable>
     </div>
 </template>
-
-<script setup>
-import { useRouter } from 'vue-router';
-
-const props = defineProps({
-    products: {
-        type: Array,
-        default: () => []
-    },
-    loading: {
-        type: Boolean,
-        default: false
-    }
-});
-
-const router = useRouter();
-
-function getStockSeverity(product) {
-    const quantity = product.stock_quantity || 0;
-    const minStock = product.min_stock || 0;
-
-    if (quantity === 0) return 'danger';
-    if (quantity <= minStock) return 'danger';
-    return 'success';
-}
-
-function getStockStatus(product) {
-    const quantity = product.stock_quantity || 0;
-    const minStock = product.min_stock || 0;
-
-    if (quantity === 0) return 'Sin Stock';
-    if (quantity <= minStock) return 'Stock Bajo';
-    return 'Disponible';
-}
-
-function getStockStatusSeverity(product) {
-    const quantity = product.stock_quantity || 0;
-    const minStock = product.min_stock || 0;
-
-    if (quantity === 0) return 'danger';
-    if (quantity <= minStock) return 'danger';
-    return 'success';
-}
-
-function formatPrice(price) {
-    if (!price) return '0.00';
-    return parseFloat(price).toFixed(2);
-}
-
-function calculateStockValue(product) {
-    const quantity = product.stock_quantity || 0;
-    const purchasePrice = parseFloat(product.purchase_price) || 0;
-    return (quantity * purchasePrice).toFixed(2);
-}
-
-function handleImageError(event) {
-    event.target.style.display = 'none';
-    event.target.nextElementSibling?.classList.add('show');
-}
-
-function viewMovements(product) {
-    router.push(`/stock-movements?product_id=${product.id}`);
-}
-</script>
 
 <style scoped>
 .stock-table-container {

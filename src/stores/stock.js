@@ -15,17 +15,13 @@ export const useStockStore = defineStore('stockStore', {
 
     getters: {
         getStockCount: (state) => state.stockList.length,
-        getLowStockProducts: (state) => state.stockList.filter((product) => 
-            product.stock_quantity > 0 && 
-            product.stock_quantity <= product.min_stock
-        ),
-        getOutOfStockProducts: (state) => state.stockList.filter((product) => 
-            product.stock_quantity === 0
-        ),
-        getTotalStockValue: (state) => state.stockList.reduce((total, product) => {
-            const value = (product.stock_quantity || 0) * (parseFloat(product.purchase_price) || 0);
-            return total + value;
-        }, 0),
+        getLowStockProducts: (state) => state.stockList.filter((product) => product.stock_quantity > 0 && product.stock_quantity <= product.min_stock),
+        getOutOfStockProducts: (state) => state.stockList.filter((product) => product.stock_quantity === 0),
+        getTotalStockValue: (state) =>
+            state.stockList.reduce((total, product) => {
+                const value = (product.stock_quantity || 0) * (parseFloat(product.purchase_price) || 0);
+                return total + value;
+            }, 0),
         findProductStockById: (state) => (id) => state.stockList.find((product) => product.id === id)
     },
 
@@ -56,7 +52,7 @@ export const useStockStore = defineStore('stockStore', {
 
         // Update local stock after a stock movement
         updateProductStock(productId, newQuantity) {
-            const productIndex = this.stockList.findIndex(product => product.id === productId);
+            const productIndex = this.stockList.findIndex((product) => product.id === productId);
             if (productIndex !== -1) {
                 this.stockList[productIndex].stock_quantity = newQuantity;
                 cache.setItem('stockList', this.stockList);

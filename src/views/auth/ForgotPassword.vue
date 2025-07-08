@@ -21,9 +21,9 @@ const errorMessage = ref('');
 
 // Reglas de validación
 const rules = {
-    emailValue: { 
-        required: helpers.withMessage('El correo electrónico es requerido', required), 
-        email: helpers.withMessage('Ingrese un correo electrónico válido', email) 
+    emailValue: {
+        required: helpers.withMessage('El correo electrónico es requerido', required),
+        email: helpers.withMessage('Ingrese un correo electrónico válido', email)
     }
 };
 
@@ -98,14 +98,7 @@ const goToLogin = () => {
                         <span class="p-input-icon-left w-full">
                             <IconField>
                                 <InputIcon class="pi pi-envelope" />
-                                <InputText 
-                                    id="email" 
-                                    v-model="emailValue" 
-                                    type="email" 
-                                    class="w-full" 
-                                    :class="{'p-invalid': v$.emailValue.$invalid && v$.emailValue.$dirty}" 
-                                    placeholder="Ingresa tu correo electrónico" 
-                                />
+                                <InputText id="email" v-model="emailValue" type="email" class="w-full" :class="{ 'p-invalid': v$.emailValue.$invalid && v$.emailValue.$dirty }" placeholder="Ingresa tu correo electrónico" />
                             </IconField>
                         </span>
                         <small v-if="v$.emailValue.$invalid && v$.emailValue.$dirty" class="p-error block mt-1">
@@ -114,12 +107,7 @@ const goToLogin = () => {
                     </div>
 
                     <div class="form-actions">
-                        <Button 
-                            type="submit" 
-                            class="p-button-primary w-full mb-4" 
-                            :loading="loading"
-                            :disabled="loading"
-                        >
+                        <Button type="submit" class="p-button-primary w-full mb-4" :loading="loading" :disabled="loading">
                             <template #loading>
                                 <i class="pi pi-spin pi-spinner mr-2"></i>
                                 <span>Enviando...</span>
@@ -229,7 +217,7 @@ const goToLogin = () => {
     cursor: pointer;
     transition: color 0.2s ease;
     font-size: 0.9375rem;
-    
+
     &:hover {
         color: var(--primary-600, #4338ca);
         text-decoration: underline;

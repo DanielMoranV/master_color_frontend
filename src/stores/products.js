@@ -94,13 +94,13 @@ export const useProductsStore = defineStore('productsStore', {
                 const processed = handleProcessSuccess(response, this);
                 this.product = processed.data.product || processed.data;
                 const updatedProduct = processed.data.product || processed.data;
-                
+
                 // Actualizar el producto en la lista
-                const index = this.productsList.findIndex(product => product.id === id);
+                const index = this.productsList.findIndex((product) => product.id === id);
                 if (index !== -1) {
                     this.productsList[index] = updatedProduct;
                 }
-                
+
                 cache.setItem('product', this.product);
                 cache.setItem('productsList', this.productsList);
                 this.success = true;
@@ -121,16 +121,16 @@ export const useProductsStore = defineStore('productsStore', {
             try {
                 const response = await productsApi.deleteProduct(id);
                 const processed = handleProcessSuccess(response, this);
-                
+
                 // Eliminar el producto de la lista
-                this.productsList = this.productsList.filter(product => product.id !== id);
-                
+                this.productsList = this.productsList.filter((product) => product.id !== id);
+
                 // Limpiar el producto seleccionado si es el mismo que se eliminó
                 if (this.product && this.product.id === id) {
                     this.product = null;
                     cache.removeItem('product');
                 }
-                
+
                 cache.setItem('productsList', this.productsList);
                 this.success = true;
                 this.message = 'Producto eliminado exitosamente';

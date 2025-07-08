@@ -1,206 +1,3 @@
-<template>
-    <div class="compact-form">
-        <form @submit.prevent="handleSubmit">
-            <!-- Información Básica -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h3 class="section-title">
-                        <i class="pi pi-info-circle"></i>
-                        Información Básica
-                    </h3>
-                </div>
-
-                <div class="form-grid">
-                    <!-- Fila 1: Nombre y SKU -->
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="name" class="field-label">Nombre *</label>
-                            <InputText id="name" v-model="formData.name" :class="{ 'p-invalid': errors.name }" placeholder="Nombre del producto" class="compact-input" />
-                            <small v-if="errors.name" class="p-error">{{ errors.name }}</small>
-                        </div>
-                        <div class="form-field">
-                            <label for="sku" class="field-label">SKU *</label>
-                            <InputText id="sku" v-model="formData.sku" :class="{ 'p-invalid': errors.sku }" placeholder="SKU único" class="compact-input" />
-                            <small v-if="errors.sku" class="p-error">{{ errors.sku }}</small>
-                        </div>
-                    </div>
-
-                    <!-- Fila 2: Código de barras y Marca -->
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="barcode" class="field-label">Código de barras *</label>
-                            <InputText id="barcode" v-model="formData.barcode" :class="{ 'p-invalid': errors.barcode }" placeholder="Código de barras" class="compact-input" />
-                            <small v-if="errors.barcode" class="p-error">{{ errors.barcode }}</small>
-                        </div>
-                        <div class="form-field">
-                            <label for="brand" class="field-label">Marca</label>
-                            <InputText id="brand" v-model="formData.brand" placeholder="Marca del producto" class="compact-input" />
-                        </div>
-                    </div>
-
-                    <!-- Fila 3: Categoría y Presentación -->
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="category" class="field-label">Categoría</label>
-                            <Select id="category" v-model="formData.category" :options="categoriesOptions" optionLabel="label" optionValue="value" placeholder="Categoría del producto" class="compact-input" />
-                        </div>
-                        <div class="form-field">
-                            <label for="presentation" class="field-label">Presentación</label>
-                            <InputText id="presentation" v-model="formData.presentation" placeholder="Presentación del producto" class="compact-input" />
-                        </div>
-                    </div>
-
-                    <!-- Fila 4: Unidad y Descripción -->
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="unidad" class="field-label">Unidad *</label>
-                            <Select id="unidad" v-model="formData.unidad" :options="unidadOptions" optionLabel="label" optionValue="value" :class="{ 'p-invalid': errors.unidad }" placeholder="Selecciona unidad" class="compact-input" />
-                            <small v-if="errors.unidad" class="p-error">{{ errors.unidad }}</small>
-                        </div>
-                        <div class="form-field">
-                            <label for="description" class="field-label">Descripción</label>
-                            <InputText id="description" v-model="formData.description" placeholder="Descripción del producto" class="compact-input" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Imagen del Producto -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h3 class="section-title">
-                        <i class="pi pi-image"></i>
-                        Imagen del Producto
-                    </h3>
-                </div>
-
-                <div class="form-grid">
-                    <div class="form-row image-upload-row">
-                        <div class="form-field image-field">
-                            <label class="field-label">Seleccionar Imagen</label>
-                            <FileUpload mode="basic" :choose-label="selectedImage ? 'Cambiar imagen' : 'Seleccionar imagen'" accept="image/*" :max-file-size="5000000" @select="onImageSelect" @clear="onImageClear" class="compact-upload" />
-                            <small class="upload-hint">Formatos: JPG, PNG, GIF. Máximo 5MB</small>
-                        </div>
-                        <div class="form-field image-preview-field" v-if="imagePreview">
-                            <label class="field-label">Vista previa</label>
-                            <div class="image-preview">
-                                <img :src="imagePreview" alt="Vista previa" class="preview-image" />
-                                <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-sm remove-image-btn" @click="removeImage" type="button" v-tooltip="'Eliminar imagen'" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Precios -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h3 class="section-title">
-                        <i class="pi pi-dollar"></i>
-                        Gestión de Precios
-                    </h3>
-                </div>
-
-                <div class="form-grid">
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="purchase_price" class="field-label">Precio de Compra *</label>
-                            <InputNumber
-                                id="purchase_price"
-                                v-model="formData.purchase_price"
-                                :class="{ 'p-invalid': errors.purchase_price }"
-                                placeholder="0.00"
-                                mode="currency"
-                                currency="PEN"
-                                locale="es-PE"
-                                :min="0"
-                                :max-fraction-digits="2"
-                                class="compact-input"
-                            />
-                            <small v-if="errors.purchase_price" class="p-error">{{ errors.purchase_price }}</small>
-                        </div>
-                        <div class="form-field">
-                            <label for="sale_price" class="field-label">Precio de Venta *</label>
-                            <InputNumber
-                                id="sale_price"
-                                v-model="formData.sale_price"
-                                :class="{ 'p-invalid': errors.sale_price }"
-                                placeholder="0.00"
-                                mode="currency"
-                                currency="PEN"
-                                locale="es-PE"
-                                :min="0"
-                                :max-fraction-digits="2"
-                                class="compact-input"
-                            />
-                            <small v-if="errors.sale_price" class="p-error">{{ errors.sale_price }}</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Gestión de Stock -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h3 class="section-title">
-                        <i class="pi pi-box"></i>
-                        Gestión de Stock
-                    </h3>
-                </div>
-
-                <div class="form-grid">
-                    <!-- Fila única con 3 columnas -->
-                    <div class="form-row stock-row">
-                        <div class="form-field">
-                            <label for="quantity" class="field-label">Cantidad Inicial</label>
-                            <InputNumber id="quantity" v-model="formData.quantity" placeholder="0" :min="0" :max-fraction-digits="0" class="compact-input" :disabled="isEdit" />
-                            <small v-if="isEdit" class="edit-note">Solo editable al crear el producto</small>
-                        </div>
-                        <div class="form-field">
-                            <label for="min_stock" class="field-label">Stock Mínimo</label>
-                            <InputNumber id="min_stock" v-model="formData.min_stock" placeholder="0" :min="0" :max-fraction-digits="0" class="compact-input" />
-                        </div>
-                        <div class="form-field">
-                            <label for="max_stock" class="field-label">Stock Máximo</label>
-                            <InputNumber id="max_stock" v-model="formData.max_stock" placeholder="0" :min="0" :max-fraction-digits="0" class="compact-input" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Estado del Producto -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h3 class="section-title">
-                        <i class="pi pi-cog"></i>
-                        Configuración
-                    </h3>
-                </div>
-
-                <div class="form-grid">
-                    <div class="form-row">
-                        <div class="form-field status-field">
-                            <label class="field-label">Estado del Producto</label>
-                            <div class="status-toggle">
-                                <Checkbox id="is_active" v-model="formData.is_active" :binary="true" class="mr-2" />
-                                <label for="is_active" class="status-label">
-                                    {{ formData.is_active ? 'Producto activo' : 'Producto inactivo' }}
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Botones de acción -->
-            <div class="form-actions">
-                <Button label="Cancelar" icon="pi pi-times" class="p-button-text" @click="$emit('cancel')" type="button" />
-                <Button :label="isEdit ? 'Actualizar' : 'Crear'" :icon="isEdit ? 'pi pi-check' : 'pi pi-plus'" type="submit" :loading="loading" />
-            </div>
-        </form>
-    </div>
-</template>
-
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
 
@@ -418,6 +215,209 @@ const handleSubmit = () => {
     }
 };
 </script>
+
+<template>
+    <div class="compact-form">
+        <form @submit.prevent="handleSubmit">
+            <!-- Información Básica -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="pi pi-info-circle"></i>
+                        Información Básica
+                    </h3>
+                </div>
+
+                <div class="form-grid">
+                    <!-- Fila 1: Nombre y SKU -->
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="name" class="field-label">Nombre *</label>
+                            <InputText id="name" v-model="formData.name" :class="{ 'p-invalid': errors.name }" placeholder="Nombre del producto" class="compact-input" />
+                            <small v-if="errors.name" class="p-error">{{ errors.name }}</small>
+                        </div>
+                        <div class="form-field">
+                            <label for="sku" class="field-label">SKU *</label>
+                            <InputText id="sku" v-model="formData.sku" :class="{ 'p-invalid': errors.sku }" placeholder="SKU único" class="compact-input" />
+                            <small v-if="errors.sku" class="p-error">{{ errors.sku }}</small>
+                        </div>
+                    </div>
+
+                    <!-- Fila 2: Código de barras y Marca -->
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="barcode" class="field-label">Código de barras *</label>
+                            <InputText id="barcode" v-model="formData.barcode" :class="{ 'p-invalid': errors.barcode }" placeholder="Código de barras" class="compact-input" />
+                            <small v-if="errors.barcode" class="p-error">{{ errors.barcode }}</small>
+                        </div>
+                        <div class="form-field">
+                            <label for="brand" class="field-label">Marca</label>
+                            <InputText id="brand" v-model="formData.brand" placeholder="Marca del producto" class="compact-input" />
+                        </div>
+                    </div>
+
+                    <!-- Fila 3: Categoría y Presentación -->
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="category" class="field-label">Categoría</label>
+                            <Select id="category" v-model="formData.category" :options="categoriesOptions" optionLabel="label" optionValue="value" placeholder="Categoría del producto" class="compact-input" />
+                        </div>
+                        <div class="form-field">
+                            <label for="presentation" class="field-label">Presentación</label>
+                            <InputText id="presentation" v-model="formData.presentation" placeholder="Presentación del producto" class="compact-input" />
+                        </div>
+                    </div>
+
+                    <!-- Fila 4: Unidad y Descripción -->
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="unidad" class="field-label">Unidad *</label>
+                            <Select id="unidad" v-model="formData.unidad" :options="unidadOptions" optionLabel="label" optionValue="value" :class="{ 'p-invalid': errors.unidad }" placeholder="Selecciona unidad" class="compact-input" />
+                            <small v-if="errors.unidad" class="p-error">{{ errors.unidad }}</small>
+                        </div>
+                        <div class="form-field">
+                            <label for="description" class="field-label">Descripción</label>
+                            <InputText id="description" v-model="formData.description" placeholder="Descripción del producto" class="compact-input" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Imagen del Producto -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="pi pi-image"></i>
+                        Imagen del Producto
+                    </h3>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-row image-upload-row">
+                        <div class="form-field image-field">
+                            <label class="field-label">Seleccionar Imagen</label>
+                            <FileUpload mode="basic" :choose-label="selectedImage ? 'Cambiar imagen' : 'Seleccionar imagen'" accept="image/*" :max-file-size="5000000" @select="onImageSelect" @clear="onImageClear" class="compact-upload" />
+                            <small class="upload-hint">Formatos: JPG, PNG, GIF. Máximo 5MB</small>
+                        </div>
+                        <div class="form-field image-preview-field" v-if="imagePreview">
+                            <label class="field-label">Vista previa</label>
+                            <div class="image-preview">
+                                <img :src="imagePreview" alt="Vista previa" class="preview-image" />
+                                <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-sm remove-image-btn" @click="removeImage" type="button" v-tooltip="'Eliminar imagen'" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Precios -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="pi pi-dollar"></i>
+                        Gestión de Precios
+                    </h3>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="purchase_price" class="field-label">Precio de Compra *</label>
+                            <InputNumber
+                                id="purchase_price"
+                                v-model="formData.purchase_price"
+                                :class="{ 'p-invalid': errors.purchase_price }"
+                                placeholder="0.00"
+                                mode="currency"
+                                currency="PEN"
+                                locale="es-PE"
+                                :min="0"
+                                :max-fraction-digits="2"
+                                class="compact-input"
+                            />
+                            <small v-if="errors.purchase_price" class="p-error">{{ errors.purchase_price }}</small>
+                        </div>
+                        <div class="form-field">
+                            <label for="sale_price" class="field-label">Precio de Venta *</label>
+                            <InputNumber
+                                id="sale_price"
+                                v-model="formData.sale_price"
+                                :class="{ 'p-invalid': errors.sale_price }"
+                                placeholder="0.00"
+                                mode="currency"
+                                currency="PEN"
+                                locale="es-PE"
+                                :min="0"
+                                :max-fraction-digits="2"
+                                class="compact-input"
+                            />
+                            <small v-if="errors.sale_price" class="p-error">{{ errors.sale_price }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestión de Stock -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="pi pi-box"></i>
+                        Gestión de Stock
+                    </h3>
+                </div>
+
+                <div class="form-grid">
+                    <!-- Fila única con 3 columnas -->
+                    <div class="form-row stock-row">
+                        <div class="form-field">
+                            <label for="quantity" class="field-label">Cantidad Inicial</label>
+                            <InputNumber id="quantity" v-model="formData.quantity" placeholder="0" :min="0" :max-fraction-digits="0" class="compact-input" :disabled="isEdit" />
+                            <small v-if="isEdit" class="edit-note">Solo editable al crear el producto</small>
+                        </div>
+                        <div class="form-field">
+                            <label for="min_stock" class="field-label">Stock Mínimo</label>
+                            <InputNumber id="min_stock" v-model="formData.min_stock" placeholder="0" :min="0" :max-fraction-digits="0" class="compact-input" />
+                        </div>
+                        <div class="form-field">
+                            <label for="max_stock" class="field-label">Stock Máximo</label>
+                            <InputNumber id="max_stock" v-model="formData.max_stock" placeholder="0" :min="0" :max-fraction-digits="0" class="compact-input" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estado del Producto -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="pi pi-cog"></i>
+                        Configuración
+                    </h3>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-row">
+                        <div class="form-field status-field">
+                            <label class="field-label">Estado del Producto</label>
+                            <div class="status-toggle">
+                                <Checkbox id="is_active" v-model="formData.is_active" :binary="true" class="mr-2" />
+                                <label for="is_active" class="status-label">
+                                    {{ formData.is_active ? 'Producto activo' : 'Producto inactivo' }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="form-actions">
+                <Button label="Cancelar" icon="pi pi-times" class="p-button-text" @click="$emit('cancel')" type="button" />
+                <Button :label="isEdit ? 'Actualizar' : 'Crear'" :icon="isEdit ? 'pi pi-check' : 'pi pi-plus'" type="submit" :loading="loading" />
+            </div>
+        </form>
+    </div>
+</template>
 
 <style scoped>
 .compact-form {

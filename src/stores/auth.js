@@ -82,19 +82,54 @@ export const useAuthStore = defineStore('authStore', {
             try {
                 // Usar la interfaz unificada authApi con el tipo de usuario almacenado
                 await authApi.logout(this.userType);
-
-                this.token = null;
-                this.user = null;
-                cache.removeItem('token');
-                cache.removeItem('currentUser');
-                cache.removeItem('userType');
-                cache.removeItem('userRole');
             } catch (error) {
-                this.error = error;
-                handleProcessError(error, this);
-            } finally {
-                this.loading = false;
+                // Log del error pero no impedir el logout local
+                console.error('Error en logout del servidor:', error);
             }
+
+            // Limpiar el estado local independientemente del resultado del servidor
+            this.clearAllData();
+
+            this.loading = false;
+        },
+
+        // Nuevo método para limpiar todos los datos
+        clearAllData() {
+            // Limpiar estado del store
+            this.token = null;
+            this.user = null;
+            this.userType = 'client'; // Resetear a valor por defecto
+            this.userRole = 'client';
+            this.expiresAt = null;
+            this.error = null;
+            this.success = false;
+            this.message = '';
+            this.validationErrors = [];
+
+            // Limpiar timer de refresh
+            if (this.refreshTimer) {
+                clearInterval(this.refreshTimer);
+                this.refreshTimer = null;
+            }
+
+            // Limpiar cache básico de auth
+            cache.removeItem('token');
+            cache.removeItem('currentUser');
+            cache.removeItem('userType');
+            cache.removeItem('userRole');
+            cache.removeItem('expiresAt');
+
+            // Limpiar datos específicos de cliente/órdenes
+            localStorage.removeItem('checkoutCart');
+            localStorage.removeItem('cart');
+            localStorage.removeItem('pendingCart');
+            localStorage.removeItem('pendingOrderId');
+            localStorage.removeItem('currentOrderId');
+
+            // Limpiar cualquier configuración de sesión
+            sessionStorage.clear();
+
+            console.log('✅ Logout completado - todos los datos limpiados');
         },
         async refresh() {
             this.loading = true;
@@ -199,6 +234,7 @@ export const useAuthStore = defineStore('authStore', {
             }
         },
 
+        // Método para limpiar datos de auth pero mantener userType
         clearAuthData() {
             this.user = null;
             this.token = null;

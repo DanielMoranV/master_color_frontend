@@ -1,9 +1,10 @@
 <script setup>
 import { productsApi } from '@/api/index';
+import { useCart } from '@/composables/useCart';
 import { useAuthStore } from '@/stores/auth';
 import { useProductsStore } from '@/stores/products';
 import { useToast } from 'primevue/usetoast';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 // Router setup
@@ -18,21 +19,24 @@ const authStore = useAuthStore();
 // Products setup
 const productsStore = useProductsStore();
 
+// Cart setup
+const { addToCart: addProductToCart, proceedToCheckout, cartStore, restorePendingCart } = useCart();
+
 // State
 const searchQuery = ref('');
 const selectedCategory = ref(null);
 const sortOption = ref('name-asc'); // Default sorting
 const cartVisible = ref(false);
-const cartItems = ref([]);
 const loading = ref(false);
 const isSmallScreen = ref(false);
+const userMenu = ref();
+const forceReactivity = ref(0);
 
 // Responsive detection
 const checkScreenSize = () => {
     isSmallScreen.value = window.innerWidth < 640;
 };
 
-// Categories - these will be populated dynamically from loaded products
 const categories = ref([
     { id: 1, name: 'impresoras', label: 'Impresoras', icon: 'pi-print' },
     { id: 2, name: 'tintas', label: 'Tintas', icon: 'pi-palette' },
@@ -44,8 +48,8 @@ const categories = ref([
 
 // Dynamic categories computed from loaded products
 const availableCategories = computed(() => {
-    const productCategories = [...new Set((productsStore.productsList || []).map(p => p.category).filter(Boolean))];
-    return categories.value.filter(cat => productCategories.includes(cat.name));
+    const productCategories = [...new Set((productsStore.productsList || []).map((p) => p.category).filter(Boolean))];
+    return categories.value.filter((cat) => productCategories.includes(cat.name));
 });
 
 // Sort options
@@ -62,12 +66,10 @@ const sortOptions = [
 const loadProducts = async () => {
     try {
         loading.value = true;
-        // Use public products endpoint for store view
         const response = await productsApi.getPublicProducts();
-        
+
         if (response.data) {
-            // Transform backend data to match frontend format
-            const transformedProducts = (response.data.products || response.data.data || response.data || []).map(product => ({
+            const transformedProducts = (response.data.products || response.data.data || response.data || []).map((product) => ({
                 id: product.id,
                 name: product.name,
                 category: product.category,
@@ -76,25 +78,36 @@ const loadProducts = async () => {
                 image: product.image_url || `https://placehold.co/300x200/4F46E5/FFFFFF?text=${encodeURIComponent(product.name)}`,
                 inStock: (product.stock_quantity || 0) > 0,
                 description: product.description || '',
-                brand: product.brand || '',
+                brand: product.brand || 'Sin marca',
+                code: product.sku || product.code || `PRD-${product.id}`,
                 sku: product.sku || '',
                 stockQuantity: product.stock_quantity || 0,
                 minStock: product.min_stock || 5,
                 maxStock: product.max_stock || 100,
                 presentation: product.presentation || '',
-                unidad: product.unidad || ''
+                unidad: product.unidad || '',
+                stock: {
+                    quantity: product.stock_quantity || 0,
+                    sale_price: parseFloat(product.sale_price || product.price || 0),
+                    regular_price: parseFloat(product.purchase_price || product.sale_price || 0),
+                    min_stock: product.min_stock || 5,
+                    max_stock: product.max_stock || 100
+                }
             }));
-            
+
             productsStore.productsList = transformedProducts;
-            
-            console.log('Products loaded:', transformedProducts.length);
+        } else {
+            productsStore.productsList = [];
         }
     } catch (error) {
         console.error('Error loading products:', error);
+
+        productsStore.productsList = [];
+
         toast.add({
             severity: 'error',
-            summary: 'Error',
-            detail: 'No se pudieron cargar los productos',
+            summary: 'Error al cargar productos',
+            detail: 'No se pudieron cargar los productos. Intente nuevamente.',
             life: 5000
         });
     } finally {
@@ -106,26 +119,24 @@ const loadProducts = async () => {
 const filteredProducts = computed(() => {
     let result = productsStore.productsList || [];
 
-    // Filter by search query - comprehensive search
     if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase().trim();
-        result = result.filter((product) => 
-            (product.name || '').toLowerCase().includes(query) ||
-            (product.category || '').toLowerCase().includes(query) ||
-            (product.description || '').toLowerCase().includes(query) ||
-            (product.brand || '').toLowerCase().includes(query) ||
-            (product.sku || '').toLowerCase().includes(query) ||
-            (product.presentation || '').toLowerCase().includes(query) ||
-            (product.unidad || '').toLowerCase().includes(query)
+        result = result.filter(
+            (product) =>
+                (product.name || '').toLowerCase().includes(query) ||
+                (product.category || '').toLowerCase().includes(query) ||
+                (product.description || '').toLowerCase().includes(query) ||
+                (product.brand || '').toLowerCase().includes(query) ||
+                (product.sku || '').toLowerCase().includes(query) ||
+                (product.presentation || '').toLowerCase().includes(query) ||
+                (product.unidad || '').toLowerCase().includes(query)
         );
     }
 
-    // Filter by category
     if (selectedCategory.value) {
         result = result.filter((product) => product.category === selectedCategory.value.name);
     }
 
-    // Sort products
     switch (sortOption.value) {
         case 'name-asc':
             result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -146,7 +157,6 @@ const filteredProducts = computed(() => {
             result.sort((a, b) => (b.stockQuantity || 0) - (a.stockQuantity || 0));
             break;
         default:
-            // Default to name ascending
             result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
 
@@ -154,30 +164,68 @@ const filteredProducts = computed(() => {
 });
 
 const cartTotal = computed(() => {
-    return cartItems.value.reduce((total, item) => {
-        return total + item.price * item.quantity;
-    }, 0);
+    forceReactivity.value;
+    return cartStore.totalPrice;
 });
 
 const cartItemsCount = computed(() => {
-    return cartItems.value.reduce((total, item) => total + item.quantity, 0);
+    forceReactivity.value;
+    return cartStore.totalItems;
 });
 
 const totalSavings = computed(() => {
-    return cartItems.value.reduce((total, item) => {
-        const savings = (item.originalPrice - item.price) * item.quantity;
-        return total + savings;
-    }, 0);
+    forceReactivity.value;
+    return cartStore.totalSavings;
+});
+
+const cartItems = computed(() => {
+    forceReactivity.value;
+    return cartStore.cartItems || [];
 });
 
 // Auth computed properties
 const isClientAuthenticated = computed(() => {
-    return authStore.isAuthenticated && authStore.userRole === 'client';
+    return authStore.isAuthenticated && (authStore.userRole === 'client' || authStore.userType === 'client');
 });
 
 const currentUserName = computed(() => {
     return authStore.currentUser?.name || 'Usuario';
 });
+
+// User menu items
+const userMenuItems = ref([
+    {
+        label: 'Mi Perfil',
+        icon: 'pi pi-user',
+        command: () => {
+            router.push('/profile');
+        }
+    },
+    {
+        label: 'Mis Direcciones',
+        icon: 'pi pi-map-marker',
+        command: () => {
+            router.push('/addresses');
+        }
+    },
+    {
+        label: 'Mis Pedidos',
+        icon: 'pi pi-shopping-bag',
+        command: () => {
+            router.push('/orders');
+        }
+    },
+    {
+        separator: true
+    },
+    {
+        label: 'Cerrar Sesión',
+        icon: 'pi pi-sign-out',
+        command: () => {
+            logout();
+        }
+    }
+]);
 
 // Methods
 const selectCategory = (category) => {
@@ -198,12 +246,12 @@ const toggleCart = () => {
     cartVisible.value = !cartVisible.value;
 };
 
-const addToCart = (product) => {
-    if (!product.inStock) {
+const addToCart = async (product) => {
+    if (!product.stock || product.stock.quantity <= 0) {
         toast.add({
             severity: 'warn',
-            summary: 'Product Unavailable',
-            detail: `${product.name} is currently out of stock`,
+            summary: 'Producto No Disponible',
+            detail: `${product.name} está fuera de stock`,
             life: 3000
         });
         return;
@@ -211,96 +259,46 @@ const addToCart = (product) => {
 
     loading.value = true;
 
-    // Simulate API call delay
-    setTimeout(() => {
-        const existingItem = cartItems.value.find((item) => item.id === product.id);
-
-        if (existingItem) {
-            existingItem.quantity += 1;
-        } else {
-            cartItems.value.push({
-                ...product,
-                quantity: 1
-            });
+    try {
+        const success = await addProductToCart(product);
+        if (success) {
+            forceReactivity.value++;
         }
-
-        toast.add({
-            severity: 'success',
-            summary: 'Added to Cart',
-            detail: `${product.name} added to your cart`,
-            life: 3000
-        });
-
+    } catch (error) {
+        console.error('Error adding to cart:', error);
+    } finally {
         loading.value = false;
-    }, 300);
-};
-
-const removeFromCart = (index) => {
-    const removedItem = cartItems.value[index];
-    cartItems.value.splice(index, 1);
-
-    toast.add({
-        severity: 'info',
-        summary: 'Removed from Cart',
-        detail: `${removedItem.name} removed from your cart`,
-        life: 3000
-    });
-};
-
-const increaseQuantity = (index) => {
-    cartItems.value[index].quantity += 1;
-};
-
-const decreaseQuantity = (index) => {
-    if (cartItems.value[index].quantity > 1) {
-        cartItems.value[index].quantity -= 1;
-    } else {
-        removeFromCart(index);
     }
+};
+
+const removeFromCart = (productId) => {
+    cartStore.removeFromCart(productId);
+    forceReactivity.value++;
+};
+
+const increaseQuantity = (productId) => {
+    cartStore.increaseQuantity(productId);
+    forceReactivity.value++;
+};
+
+const decreaseQuantity = (productId) => {
+    cartStore.decreaseQuantity(productId);
+    forceReactivity.value++;
 };
 
 const clearCart = () => {
-    cartItems.value = [];
+    cartStore.clearCart();
+    forceReactivity.value++;
     toast.add({
         severity: 'info',
-        summary: 'Cart Cleared',
-        detail: 'All items have been removed from your cart',
+        summary: 'Carrito Limpiado',
+        detail: 'Todos los productos han sido removidos del carrito',
         life: 3000
     });
 };
 
-const checkout = () => {
-    // Check if user is authenticated as client
-    if (!isClientAuthenticated.value) {
-        // Save cart to localStorage for persistence
-        localStorage.setItem('pendingCart', JSON.stringify(cartItems.value));
-        
-        toast.add({
-            severity: 'info',
-            summary: 'Registro Requerido',
-            detail: 'Necesitas registrarte para continuar con la compra. Tu carrito se guardará.',
-            life: 5000
-        });
-        
-        // Redirect to registration with a flag to indicate checkout flow
-        router.push('/auth/register?checkout=true');
-        return;
-    }
-
-    // User is authenticated, redirect to orders view
-    // Save current cart to localStorage (will be processed in orders view)
-    localStorage.setItem('checkoutCart', JSON.stringify(cartItems.value));
-    
-    toast.add({
-        severity: 'success',
-        summary: 'Procesando Orden',
-        detail: 'Redirigiendo al proceso de compra...',
-        life: 3000
-    });
-    
-    // Close cart and redirect to orders view
-    cartVisible.value = false;
-    router.push('/orders');
+const checkout = async () => {
+    await proceedToCheckout();
 };
 
 const navigateToLogin = () => {
@@ -309,6 +307,10 @@ const navigateToLogin = () => {
 
 const navigateToRegister = () => {
     router.push('/auth/register');
+};
+
+const toggleUserMenu = (event) => {
+    userMenu.value.toggle(event);
 };
 
 const logout = async () => {
@@ -320,7 +322,6 @@ const logout = async () => {
             detail: 'Has cerrado sesión exitosamente',
             life: 3000
         });
-        // Refresh the page or redirect if needed
         router.push('/auth/login');
     } catch (error) {
         toast.add({
@@ -332,40 +333,36 @@ const logout = async () => {
     }
 };
 
-
-// Restore cart from localStorage
 const restoreCart = () => {
     try {
-        // Check for pending cart (from registration flow)
-        const pendingCart = localStorage.getItem('pendingCart');
-        if (pendingCart) {
-            cartItems.value = JSON.parse(pendingCart);
-            localStorage.removeItem('pendingCart');
-            
-            if (cartItems.value.length > 0) {
-                toast.add({
-                    severity: 'success',
-                    summary: 'Carrito Restaurado',
-                    detail: `Se restauraron ${cartItems.value.length} productos en tu carrito`,
-                    life: 4000
-                });
-            }
-        }
+        restorePendingCart();
     } catch (error) {
         console.error('Error restoring cart:', error);
     }
 };
 
+watch(
+    () => cartStore.items,
+    () => {
+        forceReactivity.value++;
+    },
+    { deep: true }
+);
+
+watch(
+    () => cartStore.totalItems,
+    () => {
+        forceReactivity.value++;
+    }
+);
+
 // Lifecycle hooks
 onMounted(async () => {
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
-    console.log(isClientAuthenticated.value);
-    
-    // Load products on component mount
+
+    cartStore.loadFromLocalStorage();
     await loadProducts();
-    
-    // Restore cart if there's a pending one
     restoreCart();
 });
 
@@ -410,27 +407,24 @@ onBeforeUnmount(() => {
 
                         <!-- Show user info and logout when authenticated as client -->
                         <template v-else>
-                            <!-- User info button -->
+                            <!-- User menu dropdown -->
                             <div class="relative">
+                                <Menu id="user_menu" ref="userMenu" :model="userMenuItems" :popup="true" class="user-menu" />
                                 <Button
                                     icon="pi pi-user"
                                     :label="isSmallScreen ? undefined : currentUserName"
                                     class="p-button-outlined p-button-lg shadow-md user-button"
                                     :class="{ 'p-button-icon-only': isSmallScreen }"
-                                    v-tooltip="isSmallScreen ? currentUserName : 'Usuario autenticado'"
+                                    @click="toggleUserMenu"
+                                    v-tooltip="isSmallScreen ? currentUserName : 'Menú de usuario'"
                                 />
-                            </div>
-
-                            <!-- Logout button -->
-                            <div class="relative">
-                                <Button icon="pi pi-sign-out" class="p-button-rounded p-button-danger p-button-lg shadow-md logout-button" @click="logout" v-tooltip="'Cerrar sesión'" />
                             </div>
                         </template>
 
                         <!-- Cart button -->
                         <div class="relative">
                             <OverlayBadge :value="cartItemsCount" severity="danger" class="inline-flex">
-                                <Button icon="pi pi-shopping-cart" class="p-button-rounded p-button-lg shadow-md" :class="cartItems.length > 0 ? 'bg-green-600 border-green-600 hover:bg-green-700' : ''" @click="toggleCart" />
+                                <Button icon="pi pi-shopping-cart" class="p-button-rounded p-button-lg shadow-md" :class="cartItemsCount > 0 ? 'bg-green-600 border-green-600 hover:bg-green-700' : ''" @click="toggleCart" />
                             </OverlayBadge>
                         </div>
                     </div>
@@ -446,7 +440,13 @@ onBeforeUnmount(() => {
                     <div class="bg-white rounded-lg shadow-sm p-3 sm:p-4 sticky top-[4.5rem] md:top-24">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-semibold text-gray-800">Categorías</h2>
-                            <Button v-if="selectedCategory || searchQuery || sortOption !== 'name-asc'" v-tooltip="'Limpiar filtros'" icon="pi pi-filter-slash" class="p-button-rounded p-button-outlined p-button-sm p-button-danger" @click="clearFilters" />
+                            <Button
+                                v-if="selectedCategory || searchQuery || sortOption !== 'name-asc'"
+                                v-tooltip="'Limpiar filtros'"
+                                icon="pi pi-filter-slash"
+                                class="p-button-rounded p-button-outlined p-button-sm p-button-danger"
+                                @click="clearFilters"
+                            />
                         </div>
 
                         <div class="flex flex-wrap md:flex-col md:space-y-2 gap-2 md:gap-0">
@@ -468,7 +468,7 @@ onBeforeUnmount(() => {
                             <div v-if="sortOption !== 'name-asc'" class="mt-2">
                                 <span class="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
                                     <i class="pi pi-sort-alt mr-1"></i>
-                                    {{ sortOptions.find(opt => opt.value === sortOption)?.label }}
+                                    {{ sortOptions.find((opt) => opt.value === sortOption)?.label }}
                                 </span>
                             </div>
                         </div>
@@ -485,14 +485,7 @@ onBeforeUnmount(() => {
                                 <span class="text-sm font-medium text-gray-700">Ordenar por:</span>
                             </div>
                             <div class="w-full sm:w-auto">
-                                <Select 
-                                    v-model="sortOption" 
-                                    :options="sortOptions" 
-                                    optionLabel="label" 
-                                    optionValue="value" 
-                                    placeholder="Seleccionar orden" 
-                                    class="w-full sm:w-64 sort-select"
-                                />
+                                <Select v-model="sortOption" :options="sortOptions" optionLabel="label" optionValue="value" placeholder="Seleccionar orden" class="w-full sm:w-64 sort-select" />
                             </div>
                         </div>
                     </div>
@@ -550,7 +543,7 @@ onBeforeUnmount(() => {
                                         <i class="pi pi-box text-gray-500 text-sm"></i>
                                         <span class="text-sm text-gray-600 font-medium">Stock: {{ product.stockQuantity }}</span>
                                     </div>
-                                    
+
                                     <!-- Low stock warning -->
                                     <div v-if="product.inStock && product.stockQuantity <= (product.minStock || 5)" class="flex items-center">
                                         <span class="bg-orange-100 text-orange-800 text-xs font-medium px-2 py-1 rounded-full border border-orange-200">
@@ -586,7 +579,7 @@ onBeforeUnmount(() => {
         <!-- Shopping Cart Modal -->
         <Dialog v-model:visible="cartVisible" modal header="Carrito de compras" :style="{ width: '95vw', maxWidth: '600px' }" class="cart-dialog">
             <!-- Empty cart -->
-            <div v-if="cartItems.length === 0" class="text-center py-12">
+            <div v-if="cartStore.isCartEmpty" class="text-center py-12">
                 <i class="pi pi-shopping-cart text-6xl text-gray-300 mb-4"></i>
                 <h3 class="text-xl text-gray-500 mb-2">Tu carrito está vacío</h3>
                 <p class="text-gray-400">¡Añade algunos productos de impresión para comenzar!</p>
@@ -595,7 +588,7 @@ onBeforeUnmount(() => {
             <!-- Cart items -->
             <div v-else>
                 <div class="max-h-[60vh] sm:max-h-96 overflow-y-auto mb-4">
-                    <div v-for="(item, index) in cartItems" :key="index" class="flex flex-wrap sm:flex-nowrap items-center p-3 sm:p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors gap-2">
+                    <div v-for="(item, index) in cartItems" :key="item.id || index" class="flex flex-wrap sm:flex-nowrap items-center p-3 sm:p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors gap-2">
                         <!-- Product image -->
                         <img :src="item.image" :alt="item.name" class="w-12 h-12 sm:w-16 sm:h-16 object-contain bg-gray-50 rounded-lg flex-shrink-0" />
 
@@ -611,15 +604,15 @@ onBeforeUnmount(() => {
 
                         <!-- Quantity controls -->
                         <div class="flex items-center space-x-1 sm:space-x-2 order-3 sm:order-none w-auto">
-                            <Button icon="pi pi-minus" class="p-button-rounded p-button-text p-button-sm" @click="decreaseQuantity(index)" />
+                            <Button icon="pi pi-minus" class="p-button-rounded p-button-text p-button-sm" @click="decreaseQuantity(item.id)" />
                             <span class="w-8 text-center font-medium">{{ item.quantity }}</span>
-                            <Button icon="pi pi-plus" class="p-button-rounded p-button-text p-button-sm" @click="increaseQuantity(index)" />
+                            <Button icon="pi pi-plus" class="p-button-rounded p-button-text p-button-sm" @click="increaseQuantity(item.id)" />
                         </div>
 
                         <!-- Item total and remove -->
                         <div class="flex flex-col items-end ml-auto sm:ml-4 order-2 sm:order-none">
                             <span class="font-bold text-gray-800">S/ {{ ((item.price || 0) * (item.quantity || 0)).toFixed(2) }}</span>
-                            <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text p-button-sm mt-1" @click="removeFromCart(index)" />
+                            <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text p-button-sm mt-1" @click="removeFromCart(item.id)" />
                         </div>
                     </div>
                 </div>
@@ -823,14 +816,45 @@ onBeforeUnmount(() => {
     .bg-orange-100 {
         background-color: rgba(251, 146, 60, 0.2);
     }
-    
+
     .text-orange-800 {
         color: #fb923c;
     }
-    
+
     .border-orange-200 {
         border-color: rgba(251, 146, 60, 0.3);
     }
+}
+
+/* User menu styling */
+:deep(.user-menu .p-menu) {
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e5e7eb;
+    min-width: 180px;
+}
+
+:deep(.user-menu .p-menuitem-link) {
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+}
+
+:deep(.user-menu .p-menuitem-link:hover) {
+    background-color: #f3f4f6;
+}
+
+:deep(.user-menu .p-menuitem-icon) {
+    margin-right: 0.75rem;
+    color: #6b7280;
+}
+
+:deep(.user-menu .p-menuitem-text) {
+    font-weight: 500;
+}
+
+:deep(.user-menu .p-separator) {
+    margin: 0.5rem 0;
+    border-color: #e5e7eb;
 }
 
 /* Responsive adjustments */

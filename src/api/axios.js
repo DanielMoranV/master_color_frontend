@@ -7,7 +7,8 @@ const api = axios.create({
     timeout: 90000,
     headers: {
         'Content-Type': 'application/json',
-        Accept: 'application/json'
+        Accept: 'application/json',
+        'ngrok-skip-browser-warning': 'true'
     }
 });
 
@@ -19,7 +20,7 @@ api.interceptors.request.use(
         if (getToken) {
             config.headers.Authorization = 'Bearer ' + getToken;
         }
-        
+
         // Debug log para órdenes
         if (config.url && config.url.includes('/client/orders')) {
             console.log('🌐 API Request:', {
@@ -29,7 +30,7 @@ api.interceptors.request.use(
                 fullUrl: config.baseURL + config.url
             });
         }
-        
+
         return config;
     },
     (error) => {
@@ -43,7 +44,7 @@ api.interceptors.response.use(
         if (response.config.responseType === 'blob') {
             return response; // Devolver la respuesta completa para blobs
         }
-        
+
         // Debug log para órdenes
         if (response.config.url && response.config.url.includes('/client/orders')) {
             console.log('🌐 API Response:', {
@@ -52,7 +53,7 @@ api.interceptors.response.use(
                 data: response.data
             });
         }
-        
+
         // Si el backend ya responde con la estructura estándar, solo retorna response.data
         // Si algún endpoint no cumple, aquí puedes adaptarlo
         return response.data;
@@ -77,7 +78,26 @@ api.interceptors.response.use(
         if (error.response) {
             switch (error.response.status) {
                 case 401:
-                    errResponse.message = 'Credenciales incorrectas. Por favor, inténtelo nuevamente.';
+                    // Manejar token expirado o no válido
+                    if (error.config.url && !error.config.url.includes('/auth/login')) {
+                        // Si no es una petición de login, probablemente el token expiró
+                        console.log('🔐 Token expirado o inválido, limpiando sesión...');
+
+                        // Importar y usar el store de auth para hacer logout
+                        import('@/stores/auth').then(({ useAuthStore }) => {
+                            const authStore = useAuthStore();
+                            authStore.clearAllData();
+
+                            // Redirigir a login solo si no estamos ya en una página pública
+                            if (window.location.pathname !== '/' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+                                window.location.href = '/';
+                            }
+                        });
+
+                        errResponse.message = 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.';
+                    } else {
+                        errResponse.message = 'Credenciales incorrectas. Por favor, inténtelo nuevamente.';
+                    }
                     break;
                 case 403:
                     errResponse.message = 'Usuario deshabilitado o no registrado.';

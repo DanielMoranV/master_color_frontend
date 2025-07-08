@@ -31,14 +31,14 @@ const order = computed(() => {
         const currentOrder = ordersStore.getCurrentOrder;
         const orderFromList = ordersStore.getOrderById(props.orderId);
         const selectedOrder = currentOrder || orderFromList;
-        
+
         console.log('🔍 OrderDetailsModal: Computing order:', {
             orderId: props.orderId,
             currentOrder: currentOrder,
             orderFromList: orderFromList,
             selectedOrder: selectedOrder
         });
-        
+
         return selectedOrder;
     }
     return null;
@@ -51,7 +51,8 @@ const orderStatusInfo = computed(() => {
     return {
         label: ordersStore.getOrderStatusLabel(status),
         severity: ordersStore.getOrderStatusSeverity(status),
-        icon: getStatusIcon(status)
+        icon: ordersStore.getOrderStatusIcon(status),
+        description: ordersStore.getOrderStatusDescription(status)
     };
 });
 
@@ -68,15 +69,45 @@ const orderItems = computed(() => {
         console.log('🔍 OrderDetailsModal: No order available for items');
         return [];
     }
-    
-    const items = order.value.items || order.value.products || order.value.order_details || [];
-    console.log('🔍 OrderDetailsModal: Order items computed:', {
-        orderValue: order.value,
-        items: items,
-        itemsLength: items.length,
-        itemsKeys: Object.keys(order.value || {})
+
+    // Check different possible data structures
+    let items = [];
+
+    if (order.value.items && order.value.items.length > 0) {
+        items = order.value.items;
+        console.log('🔍 OrderDetailsModal: Using items array:', items);
+    } else if (order.value.products && order.value.products.length > 0) {
+        items = order.value.products;
+        console.log('🔍 OrderDetailsModal: Using products array:', items);
+    } else if (order.value.order_details && order.value.order_details.length > 0) {
+        // Map order_details to proper format
+        items = order.value.order_details.map((detail) => ({
+            id: detail.id,
+            name: detail.product?.name || 'Producto sin nombre',
+            description: detail.product?.description || '',
+            image: detail.product?.image || '/placeholder-product.png',
+            image_url: detail.product?.image_url || detail.product?.image || '/placeholder-product.png',
+            category: detail.product?.category || '',
+            sku: detail.product?.sku || '',
+            brand: detail.product?.brand || '',
+            quantity: detail.quantity || 1,
+            price: detail.unit_price || detail.price || 0,
+            unit_price: detail.unit_price || 0,
+            subtotal: detail.subtotal || 0,
+            product: detail.product,
+            // Keep original detail for reference
+            order_detail_id: detail.id,
+            product_id: detail.product_id
+        }));
+        console.log('🔍 OrderDetailsModal: Using order_details array, mapped to:', items);
+    }
+
+    console.log('🔍 OrderDetailsModal: Final orderItems:', {
+        source: order.value.order_details ? 'order_details' : order.value.products ? 'products' : 'items',
+        count: items.length,
+        items: items
     });
-    
+
     return items;
 });
 
@@ -201,6 +232,17 @@ const formatCurrency = (amount) => {
     return `S/ ${numericAmount.toFixed(2)}`;
 };
 
+const getStatusColor = (severity) => {
+    const colorMap = {
+        info: '#3b82f6',
+        success: '#10b981',
+        warning: '#f59e0b',
+        danger: '#ef4444',
+        secondary: '#6b7280'
+    };
+    return colorMap[severity] || '#6b7280';
+};
+
 const debugRefresh = async () => {
     console.log('🔧 Debug: Manual refresh triggered for order ID:', props.orderId);
     if (props.orderId) {
@@ -219,16 +261,16 @@ watch([isVisible, () => props.orderId], async ([visible, orderId]) => {
             currentOrder: ordersStore.getCurrentOrder,
             ordersCount: ordersStore.getOrders.length
         });
-        
+
         const result = await ordersStore.fetchOrderById(orderId);
         console.log('🔍 OrderDetailsModal: Fetch result:', result);
-        
+
         console.log('🔍 OrderDetailsModal: Store state after fetch:', {
             isLoading: ordersStore.isLoading,
             currentOrder: ordersStore.getCurrentOrder,
             error: ordersStore.getError
         });
-        
+
         console.log('🔍 OrderDetailsModal: Order from list:', ordersStore.getOrderById(orderId));
     }
 });
@@ -243,8 +285,28 @@ watch([isVisible, () => props.orderId], async ([visible, orderId]) => {
                     <h3 class="order-title">Orden #{{ order.id }}</h3>
                     <p class="order-date">{{ formatDate(order.created_at) }}</p>
                 </div>
-                <div class="order-status">
-                    <Tag :value="orderStatusInfo.label" :severity="orderStatusInfo.severity" :icon="orderStatusInfo.icon" class="status-tag" />
+                <div class="order-status-section">
+                    <div class="status-card">
+                        <div class="status-icon-wrapper">
+                            <i :class="orderStatusInfo.icon" :style="{ color: getStatusColor(orderStatusInfo.severity) }"></i>
+                        </div>
+                        <div class="status-content">
+                            <h4 class="status-title">{{ orderStatusInfo.label }}</h4>
+                            <p class="status-description">{{ orderStatusInfo.description }}</p>
+                            <div v-if="order.status === 'pendiente'" class="status-highlight success">
+                                <i class="pi pi-check-circle"></i>
+                                <span>Pago confirmado</span>
+                            </div>
+                            <div v-else-if="order.status === 'pendiente_pago'" class="status-highlight warning">
+                                <i class="pi pi-clock"></i>
+                                <span>Esperando pago</span>
+                            </div>
+                            <div v-else-if="order.status === 'enviado'" class="status-highlight info">
+                                <i class="pi pi-truck"></i>
+                                <span>En camino</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -275,7 +337,7 @@ watch([isVisible, () => props.orderId], async ([visible, orderId]) => {
                     Productos ({{ orderItems.length }})
                 </h4>
                 <!-- Debug info -->
-                <div v-if="orderItems.length === 0" class="debug-info" style="background: #fff3cd; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                <div v-if="orderItems.length === 0" class="debug-info" style="background: #fff3cd; padding: 1rem; border-radius: 8px; margin-bottom: 1rem">
                     <p><strong>Debug Info:</strong></p>
                     <p>Order ID: {{ order?.id }}</p>
                     <p>Order Keys: {{ order ? Object.keys(order).join(', ') : 'No order' }}</p>
@@ -284,7 +346,7 @@ watch([isVisible, () => props.orderId], async ([visible, orderId]) => {
                     <p>Order Details: {{ order?.order_details?.length || 0 }}</p>
                     <p>Is Loading: {{ ordersStore.isLoading }}</p>
                     <p>Has Error: {{ !!ordersStore.getError }}</p>
-                    <Button @click="debugRefresh" label="Debug Refresh" class="p-button-sm" style="margin-top: 0.5rem;" />
+                    <Button @click="debugRefresh" label="Debug Refresh" class="p-button-sm" style="margin-top: 0.5rem" />
                 </div>
                 <div class="products-list">
                     <div v-for="item in orderItems" :key="item.id" class="product-item">
@@ -299,17 +361,17 @@ watch([isVisible, () => props.orderId], async ([visible, orderId]) => {
                         </div>
                         <div class="product-quantity">
                             <span class="quantity-label">Cantidad:</span>
-                            <span class="quantity-value">{{ item.quantity || item.pivot?.quantity || 1 }}</span>
+                            <span class="quantity-value">{{ item.quantity || 1 }}</span>
                         </div>
                         <div class="product-pricing">
                             <div class="unit-price">
                                 <span class="price-label">Precio unitario:</span>
-                                <span class="price-value">{{ formatCurrency(item.price || item.pivot?.price) }}</span>
+                                <span class="price-value">{{ formatCurrency(item.unit_price || item.price || 0) }}</span>
                             </div>
                             <div class="total-price">
                                 <span class="total-label">Subtotal:</span>
                                 <span class="total-value">
-                                    {{ formatCurrency((item.price || item.pivot?.price || 0) * (item.quantity || item.pivot?.quantity || 1)) }}
+                                    {{ formatCurrency(item.subtotal || (item.unit_price || item.price || 0) * (item.quantity || 1)) }}
                                 </span>
                             </div>
                         </div>
@@ -404,11 +466,16 @@ watch([isVisible, () => props.orderId], async ([visible, orderId]) => {
 .order-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
+    align-items: flex-start;
+    padding: 1.5rem;
     background: #f8fafc;
     border-radius: 12px;
     border: 1px solid #e2e8f0;
+    gap: 1rem;
+}
+
+.order-info {
+    flex: 1;
 }
 
 .order-title {
@@ -424,9 +491,120 @@ watch([isVisible, () => props.orderId], async ([visible, orderId]) => {
     font-size: 0.875rem;
 }
 
-.status-tag {
-    font-size: 0.875rem;
-    padding: 0.5rem 1rem;
+.order-status-section {
+    display: flex;
+    justify-content: flex-end;
+    min-width: 280px;
+}
+
+.status-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    max-width: 300px;
+}
+
+.status-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.status-icon-wrapper i {
+    font-size: 1.25rem;
+}
+
+.status-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.status-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.status-description {
+    font-size: 0.75rem;
+    color: #6b7280;
+    line-height: 1.3;
+    margin: 0;
+}
+
+.status-highlight {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-top: 0.5rem;
+    padding: 0.375rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-highlight.success {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.status-highlight.warning {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.status-highlight.info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-highlight i {
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+/* Animations */
+.status-icon-wrapper:has(.pi-check-circle) i {
+    animation: pulse-success 2s infinite;
+}
+
+.status-icon-wrapper:has(.pi-cog) i {
+    animation: spin 2s linear infinite;
+}
+
+@keyframes pulse-success {
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.1);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Títulos de sección */
@@ -743,6 +921,29 @@ watch([isVisible, () => props.orderId], async ([visible, orderId]) => {
         flex-direction: column;
         gap: 1rem;
         text-align: center;
+    }
+
+    .order-status-section {
+        justify-content: center;
+        min-width: auto;
+        width: 100%;
+    }
+
+    .status-card {
+        max-width: none;
+        width: 100%;
+        text-align: center;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .status-content {
+        align-items: center;
+        text-align: center;
+    }
+
+    .status-highlight {
+        justify-content: center;
     }
 
     .product-item {

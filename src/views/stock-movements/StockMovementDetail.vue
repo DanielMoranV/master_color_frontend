@@ -1,3 +1,119 @@
+<script setup>
+import { computed } from 'vue';
+
+const props = defineProps({
+    movement: {
+        type: Object,
+        default: null
+    }
+});
+
+// Movement type configuration
+const movementTypeConfig = {
+    entrada: {
+        label: 'Entrada',
+        severity: 'success',
+        icon: 'pi pi-arrow-down'
+    },
+    salida: {
+        label: 'Salida',
+        severity: 'danger',
+        icon: 'pi pi-arrow-up'
+    },
+    ajuste: {
+        label: 'Ajuste',
+        severity: 'info',
+        icon: 'pi pi-cog'
+    },
+    devolucion: {
+        label: 'Devolución',
+        severity: 'warning',
+        icon: 'pi pi-undo'
+    }
+};
+
+// Computed properties
+const hasUnitPrices = computed(() => {
+    return props.movement?.details?.some((detail) => detail.unit_price && detail.unit_price > 0);
+});
+
+// Helper methods
+const getMovementTypeLabel = (type) => {
+    return movementTypeConfig[type]?.label || type;
+};
+
+const getMovementTypeSeverity = (type) => {
+    return movementTypeConfig[type]?.severity || 'secondary';
+};
+
+const getMovementTypeIcon = (type) => {
+    return movementTypeConfig[type]?.icon || 'pi pi-circle';
+};
+
+const getUserInitials = (name) => {
+    if (!name) return 'N/A';
+    return name
+        .split(' ')
+        .map((word) => word.charAt(0))
+        .join('')
+        .substring(0, 2)
+        .toUpperCase();
+};
+
+const formatNumber = (value) => {
+    if (!value) return '0';
+    return new Intl.NumberFormat('es-ES').format(value);
+};
+
+const formatCurrency = (value) => {
+    if (!value) return 'S/ 0.00';
+    return new Intl.NumberFormat('es-PE', {
+        style: 'currency',
+        currency: 'PEN'
+    }).format(value);
+};
+
+const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+};
+
+const formatTime = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+};
+
+const getStockChangeText = (detail) => {
+    const change = detail.new_stock - detail.previous_stock;
+    if (change > 0) return `+${formatNumber(change)}`;
+    if (change < 0) return formatNumber(change);
+    return '0';
+};
+
+const getStockChangeSeverity = (detail) => {
+    const change = detail.new_stock - detail.previous_stock;
+    if (change > 0) return 'success';
+    if (change < 0) return 'danger';
+    return 'secondary';
+};
+
+const getStockChangeIcon = (detail) => {
+    const change = detail.new_stock - detail.previous_stock;
+    if (change > 0) return 'pi pi-arrow-up';
+    if (change < 0) return 'pi pi-arrow-down';
+    return 'pi pi-minus';
+};
+</script>
+
 <template>
     <div class="stock-movement-detail">
         <div v-if="!movement" class="loading-state">
@@ -13,12 +129,7 @@
                         <span class="id-label">Movimiento</span>
                         <span class="id-value">#{{ movement.id }}</span>
                     </div>
-                    <Tag 
-                        :value="getMovementTypeLabel(movement.movement_type)" 
-                        :severity="getMovementTypeSeverity(movement.movement_type)"
-                        :icon="getMovementTypeIcon(movement.movement_type)"
-                        class="movement-type-tag"
-                    />
+                    <Tag :value="getMovementTypeLabel(movement.movement_type)" :severity="getMovementTypeSeverity(movement.movement_type)" :icon="getMovementTypeIcon(movement.movement_type)" class="movement-type-tag" />
                 </div>
                 <div class="movement-date">
                     <i class="pi pi-calendar date-icon"></i>
@@ -50,12 +161,7 @@
                         <div class="info-item">
                             <span class="info-label">Usuario:</span>
                             <div class="user-info">
-                                <Avatar 
-                                    :label="getUserInitials(movement.user?.name)" 
-                                    size="small" 
-                                    shape="circle" 
-                                    class="user-avatar"
-                                />
+                                <Avatar :label="getUserInitials(movement.user?.name)" size="small" shape="circle" class="user-avatar" />
                                 <span class="user-name">{{ movement.user?.name || 'N/A' }}</span>
                             </div>
                         </div>
@@ -136,13 +242,7 @@
                         <p>No hay detalles de productos disponibles</p>
                     </div>
 
-                    <DataTable
-                        v-else
-                        :value="movement.details"
-                        responsiveLayout="scroll"
-                        class="details-table"
-                        stripedRows
-                    >
+                    <DataTable v-else :value="movement.details" responsiveLayout="scroll" class="details-table" stripedRows>
                         <Column field="stock.product.name" header="Producto" class="product-column">
                             <template #body="{ data }">
                                 <div class="product-cell">
@@ -184,12 +284,7 @@
                                 <div class="stock-cell">
                                     <span class="stock-value new">{{ formatNumber(data.new_stock) }}</span>
                                     <div class="stock-change">
-                                        <Tag
-                                            :value="getStockChangeText(data)"
-                                            :severity="getStockChangeSeverity(data)"
-                                            :icon="getStockChangeIcon(data)"
-                                            class="change-tag"
-                                        />
+                                        <Tag :value="getStockChangeText(data)" :severity="getStockChangeSeverity(data)" :icon="getStockChangeIcon(data)" class="change-tag" />
                                     </div>
                                 </div>
                             </template>
@@ -211,117 +306,6 @@
         </div>
     </div>
 </template>
-
-<script setup>
-import { computed } from 'vue';
-
-const props = defineProps({
-    movement: {
-        type: Object,
-        default: null
-    }
-});
-
-// Movement type configuration
-const movementTypeConfig = {
-    entrada: {
-        label: 'Entrada',
-        severity: 'success',
-        icon: 'pi pi-arrow-down'
-    },
-    salida: {
-        label: 'Salida',
-        severity: 'danger',
-        icon: 'pi pi-arrow-up'
-    },
-    ajuste: {
-        label: 'Ajuste',
-        severity: 'info',
-        icon: 'pi pi-cog'
-    },
-    devolucion: {
-        label: 'Devolución',
-        severity: 'warning',
-        icon: 'pi pi-undo'
-    }
-};
-
-// Computed properties
-const hasUnitPrices = computed(() => {
-    return props.movement?.details?.some(detail => detail.unit_price && detail.unit_price > 0);
-});
-
-// Helper methods
-const getMovementTypeLabel = (type) => {
-    return movementTypeConfig[type]?.label || type;
-};
-
-const getMovementTypeSeverity = (type) => {
-    return movementTypeConfig[type]?.severity || 'secondary';
-};
-
-const getMovementTypeIcon = (type) => {
-    return movementTypeConfig[type]?.icon || 'pi pi-circle';
-};
-
-const getUserInitials = (name) => {
-    if (!name) return 'N/A';
-    return name.split(' ').map(word => word.charAt(0)).join('').substring(0, 2).toUpperCase();
-};
-
-const formatNumber = (value) => {
-    if (!value) return '0';
-    return new Intl.NumberFormat('es-ES').format(value);
-};
-
-const formatCurrency = (value) => {
-    if (!value) return 'S/ 0.00';
-    return new Intl.NumberFormat('es-PE', {
-        style: 'currency',
-        currency: 'PEN'
-    }).format(value);
-};
-
-const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-    });
-};
-
-const formatTime = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-};
-
-const getStockChangeText = (detail) => {
-    const change = detail.new_stock - detail.previous_stock;
-    if (change > 0) return `+${formatNumber(change)}`;
-    if (change < 0) return formatNumber(change);
-    return '0';
-};
-
-const getStockChangeSeverity = (detail) => {
-    const change = detail.new_stock - detail.previous_stock;
-    if (change > 0) return 'success';
-    if (change < 0) return 'danger';
-    return 'secondary';
-};
-
-const getStockChangeIcon = (detail) => {
-    const change = detail.new_stock - detail.previous_stock;
-    if (change > 0) return 'pi pi-arrow-up';
-    if (change < 0) return 'pi pi-arrow-down';
-    return 'pi pi-minus';
-};
-</script>
 
 <style scoped>
 .stock-movement-detail {
@@ -410,7 +394,8 @@ const getStockChangeIcon = (detail) => {
     font-size: 0.8rem;
 }
 
-.info-card, .products-card {
+.info-card,
+.products-card {
     border-radius: 12px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
@@ -488,7 +473,9 @@ const getStockChangeIcon = (detail) => {
 .summary-card {
     border-radius: 12px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .summary-card:hover {
@@ -594,16 +581,19 @@ const getStockChangeIcon = (detail) => {
     display: inline-block;
 }
 
-.price-cell, .subtotal-cell {
+.price-cell,
+.subtotal-cell {
     text-align: right;
 }
 
-.price-value, .subtotal-value {
+.price-value,
+.subtotal-value {
     font-weight: 600;
     color: #059669;
 }
 
-.no-price, .no-subtotal {
+.no-price,
+.no-subtotal {
     color: #94a3b8;
     font-style: italic;
 }
@@ -647,34 +637,34 @@ const getStockChangeIcon = (detail) => {
         gap: 1rem;
         align-items: stretch;
     }
-    
+
     .header-info {
         justify-content: space-between;
     }
-    
+
     .movement-date {
         align-self: flex-end;
     }
-    
+
     .info-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .summary-cards {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .summary-content {
         flex-direction: column;
         text-align: center;
     }
-    
+
     .summary-icon {
         width: 40px;
         height: 40px;
         font-size: 1rem;
     }
-    
+
     .summary-value {
         font-size: 1.2rem;
     }

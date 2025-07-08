@@ -1,79 +1,3 @@
-<template>
-    <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-        <div class="w-full max-w-md">
-            <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 p-6">
-                <div v-if="loading" class="text-center py-8">
-                    <i class="pi pi-spin pi-spinner text-blue-600 text-4xl mb-4"></i>
-                    <h2 class="text-xl font-bold text-gray-800">Verificando tu correo electrónico...</h2>
-                    <p class="text-gray-600 mt-2">Por favor espera un momento.</p>
-                </div>
-                
-                <div v-else-if="success" class="text-center py-8">
-                    <div class="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4">
-                        <i class="pi pi-check text-green-600 text-3xl"></i>
-                    </div>
-                    <h2 class="text-xl font-bold text-gray-800">¡Email verificado correctamente!</h2>
-                    <p class="text-gray-600 mt-2">Tu cuenta ha sido verificada y ya puedes acceder a todas las funcionalidades.</p>
-                    <Button 
-                        label="Ir al Dashboard" 
-                        icon="pi pi-home" 
-                        class="mt-6 p-button-primary"
-                        @click="goToDashboard"
-                    />
-                </div>
-                
-                <div v-else class="text-center py-8">
-                    <div class="w-16 h-16 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-4">
-                        <i class="pi pi-times text-red-600 text-3xl"></i>
-                    </div>
-                    <h2 class="text-xl font-bold text-gray-800">Error de verificación</h2>
-                    <p class="text-gray-600 mt-2">{{ errorMessage }}</p>
-                    <div class="flex flex-col sm:flex-row gap-4 mt-6 justify-center">
-                        <Button 
-                            label="Reintentar" 
-                            icon="pi pi-refresh" 
-                            class="p-button-outlined p-button-primary"
-                            @click="verifyEmail"
-                        />
-                        <Button 
-                            label="Ir a Iniciar Sesión" 
-                            icon="pi pi-sign-in" 
-                            class="p-button-primary"
-                            @click="goToLogin"
-                        />
-                    </div>
-                    
-                    <div class="mt-4 border-t border-gray-200 pt-4">
-                        <p class="text-sm text-gray-600 mb-3">¿No recibiste el correo de verificación?</p>
-                        
-                        <div v-if="!verificationSent" class="flex flex-col items-center space-y-3">
-                            <InputText 
-                                v-model="userEmail" 
-                                placeholder="Ingresa tu correo electrónico" 
-                                class="w-full max-w-xs"
-                            />
-                            <Button 
-                                label="Reenviar correo de verificación" 
-                                icon="pi pi-envelope" 
-                                :loading="resendLoading"
-                                class="p-button-outlined p-button-secondary"
-                                @click="resendVerificationEmail"
-                            />
-                        </div>
-                        
-                        <p v-else class="text-sm text-green-600 mt-2">
-                            <i class="pi pi-check mr-1"></i> Correo enviado. Si no lo recibes, revisa tu carpeta de spam.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Toast para notificaciones -->
-        <Toast position="top-right" />
-    </div>
-</template>
-
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -95,19 +19,19 @@ const userEmail = ref('');
 
 const verifyEmail = async () => {
     loading.value = true;
-    
+
     const token = route.query.token;
-    
+
     if (!token) {
         errorMessage.value = 'No se encontró el token de verificación en la URL.';
         loading.value = false;
         success.value = false;
         return;
     }
-    
+
     try {
         const result = await authStore.verifyEmail({ token });
-        
+
         if (result.success) {
             success.value = true;
             toast.add({
@@ -159,12 +83,12 @@ const resendVerificationEmail = async () => {
         });
         return;
     }
-    
+
     resendLoading.value = true;
-    
+
     try {
         const result = await authStore.resendVerificationEmail({ email: userEmail.value });
-        
+
         if (result.success) {
             verificationSent.value = true;
             toast.add({
@@ -195,7 +119,7 @@ const resendVerificationEmail = async () => {
 
 onMounted(() => {
     verifyEmail();
-    
+
     // Si hay un token en la URL, intentamos extraer el email del token
     const token = route.query.token;
     if (token) {
@@ -216,3 +140,52 @@ onMounted(() => {
     }
 });
 </script>
+
+<template>
+    <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+        <div class="w-full max-w-md">
+            <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 p-6">
+                <div v-if="loading" class="text-center py-8">
+                    <i class="pi pi-spin pi-spinner text-blue-600 text-4xl mb-4"></i>
+                    <h2 class="text-xl font-bold text-gray-800">Verificando tu correo electrónico...</h2>
+                    <p class="text-gray-600 mt-2">Por favor espera un momento.</p>
+                </div>
+
+                <div v-else-if="success" class="text-center py-8">
+                    <div class="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="pi pi-check text-green-600 text-3xl"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800">¡Email verificado correctamente!</h2>
+                    <p class="text-gray-600 mt-2">Tu cuenta ha sido verificada y ya puedes acceder a todas las funcionalidades.</p>
+                    <Button label="Ir al Dashboard" icon="pi pi-home" class="mt-6 p-button-primary" @click="goToDashboard" />
+                </div>
+
+                <div v-else class="text-center py-8">
+                    <div class="w-16 h-16 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="pi pi-times text-red-600 text-3xl"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800">Error de verificación</h2>
+                    <p class="text-gray-600 mt-2">{{ errorMessage }}</p>
+                    <div class="flex flex-col sm:flex-row gap-4 mt-6 justify-center">
+                        <Button label="Reintentar" icon="pi pi-refresh" class="p-button-outlined p-button-primary" @click="verifyEmail" />
+                        <Button label="Ir a Iniciar Sesión" icon="pi pi-sign-in" class="p-button-primary" @click="goToLogin" />
+                    </div>
+
+                    <div class="mt-4 border-t border-gray-200 pt-4">
+                        <p class="text-sm text-gray-600 mb-3">¿No recibiste el correo de verificación?</p>
+
+                        <div v-if="!verificationSent" class="flex flex-col items-center space-y-3">
+                            <InputText v-model="userEmail" placeholder="Ingresa tu correo electrónico" class="w-full max-w-xs" />
+                            <Button label="Reenviar correo de verificación" icon="pi pi-envelope" :loading="resendLoading" class="p-button-outlined p-button-secondary" @click="resendVerificationEmail" />
+                        </div>
+
+                        <p v-else class="text-sm text-green-600 mt-2"><i class="pi pi-check mr-1"></i> Correo enviado. Si no lo recibes, revisa tu carpeta de spam.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast para notificaciones -->
+        <Toast position="top-right" />
+    </div>
+</template>

@@ -19,12 +19,13 @@ export const useRolesStore = defineStore('rolesStore', {
         findRoleById: (state) => (id) => state.rolesList.find((role) => role.id === id),
         findRoleByName: (state) => (name) => state.rolesList.find((role) => role.name?.toLowerCase() === name?.toLowerCase()),
         // Getter para obtener opciones de roles para formularios
-        getRoleOptions: (state) => state.rolesList.map(role => ({
-            label: role.name,
-            value: role.name,
-            id: role.id,
-            description: role.description
-        }))
+        getRoleOptions: (state) =>
+            state.rolesList.map((role) => ({
+                label: role.name,
+                value: role.name,
+                id: role.id,
+                description: role.description
+            }))
     },
     actions: {
         async fetchRoles() {

@@ -1,80 +1,3 @@
-<template>
-    <div class="products-management">
-        <!-- Header Section with Gradient Background -->
-        <div class="header-section">
-            <div class="header-content">
-                <div class="title-section">
-                    <div class="icon-wrapper">
-                        <i class="pi pi-box"></i>
-                    </div>
-                    <div>
-                        <h1 class="main-title">Gestión de Productos</h1>
-                        <p class="subtitle">Administra y controla los productos del sistema</p>
-                    </div>
-                </div>
-                <Button label="Nuevo Producto" icon="pi pi-plus" @click="openNew" class="create-button" raised />
-            </div>
-        </div>
-
-        <!-- Main Content Card -->
-        <div class="content-card">
-            <div class="table-header">
-                <h2 class="table-title">Lista de Productos</h2>
-                <div class="table-actions">
-                    <div class="search-box">
-                        <i class="pi pi-search"></i>
-                        <input type="text" placeholder="Buscar productos..." v-model="searchQuery" class="search-input" />
-                    </div>
-                </div>
-            </div>
-
-            <ProductsTable :products="filteredProducts" :loading="productsStore.loading" @edit="editProduct" @delete="confirmDeleteProduct" />
-        </div>
-
-        <!-- Enhanced Product Dialog -->
-        <Dialog v-model:visible="productDialog" :style="{ width: '750px' }" :header="selectedProduct?.id ? 'Editar Producto' : 'Nuevo Producto'" :modal="true" class="product-dialog">
-            <template #header>
-                <div class="dialog-header">
-                    <div class="dialog-icon">
-                        <i :class="selectedProduct?.id ? 'pi pi-box' : 'pi pi-plus'"></i>
-                    </div>
-                    <div>
-                        <h3>{{ selectedProduct?.id ? 'Editar Producto' : 'Nuevo Producto' }}</h3>
-                        <p>{{ selectedProduct?.id ? 'Modifica la información del producto' : 'Completa los datos del nuevo producto' }}</p>
-                    </div>
-                </div>
-            </template>
-
-            <ProductForm :product="selectedProduct" :loading="productsStore.loading" @submit="handleSaveProduct" @cancel="hideDialog" />
-        </Dialog>
-
-        <!-- Compact Delete Dialog -->
-        <Dialog v-model:visible="deleteProductDialog" :style="{ width: '400px' }" header="Confirmar Eliminación" :modal="true" class="delete-dialog-compact">
-            <div class="delete-content-compact">
-                <div class="warning-icon">
-                    <i class="pi pi-exclamation-triangle"></i>
-                </div>
-                <div class="warning-message">
-                    <p>
-                        ¿Eliminar el producto <strong>{{ selectedProduct?.name || 'seleccionado' }}</strong
-                        >?
-                    </p>
-                    <small>Esta acción no se puede deshacer</small>
-                </div>
-            </div>
-
-            <template #footer>
-                <div class="dialog-actions-compact">
-                    <Button label="Cancelar" class="p-button-text" @click="deleteProductDialog = false" />
-                    <Button label="Eliminar" icon="pi pi-trash" severity="danger" @click="deleteProduct" :loading="productsStore.loading" />
-                </div>
-            </template>
-        </Dialog>
-
-        <Toast position="top-right" />
-    </div>
-</template>
-
 <script setup>
 import { useProductsStore } from '@/stores/products';
 import { useToast } from 'primevue/usetoast';
@@ -228,6 +151,83 @@ onMounted(async () => {
     await productsStore.fetchProducts();
 });
 </script>
+
+<template>
+    <div class="products-management">
+        <!-- Header Section with Gradient Background -->
+        <div class="header-section">
+            <div class="header-content">
+                <div class="title-section">
+                    <div class="icon-wrapper">
+                        <i class="pi pi-box"></i>
+                    </div>
+                    <div>
+                        <h1 class="main-title">Gestión de Productos</h1>
+                        <p class="subtitle">Administra y controla los productos del sistema</p>
+                    </div>
+                </div>
+                <Button label="Nuevo Producto" icon="pi pi-plus" @click="openNew" class="create-button" raised />
+            </div>
+        </div>
+
+        <!-- Main Content Card -->
+        <div class="content-card">
+            <div class="table-header">
+                <h2 class="table-title">Lista de Productos</h2>
+                <div class="table-actions">
+                    <div class="search-box">
+                        <i class="pi pi-search"></i>
+                        <input type="text" placeholder="Buscar productos..." v-model="searchQuery" class="search-input" />
+                    </div>
+                </div>
+            </div>
+
+            <ProductsTable :products="filteredProducts" :loading="productsStore.loading" @edit="editProduct" @delete="confirmDeleteProduct" />
+        </div>
+
+        <!-- Enhanced Product Dialog -->
+        <Dialog v-model:visible="productDialog" :style="{ width: '750px' }" :header="selectedProduct?.id ? 'Editar Producto' : 'Nuevo Producto'" :modal="true" class="product-dialog">
+            <template #header>
+                <div class="dialog-header">
+                    <div class="dialog-icon">
+                        <i :class="selectedProduct?.id ? 'pi pi-box' : 'pi pi-plus'"></i>
+                    </div>
+                    <div>
+                        <h3>{{ selectedProduct?.id ? 'Editar Producto' : 'Nuevo Producto' }}</h3>
+                        <p>{{ selectedProduct?.id ? 'Modifica la información del producto' : 'Completa los datos del nuevo producto' }}</p>
+                    </div>
+                </div>
+            </template>
+
+            <ProductForm :product="selectedProduct" :loading="productsStore.loading" @submit="handleSaveProduct" @cancel="hideDialog" />
+        </Dialog>
+
+        <!-- Compact Delete Dialog -->
+        <Dialog v-model:visible="deleteProductDialog" :style="{ width: '400px' }" header="Confirmar Eliminación" :modal="true" class="delete-dialog-compact">
+            <div class="delete-content-compact">
+                <div class="warning-icon">
+                    <i class="pi pi-exclamation-triangle"></i>
+                </div>
+                <div class="warning-message">
+                    <p>
+                        ¿Eliminar el producto <strong>{{ selectedProduct?.name || 'seleccionado' }}</strong
+                        >?
+                    </p>
+                    <small>Esta acción no se puede deshacer</small>
+                </div>
+            </div>
+
+            <template #footer>
+                <div class="dialog-actions-compact">
+                    <Button label="Cancelar" class="p-button-text" @click="deleteProductDialog = false" />
+                    <Button label="Eliminar" icon="pi pi-trash" severity="danger" @click="deleteProduct" :loading="productsStore.loading" />
+                </div>
+            </template>
+        </Dialog>
+
+        <Toast position="top-right" />
+    </div>
+</template>
 
 <style scoped>
 .products-management {

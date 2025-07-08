@@ -34,8 +34,25 @@ const confirmLogout = () => {
     logoutDialog.value = true;
 };
 const logout = async () => {
-    await authStore.logout();
-    router.push('/');
+    logoutDialog.value = false; // Cerrar el diálogo inmediatamente
+
+    try {
+        await authStore.logout();
+
+        // Redirigir según el tipo de usuario
+        if (authStore.getUserType === 'client') {
+            router.push('/'); // Página principal de la tienda
+        } else {
+            router.push('/login'); // Página de login para empleados
+        }
+
+        // Opcional: mostrar mensaje de confirmación
+        console.log('✅ Sesión cerrada exitosamente');
+    } catch (error) {
+        console.error('Error durante el logout:', error);
+        // Aún así redirigir porque el logout local se completó
+        router.push('/');
+    }
 };
 
 onMounted(async () => {
@@ -67,16 +84,10 @@ onBeforeMount(() => {
 
         <div class="layout-topbar-actions">
             <!-- Cart icon for clients only -->
-            <button 
-                v-if="authStore.userRole === 'client'" 
-                type="button" 
-                class="layout-topbar-action cart-button" 
-                @click="goToCart"
-                v-tooltip="'Ir a la tienda'"
-            >
+            <button v-if="authStore.userRole === 'client'" type="button" class="layout-topbar-action cart-button" @click="goToCart" v-tooltip="'Ir a la tienda'">
                 <i class="pi pi-shopping-cart"></i>
             </button>
-            
+
             <div class="layout-config-menu">
                 <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
                     <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>

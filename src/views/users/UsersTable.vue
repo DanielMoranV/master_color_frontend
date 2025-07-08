@@ -1,103 +1,3 @@
-<template>
-    <div class="users-table">
-        <DataTable
-            ref="dt"
-            :value="users"
-            v-model:filters="filters"
-            :paginator="true"
-            :rows="10"
-            :rowsPerPageOptions="[5, 10, 25, 50]"
-            :loading="loading"
-            dataKey="id"
-            filterDisplay="menu"
-            :globalFilterFields="['name', 'email', 'role_name', 'phone', 'dni']"
-            responsiveLayout="scroll"
-            class="p-datatable-gridlines"
-            :metaKeySelection="false"
-            :rowHover="true"
-        >
-            <template #empty>
-                <div class="empty-state">
-                    <div class="empty-icon">
-                        <i class="pi pi-users"></i>
-                    </div>
-                    <h3 class="empty-title">No hay usuarios disponibles</h3>
-                    <p class="empty-message">Aún no se han registrado usuarios en el sistema. Comienza creando tu primer usuario.</p>
-                </div>
-            </template>
-
-            <template #loading>
-                <div class="text-center py-4">
-                    <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="8" />
-                    <p class="text-500 mt-2">Cargando usuarios...</p>
-                </div>
-            </template>
-
-            <Column field="id" header="ID" :sortable="true" style="min-width: 4rem">
-                <template #body="{ data }">
-                    <Badge :value="data.id" class="p-badge-secondary" />
-                </template>
-            </Column>
-
-            <Column field="name" header="Nombre" :sortable="true" style="min-width: 12rem">
-                <template #body="{ data }">
-                    <div class="flex flex-column">
-                        <span class="font-semibold">{{ data.name || 'Sin nombre' }}</span>
-                    </div>
-                </template>
-            </Column>
-
-            <Column field="email" header="Email" :sortable="true" style="min-width: 14rem">
-                <template #body="{ data }">
-                    <div class="flex align-items-center">
-                        <i class="pi pi-envelope text-400 mr-2"></i>
-                        <span>{{ data.email || 'Sin email' }}</span>
-                    </div>
-                </template>
-            </Column>
-
-            <Column field="dni" header="DNI" :sortable="true" style="min-width: 8rem">
-                <template #body="{ data }">
-                    <div class="flex align-items-center">
-                        <i class="pi pi-id-card text-400 mr-2"></i>
-                        <span>{{ data.dni || 'Sin DNI' }}</span>
-                    </div>
-                </template>
-            </Column>
-
-            <Column field="phone" header="Teléfono" :sortable="true" style="min-width: 10rem">
-                <template #body="{ data }">
-                    <div class="flex align-items-center">
-                        <i class="pi pi-phone text-400 mr-2"></i>
-                        <span>{{ data.phone || 'Sin teléfono' }}</span>
-                    </div>
-                </template>
-            </Column>
-
-            <Column field="role" header="Rol" :sortable="true" style="min-width: 8rem">
-                <template #body="{ data }">
-                    <Tag :value="getRoleDisplayName(data)" :severity="getRoleSeverity(data)" class="text-sm" />
-                </template>
-            </Column>
-
-            <Column field="is_active" header="Estado" :sortable="true" style="min-width: 8rem">
-                <template #body="{ data }">
-                    <Tag :value="getStatusLabel(data.is_active)" :severity="getStatusSeverity(data.is_active)" class="text-sm" />
-                </template>
-            </Column>
-
-            <Column header="Acciones" style="min-width: 10rem">
-                <template #body="{ data }">
-                    <div class="flex gap-2">
-                        <Button icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-warning" @click="editUser(data)" v-tooltip.top="'Editar'" />
-                        <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" @click="deleteUser(data)" v-tooltip.top="'Eliminar'" />
-                    </div>
-                </template>
-            </Column>
-        </DataTable>
-    </div>
-</template>
-
 <script setup>
 import { ref } from 'vue';
 import { FilterMatchMode } from '@primevue/core/api';
@@ -233,6 +133,106 @@ const exportCSV = () => {
     dt.value.exportCSV();
 };
 </script>
+
+<template>
+    <div class="users-table">
+        <DataTable
+            ref="dt"
+            :value="users"
+            v-model:filters="filters"
+            :paginator="true"
+            :rows="10"
+            :rowsPerPageOptions="[5, 10, 25, 50]"
+            :loading="loading"
+            dataKey="id"
+            filterDisplay="menu"
+            :globalFilterFields="['name', 'email', 'role_name', 'phone', 'dni']"
+            responsiveLayout="scroll"
+            class="p-datatable-gridlines"
+            :metaKeySelection="false"
+            :rowHover="true"
+        >
+            <template #empty>
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="pi pi-users"></i>
+                    </div>
+                    <h3 class="empty-title">No hay usuarios disponibles</h3>
+                    <p class="empty-message">Aún no se han registrado usuarios en el sistema. Comienza creando tu primer usuario.</p>
+                </div>
+            </template>
+
+            <template #loading>
+                <div class="text-center py-4">
+                    <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="8" />
+                    <p class="text-500 mt-2">Cargando usuarios...</p>
+                </div>
+            </template>
+
+            <Column field="id" header="ID" :sortable="true" style="min-width: 4rem">
+                <template #body="{ data }">
+                    <Badge :value="data.id" class="p-badge-secondary" />
+                </template>
+            </Column>
+
+            <Column field="name" header="Nombre" :sortable="true" style="min-width: 12rem">
+                <template #body="{ data }">
+                    <div class="flex flex-column">
+                        <span class="font-semibold">{{ data.name || 'Sin nombre' }}</span>
+                    </div>
+                </template>
+            </Column>
+
+            <Column field="email" header="Email" :sortable="true" style="min-width: 14rem">
+                <template #body="{ data }">
+                    <div class="flex align-items-center">
+                        <i class="pi pi-envelope text-400 mr-2"></i>
+                        <span>{{ data.email || 'Sin email' }}</span>
+                    </div>
+                </template>
+            </Column>
+
+            <Column field="dni" header="DNI" :sortable="true" style="min-width: 8rem">
+                <template #body="{ data }">
+                    <div class="flex align-items-center">
+                        <i class="pi pi-id-card text-400 mr-2"></i>
+                        <span>{{ data.dni || 'Sin DNI' }}</span>
+                    </div>
+                </template>
+            </Column>
+
+            <Column field="phone" header="Teléfono" :sortable="true" style="min-width: 10rem">
+                <template #body="{ data }">
+                    <div class="flex align-items-center">
+                        <i class="pi pi-phone text-400 mr-2"></i>
+                        <span>{{ data.phone || 'Sin teléfono' }}</span>
+                    </div>
+                </template>
+            </Column>
+
+            <Column field="role" header="Rol" :sortable="true" style="min-width: 8rem">
+                <template #body="{ data }">
+                    <Tag :value="getRoleDisplayName(data)" :severity="getRoleSeverity(data)" class="text-sm" />
+                </template>
+            </Column>
+
+            <Column field="is_active" header="Estado" :sortable="true" style="min-width: 8rem">
+                <template #body="{ data }">
+                    <Tag :value="getStatusLabel(data.is_active)" :severity="getStatusSeverity(data.is_active)" class="text-sm" />
+                </template>
+            </Column>
+
+            <Column header="Acciones" style="min-width: 10rem">
+                <template #body="{ data }">
+                    <div class="flex gap-2">
+                        <Button icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-warning" @click="editUser(data)" v-tooltip.top="'Editar'" />
+                        <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" @click="deleteUser(data)" v-tooltip.top="'Eliminar'" />
+                    </div>
+                </template>
+            </Column>
+        </DataTable>
+    </div>
+</template>
 
 <style scoped>
 .users-table {

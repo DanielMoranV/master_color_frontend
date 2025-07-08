@@ -1,3 +1,25 @@
+<script setup>
+import { useRouter } from 'vue-router';
+import { useToast } from 'primevue/usetoast';
+
+const router = useRouter();
+const toast = useToast();
+
+const goHome = () => {
+    router.push('/');
+};
+
+const goLogin = () => {
+    router.push('/login');
+    toast.add({
+        severity: 'info',
+        summary: 'Redirigiendo',
+        detail: 'Te estamos llevando a la página de inicio de sesión',
+        life: 3000
+    });
+};
+</script>
+
 <template>
     <div class="min-h-screen bg-gray-100 flex items-center justify-center p-2">
         <div class="w-full max-w-3xl">
@@ -43,28 +65,6 @@
         <Toast position="top-right" />
     </div>
 </template>
-
-<script setup>
-import { useRouter } from 'vue-router';
-import { useToast } from 'primevue/usetoast';
-
-const router = useRouter();
-const toast = useToast();
-
-const goHome = () => {
-    router.push('/');
-};
-
-const goLogin = () => {
-    router.push('/login');
-    toast.add({
-        severity: 'info',
-        summary: 'Redirigiendo',
-        detail: 'Te estamos llevando a la página de inicio de sesión',
-        life: 3000
-    });
-};
-</script>
 
 <style lang="scss" scoped>
 .min-h-screen {

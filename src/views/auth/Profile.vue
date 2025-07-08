@@ -1,207 +1,3 @@
-<template>
-    <!-- Importar estilos de animate.css -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-    <div class="profile-container animate__animated animate__fadeInUp animate__delay-1s">
-        <!-- Diálogo de cambio de contraseña -->
-        <Dialog v-model:visible="showPasswordDialog" modal header="Cambiar Contraseña" :style="{ width: '450px' }" :closable="!passwordLoading">
-            <div class="password-dialog-content">
-                <div v-if="passwordError" class="p-4 mb-4 border-round bg-red-50">
-                    <div class="flex align-items-center">
-                        <i class="pi pi-times-circle text-red-500 mr-3 text-xl"></i>
-                        <div class="text-red-700">{{ passwordError }}</div>
-                    </div>
-                </div>
-
-                <div class="field mb-4">
-                    <label for="currentPassword" class="block text-900 font-medium mb-2">Contraseña actual</label>
-                    <Password id="currentPassword" v-model="currentPassword" class="w-full" :feedback="false" :toggleMask="true" placeholder="Ingresa tu contraseña actual" fluid />
-                </div>
-
-                <div class="field mb-4">
-                    <label for="newPassword" class="block text-900 font-medium mb-2">Nueva contraseña</label>
-                    <Password id="newPassword" v-model="newPassword" class="w-full" :feedback="true" :toggleMask="true" placeholder="Ingresa tu nueva contraseña" fluid />
-                </div>
-
-                <div class="field mb-4">
-                    <label for="confirmPassword" class="block text-900 font-medium mb-2">Confirmar contraseña</label>
-                    <Password id="confirmPassword" v-model="confirmPassword" class="w-full" :feedback="false" :toggleMask="true" placeholder="Confirma tu nueva contraseña" fluid />
-                </div>
-
-                <div class="mt-4">
-                    <div class="flex flex-column md:flex-row justify-content-center align-items-center gap-3">
-                        <Button label="Cancelar" icon="pi pi-times" class="p-button-outlined p-button-secondary w-full md:w-auto" @click="cancelPasswordChange" :disabled="passwordLoading" />
-                        <Button label="Cambiar contraseña" icon="pi pi-check" class="p-button-primary w-full md:w-auto" @click="submitPasswordChange" :loading="passwordLoading" />
-                    </div>
-                </div>
-            </div>
-        </Dialog>
-        <!-- Header con banner y avatar -->
-        <div class="profile-header">
-            <div class="banner-section">
-                <div class="banner-gradient">
-                    <!-- Avatar eliminado según requerimiento del usuario -->
-                    <div class="profile-info-header">
-                        <div class="user-details">
-                            <h1 class="user-name">{{ user?.name || 'Usuario' }}</h1>
-                            <p class="user-email">{{ user?.email || 'email@ejemplo.com' }}</p>
-                            <div class="status-badges">
-                                <Tag
-                                    :value="user?.email_verified_at ? 'Verificado' : 'Sin verificar'"
-                                    :severity="user?.email_verified_at ? 'success' : 'warning'"
-                                    :icon="user?.email_verified_at ? 'pi pi-check-circle' : 'pi pi-exclamation-triangle'"
-                                    class="status-tag"
-                                />
-                                <Tag value="Usuario activo" severity="info" icon="pi pi-user" class="status-tag ml-2" />
-                            </div>
-                        </div>
-                        <div class="quick-actions">
-                            <Button icon="pi pi-cog" class="p-button-text p-button-rounded" v-tooltip.left="'Configuración'" @click="openSettings" />
-                            <Button icon="pi pi-share-alt" class="p-button-text p-button-rounded" v-tooltip.left="'Compartir perfil'" @click="shareProfile" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Loading State -->
-        <div v-if="loading" class="loading-container">
-            <ProgressSpinner />
-            <p class="loading-text">Cargando información del perfil...</p>
-        </div>
-
-        <!-- Main Content -->
-        <div v-else-if="user" class="profile-content">
-            <div class="grid">
-                <!-- Información Personal -->
-                <div class="col-12 lg:col-8">
-                    <div class="info-card">
-                        <div class="card-header">
-                            <h3><i class="pi pi-user mr-2"></i>Información Personal</h3>
-                            <Button icon="pi pi-pencil" class="p-button-text p-button-sm" @click="editProfile" label="Editar" />
-                        </div>
-                        <Divider class="my-3" />
-
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <div class="info-label">
-                                    <i class="pi pi-user"></i>
-                                    <span>Nombre completo</span>
-                                </div>
-                                <div class="info-value">{{ user.name }}</div>
-                            </div>
-
-                            <div class="info-item">
-                                <div class="info-label">
-                                    <i class="pi pi-envelope"></i>
-                                    <span>Correo electrónico</span>
-                                </div>
-                                <div class="info-value">{{ user.email }}</div>
-                            </div>
-
-                            <div class="info-item" v-if="user.phone">
-                                <div class="info-label">
-                                    <i class="pi pi-phone"></i>
-                                    <span>Teléfono</span>
-                                </div>
-                                <div class="info-value">{{ user.phone }}</div>
-                            </div>
-
-                            <div class="info-item" v-if="user.created_at">
-                                <div class="info-label">
-                                    <i class="pi pi-calendar"></i>
-                                    <span>Miembro desde</span>
-                                </div>
-                                <div class="info-value">{{ formatDate(user.created_at) }}</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Estadísticas -->
-                    <div class="stats-card">
-                        <h3><i class="pi pi-chart-line mr-2"></i>Estadísticas</h3>
-                        <Divider class="my-3" />
-                        <div class="stats-grid">
-                            <div class="stat-item">
-                                <div class="stat-number">{{ Math.floor(Math.random() * 50) + 10 }}</div>
-                                <div class="stat-label">Días activo</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-number">{{ Math.floor(Math.random() * 20) + 5 }}</div>
-                                <div class="stat-label">Sesiones</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-number">{{ Math.floor(Math.random() * 100) + 25 }}</div>
-                                <div class="stat-label">Acciones</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Panel lateral -->
-                <div class="col-12 lg:col-4">
-                    <!-- Acciones rápidas -->
-                    <div class="actions-card">
-                        <h3><i class="pi pi-bolt mr-2"></i>Acciones Rápidas</h3>
-                        <Divider class="my-3" />
-                        <div class="actions-list">
-                            <Button label="Editar Perfil" icon="pi pi-user-edit" class="action-btn p-button-outlined" @click="editProfile" />
-                            <Button v-if="!user.email_verified_at" label="Verificar Email" icon="pi pi-envelope" class="action-btn p-button-warning" @click="resendVerification" :loading="verificationLoading" />
-                            <Button label="Cambiar Contraseña" icon="pi pi-lock" class="action-btn p-button-outlined" @click="changePassword" />
-                            <Button label="Configurar Notificaciones" icon="pi pi-bell" class="action-btn p-button-outlined" @click="configureNotifications" />
-                        </div>
-                    </div>
-
-                    <!-- Seguridad -->
-                    <div class="security-card">
-                        <h3><i class="pi pi-shield mr-2"></i>Seguridad</h3>
-                        <Divider class="my-3" />
-                        <div class="security-items">
-                            <div class="security-item">
-                                <div class="security-info">
-                                    <span class="security-title">Autenticación en dos pasos</span>
-                                    <small class="security-desc">Protege tu cuenta con 2FA</small>
-                                </div>
-                                <InputSwitch v-model="twoFactorEnabled" @change="toggleTwoFactor" />
-                            </div>
-                            <div class="security-item">
-                                <div class="security-info">
-                                    <span class="security-title">Notificaciones de seguridad</span>
-                                    <small class="security-desc">Alertas de inicio de sesión</small>
-                                </div>
-                                <InputSwitch v-model="securityNotifications" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Actividad Reciente -->
-                    <div class="activity-card">
-                        <h3><i class="pi pi-history mr-2"></i>Actividad Reciente</h3>
-                        <Divider class="my-3" />
-                        <Timeline :value="recentActivity" class="activity-timeline">
-                            <template #content="slotProps">
-                                <div class="activity-item">
-                                    <span class="activity-title">{{ slotProps.item.title }}</span>
-                                    <small class="activity-time">{{ slotProps.item.time }}</small>
-                                </div>
-                            </template>
-                        </Timeline>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Estado de error -->
-        <div v-else class="error-state">
-            <div class="error-content">
-                <i class="pi pi-user-minus error-icon"></i>
-                <h3>No se pudo cargar el perfil</h3>
-                <p>Parece que hay un problema con tu sesión. Por favor, inicia sesión nuevamente.</p>
-                <Button label="Iniciar Sesión" icon="pi pi-sign-in" class="p-button-primary mt-3" @click="goToLogin" />
-            </div>
-        </div>
-    </div>
-</template>
-
 <script setup>
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
@@ -413,6 +209,210 @@ const submitPasswordChange = async () => {
     }
 };
 </script>
+
+<template>
+    <!-- Importar estilos de animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <div class="profile-container animate__animated animate__fadeInUp animate__delay-1s">
+        <!-- Diálogo de cambio de contraseña -->
+        <Dialog v-model:visible="showPasswordDialog" modal header="Cambiar Contraseña" :style="{ width: '450px' }" :closable="!passwordLoading">
+            <div class="password-dialog-content">
+                <div v-if="passwordError" class="p-4 mb-4 border-round bg-red-50">
+                    <div class="flex align-items-center">
+                        <i class="pi pi-times-circle text-red-500 mr-3 text-xl"></i>
+                        <div class="text-red-700">{{ passwordError }}</div>
+                    </div>
+                </div>
+
+                <div class="field mb-4">
+                    <label for="currentPassword" class="block text-900 font-medium mb-2">Contraseña actual</label>
+                    <Password id="currentPassword" v-model="currentPassword" class="w-full" :feedback="false" :toggleMask="true" placeholder="Ingresa tu contraseña actual" fluid />
+                </div>
+
+                <div class="field mb-4">
+                    <label for="newPassword" class="block text-900 font-medium mb-2">Nueva contraseña</label>
+                    <Password id="newPassword" v-model="newPassword" class="w-full" :feedback="true" :toggleMask="true" placeholder="Ingresa tu nueva contraseña" fluid />
+                </div>
+
+                <div class="field mb-4">
+                    <label for="confirmPassword" class="block text-900 font-medium mb-2">Confirmar contraseña</label>
+                    <Password id="confirmPassword" v-model="confirmPassword" class="w-full" :feedback="false" :toggleMask="true" placeholder="Confirma tu nueva contraseña" fluid />
+                </div>
+
+                <div class="mt-4">
+                    <div class="flex flex-column md:flex-row justify-content-center align-items-center gap-3">
+                        <Button label="Cancelar" icon="pi pi-times" class="p-button-outlined p-button-secondary w-full md:w-auto" @click="cancelPasswordChange" :disabled="passwordLoading" />
+                        <Button label="Cambiar contraseña" icon="pi pi-check" class="p-button-primary w-full md:w-auto" @click="submitPasswordChange" :loading="passwordLoading" />
+                    </div>
+                </div>
+            </div>
+        </Dialog>
+        <!-- Header con banner y avatar -->
+        <div class="profile-header">
+            <div class="banner-section">
+                <div class="banner-gradient">
+                    <!-- Avatar eliminado según requerimiento del usuario -->
+                    <div class="profile-info-header">
+                        <div class="user-details">
+                            <h1 class="user-name">{{ user?.name || 'Usuario' }}</h1>
+                            <p class="user-email">{{ user?.email || 'email@ejemplo.com' }}</p>
+                            <div class="status-badges">
+                                <Tag
+                                    :value="user?.email_verified_at ? 'Verificado' : 'Sin verificar'"
+                                    :severity="user?.email_verified_at ? 'success' : 'warning'"
+                                    :icon="user?.email_verified_at ? 'pi pi-check-circle' : 'pi pi-exclamation-triangle'"
+                                    class="status-tag"
+                                />
+                                <Tag value="Usuario activo" severity="info" icon="pi pi-user" class="status-tag ml-2" />
+                            </div>
+                        </div>
+                        <div class="quick-actions">
+                            <Button icon="pi pi-cog" class="p-button-text p-button-rounded" v-tooltip.left="'Configuración'" @click="openSettings" />
+                            <Button icon="pi pi-share-alt" class="p-button-text p-button-rounded" v-tooltip.left="'Compartir perfil'" @click="shareProfile" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="loading" class="loading-container">
+            <ProgressSpinner />
+            <p class="loading-text">Cargando información del perfil...</p>
+        </div>
+
+        <!-- Main Content -->
+        <div v-else-if="user" class="profile-content">
+            <div class="grid">
+                <!-- Información Personal -->
+                <div class="col-12 lg:col-8">
+                    <div class="info-card">
+                        <div class="card-header">
+                            <h3><i class="pi pi-user mr-2"></i>Información Personal</h3>
+                            <Button icon="pi pi-pencil" class="p-button-text p-button-sm" @click="editProfile" label="Editar" />
+                        </div>
+                        <Divider class="my-3" />
+
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="pi pi-user"></i>
+                                    <span>Nombre completo</span>
+                                </div>
+                                <div class="info-value">{{ user.name }}</div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="pi pi-envelope"></i>
+                                    <span>Correo electrónico</span>
+                                </div>
+                                <div class="info-value">{{ user.email }}</div>
+                            </div>
+
+                            <div class="info-item" v-if="user.phone">
+                                <div class="info-label">
+                                    <i class="pi pi-phone"></i>
+                                    <span>Teléfono</span>
+                                </div>
+                                <div class="info-value">{{ user.phone }}</div>
+                            </div>
+
+                            <div class="info-item" v-if="user.created_at">
+                                <div class="info-label">
+                                    <i class="pi pi-calendar"></i>
+                                    <span>Miembro desde</span>
+                                </div>
+                                <div class="info-value">{{ formatDate(user.created_at) }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Estadísticas -->
+                    <div class="stats-card">
+                        <h3><i class="pi pi-chart-line mr-2"></i>Estadísticas</h3>
+                        <Divider class="my-3" />
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-number">{{ Math.floor(Math.random() * 50) + 10 }}</div>
+                                <div class="stat-label">Días activo</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">{{ Math.floor(Math.random() * 20) + 5 }}</div>
+                                <div class="stat-label">Sesiones</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">{{ Math.floor(Math.random() * 100) + 25 }}</div>
+                                <div class="stat-label">Acciones</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel lateral -->
+                <div class="col-12 lg:col-4">
+                    <!-- Acciones rápidas -->
+                    <div class="actions-card">
+                        <h3><i class="pi pi-bolt mr-2"></i>Acciones Rápidas</h3>
+                        <Divider class="my-3" />
+                        <div class="actions-list">
+                            <Button label="Editar Perfil" icon="pi pi-user-edit" class="action-btn p-button-outlined" @click="editProfile" />
+                            <Button v-if="!user.email_verified_at" label="Verificar Email" icon="pi pi-envelope" class="action-btn p-button-warning" @click="resendVerification" :loading="verificationLoading" />
+                            <Button label="Cambiar Contraseña" icon="pi pi-lock" class="action-btn p-button-outlined" @click="changePassword" />
+                            <Button label="Configurar Notificaciones" icon="pi pi-bell" class="action-btn p-button-outlined" @click="configureNotifications" />
+                        </div>
+                    </div>
+
+                    <!-- Seguridad -->
+                    <div class="security-card">
+                        <h3><i class="pi pi-shield mr-2"></i>Seguridad</h3>
+                        <Divider class="my-3" />
+                        <div class="security-items">
+                            <div class="security-item">
+                                <div class="security-info">
+                                    <span class="security-title">Autenticación en dos pasos</span>
+                                    <small class="security-desc">Protege tu cuenta con 2FA</small>
+                                </div>
+                                <InputSwitch v-model="twoFactorEnabled" @change="toggleTwoFactor" />
+                            </div>
+                            <div class="security-item">
+                                <div class="security-info">
+                                    <span class="security-title">Notificaciones de seguridad</span>
+                                    <small class="security-desc">Alertas de inicio de sesión</small>
+                                </div>
+                                <InputSwitch v-model="securityNotifications" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actividad Reciente -->
+                    <div class="activity-card">
+                        <h3><i class="pi pi-history mr-2"></i>Actividad Reciente</h3>
+                        <Divider class="my-3" />
+                        <Timeline :value="recentActivity" class="activity-timeline">
+                            <template #content="slotProps">
+                                <div class="activity-item">
+                                    <span class="activity-title">{{ slotProps.item.title }}</span>
+                                    <small class="activity-time">{{ slotProps.item.time }}</small>
+                                </div>
+                            </template>
+                        </Timeline>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado de error -->
+        <div v-else class="error-state">
+            <div class="error-content">
+                <i class="pi pi-user-minus error-icon"></i>
+                <h3>No se pudo cargar el perfil</h3>
+                <p>Parece que hay un problema con tu sesión. Por favor, inicia sesión nuevamente.</p>
+                <Button label="Iniciar Sesión" icon="pi pi-sign-in" class="p-button-primary mt-3" @click="goToLogin" />
+            </div>
+        </div>
+    </div>
+</template>
 
 <style scoped>
 .profile-container {

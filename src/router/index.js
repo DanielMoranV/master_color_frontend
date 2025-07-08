@@ -1,6 +1,5 @@
 import AppLayout from '@/layout/AppLayout.vue';
 import { useAuthStore } from '@/stores/auth';
-import { computed } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
 
 const router = createRouter({
@@ -51,6 +50,12 @@ const router = createRouter({
                     name: 'orders',
                     component: () => import('@/views/orders/Orders.vue'),
                     meta: { roles: ['client'] }
+                },
+                {
+                    path: '/addresses',
+                    name: 'client-addresses',
+                    component: () => import('@/views/addresses/AddressManager.vue'),
+                    meta: { roles: ['client'] }
                 }
             ]
         },
@@ -98,6 +103,18 @@ const router = createRouter({
             meta: { public: true } // Ruta pública
         },
         {
+            path: '/orders',
+            name: 'client-orders',
+            component: () => import('@/views/orders/Orders.vue'),
+            meta: { roles: ['client'] }
+        },
+        {
+            path: '/payment-return',
+            name: 'payment-return',
+            component: () => import('@/views/orders/PaymentReturn.vue'),
+            meta: { roles: ['client'] }
+        },
+        {
             path: '/accessdenied',
             name: 'accessDenied',
             component: () => import('@/views/auth/Access.vue'),
@@ -138,8 +155,7 @@ router.beforeEach(async (to, from, next) => {
     }
 
     // Verificar usuario activo
-    if (!authStore.currentUser?.is_active) {
-        console.log(authStore.currentUser?.is_active);
+    if (!authStore.currentUser?.is_active && authStore.getUserType !== 'client') {
         return next({ name: 'login' });
     }
 
@@ -148,8 +164,6 @@ router.beforeEach(async (to, from, next) => {
     const allowedRoles = to.meta.roles || [];
 
     if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
-        console.log(userRole);
-        console.log(allowedRoles);
         return next({ name: 'accessDenied' });
     }
 

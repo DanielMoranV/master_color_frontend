@@ -1,151 +1,3 @@
-<template>
-    <div class="stock-movements-table">
-        <DataTable
-            :value="movements"
-            :loading="loading"
-            dataKey="id"
-            :paginator="true"
-            :rows="10"
-            :rowsPerPageOptions="[5, 10, 25, 50]"
-            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} movimientos"
-            responsiveLayout="scroll"
-            :globalFilterFields="['reason', 'voucher_number', 'user.name', 'movement_type']"
-            class="custom-table"
-            stripedRows
-            sortMode="multiple"
-        >
-            <template #empty>
-                <div class="empty-state">
-                    <i class="pi pi-inbox empty-icon"></i>
-                    <h3>No hay movimientos</h3>
-                    <p>No se encontraron movimientos de stock en el sistema.</p>
-                </div>
-            </template>
-
-            <template #loading>
-                <div class="loading-state">
-                    <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="4" />
-                    <p>Cargando movimientos...</p>
-                </div>
-            </template>
-
-            <Column field="id" header="ID" sortable class="id-column">
-                <template #body="{ data }">
-                    <div class="id-cell">
-                        <span class="id-badge">#{{ data.id }}</span>
-                    </div>
-                </template>
-            </Column>
-
-            <Column field="movement_type" header="Tipo" sortable class="type-column">
-                <template #body="{ data }">
-                    <div class="type-cell">
-                        <Tag 
-                            :value="getMovementTypeLabel(data.movement_type)" 
-                            :severity="getMovementTypeSeverity(data.movement_type)"
-                            :icon="getMovementTypeIcon(data.movement_type)"
-                            class="movement-type-tag"
-                        />
-                        <Tag 
-                            v-if="isCancellationMovement(data)"
-                            value="CANCELADO" 
-                            severity="warning"
-                            icon="pi pi-times-circle"
-                            class="cancellation-tag"
-                        />
-                    </div>
-                </template>
-            </Column>
-
-            <Column field="reason" header="Motivo" sortable class="reason-column">
-                <template #body="{ data }">
-                    <div class="reason-cell">
-                        <span class="reason-text" :title="data.reason">{{ data.reason }}</span>
-                        <small v-if="data.voucher_number" class="voucher-number">{{ data.voucher_number }}</small>
-                    </div>
-                </template>
-            </Column>
-
-            <Column field="total_quantity" header="Cantidad Total" sortable class="quantity-column">
-                <template #body="{ data }">
-                    <div class="quantity-cell">
-                        <i class="pi pi-box quantity-icon"></i>
-                        <span class="quantity-value">{{ formatNumber(data.total_quantity) }}</span>
-                    </div>
-                </template>
-            </Column>
-
-            <Column field="total_value" header="Valor Total" sortable class="value-column">
-                <template #body="{ data }">
-                    <div class="value-cell">
-                        <i class="pi pi-dollar value-icon"></i>
-                        <span class="value-amount">{{ formatCurrency(data.total_value) }}</span>
-                    </div>
-                </template>
-            </Column>
-
-            <Column field="user.name" header="Usuario" sortable class="user-column">
-                <template #body="{ data }">
-                    <div class="user-cell">
-                        <Avatar 
-                            :label="getUserInitials(data.user?.name)" 
-                            size="small" 
-                            shape="circle" 
-                            class="user-avatar"
-                        />
-                        <span class="user-name">{{ data.user?.name || 'N/A' }}</span>
-                    </div>
-                </template>
-            </Column>
-
-            <Column field="created_at" header="Fecha" sortable class="date-column">
-                <template #body="{ data }">
-                    <div class="date-cell">
-                        <i class="pi pi-calendar date-icon"></i>
-                        <div class="date-info">
-                            <span class="date-value">{{ formatDate(data.created_at) }}</span>
-                            <small class="time-value">{{ formatTime(data.created_at) }}</small>
-                        </div>
-                    </div>
-                </template>
-            </Column>
-
-            <Column header="Acciones" class="actions-column" :exportable="false">
-                <template #body="{ data }">
-                    <div class="action-buttons">
-                        <Button
-                            icon="pi pi-eye"
-                            @click="$emit('view', data)"
-                            class="action-button view-button"
-                            v-tooltip.top="'Ver detalles'"
-                            text
-                            rounded
-                        />
-                        <Button
-                            icon="pi pi-pencil"
-                            @click="$emit('edit', data)"
-                            class="action-button edit-button"
-                            v-tooltip.top="'Editar'"
-                            text
-                            rounded
-                        />
-                        <Button
-                            v-if="canBeCancelled(data)"
-                            icon="pi pi-times-circle"
-                            @click="$emit('correct', data)"
-                            class="action-button cancel-button"
-                            v-tooltip.top="'Cancelar movimiento'"
-                            text
-                            rounded
-                        />
-                    </div>
-                </template>
-            </Column>
-        </DataTable>
-    </div>
-</template>
-
 <script setup>
 import { defineProps, defineEmits } from 'vue';
 
@@ -201,7 +53,12 @@ const getMovementTypeIcon = (type) => {
 
 const getUserInitials = (name) => {
     if (!name) return 'N/A';
-    return name.split(' ').map(word => word.charAt(0)).join('').substring(0, 2).toUpperCase();
+    return name
+        .split(' ')
+        .map((word) => word.charAt(0))
+        .join('')
+        .substring(0, 2)
+        .toUpperCase();
 };
 
 const formatNumber = (value) => {
@@ -241,13 +98,9 @@ const isCancellationMovement = (movement) => {
     if (movement.canceled_at) {
         return true;
     }
-    
+
     // Verificar por convención de nombres (fallback)
-    return movement.reason?.includes('CANCELACIÓN') || 
-           movement.voucher_number?.startsWith('CANCEL-') ||
-           movement.reason?.includes('ANULACIÓN') ||
-           movement.voucher_number?.startsWith('ANUL-') ||
-           movement.reason?.includes('CORRECCIÓN');
+    return movement.reason?.includes('CANCELACIÓN') || movement.voucher_number?.startsWith('CANCEL-') || movement.reason?.includes('ANULACIÓN') || movement.voucher_number?.startsWith('ANUL-') || movement.reason?.includes('CORRECCIÓN');
 };
 
 const canBeCancelled = (movement) => {
@@ -256,20 +109,130 @@ const canBeCancelled = (movement) => {
     if (!['entrada', 'salida', 'devolucion'].includes(movement.movement_type)) {
         return false;
     }
-    
+
     // No permitir cancelar movimientos que ya están cancelados (canceled_at)
     if (movement.canceled_at) {
         return false;
     }
-    
+
     // No permitir cancelar movimientos que ya son cancelaciones
     if (isCancellationMovement(movement)) {
         return false;
     }
-    
+
     return true;
 };
 </script>
+
+<template>
+    <div class="stock-movements-table">
+        <DataTable
+            :value="movements"
+            :loading="loading"
+            dataKey="id"
+            :paginator="true"
+            :rows="10"
+            :rowsPerPageOptions="[5, 10, 25, 50]"
+            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} movimientos"
+            responsiveLayout="scroll"
+            :globalFilterFields="['reason', 'voucher_number', 'user.name', 'movement_type']"
+            class="custom-table"
+            stripedRows
+            sortMode="multiple"
+        >
+            <template #empty>
+                <div class="empty-state">
+                    <i class="pi pi-inbox empty-icon"></i>
+                    <h3>No hay movimientos</h3>
+                    <p>No se encontraron movimientos de stock en el sistema.</p>
+                </div>
+            </template>
+
+            <template #loading>
+                <div class="loading-state">
+                    <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="4" />
+                    <p>Cargando movimientos...</p>
+                </div>
+            </template>
+
+            <Column field="id" header="ID" sortable class="id-column">
+                <template #body="{ data }">
+                    <div class="id-cell">
+                        <span class="id-badge">#{{ data.id }}</span>
+                    </div>
+                </template>
+            </Column>
+
+            <Column field="movement_type" header="Tipo" sortable class="type-column">
+                <template #body="{ data }">
+                    <div class="type-cell">
+                        <Tag :value="getMovementTypeLabel(data.movement_type)" :severity="getMovementTypeSeverity(data.movement_type)" :icon="getMovementTypeIcon(data.movement_type)" class="movement-type-tag" />
+                        <Tag v-if="isCancellationMovement(data)" value="CANCELADO" severity="warning" icon="pi pi-times-circle" class="cancellation-tag" />
+                    </div>
+                </template>
+            </Column>
+
+            <Column field="reason" header="Motivo" sortable class="reason-column">
+                <template #body="{ data }">
+                    <div class="reason-cell">
+                        <span class="reason-text" :title="data.reason">{{ data.reason }}</span>
+                        <small v-if="data.voucher_number" class="voucher-number">{{ data.voucher_number }}</small>
+                    </div>
+                </template>
+            </Column>
+
+            <Column field="total_quantity" header="Cantidad Total" sortable class="quantity-column">
+                <template #body="{ data }">
+                    <div class="quantity-cell">
+                        <i class="pi pi-box quantity-icon"></i>
+                        <span class="quantity-value">{{ formatNumber(data.total_quantity) }}</span>
+                    </div>
+                </template>
+            </Column>
+
+            <Column field="total_value" header="Valor Total" sortable class="value-column">
+                <template #body="{ data }">
+                    <div class="value-cell">
+                        <i class="pi pi-dollar value-icon"></i>
+                        <span class="value-amount">{{ formatCurrency(data.total_value) }}</span>
+                    </div>
+                </template>
+            </Column>
+
+            <Column field="user.name" header="Usuario" sortable class="user-column">
+                <template #body="{ data }">
+                    <div class="user-cell">
+                        <Avatar :label="getUserInitials(data.user?.name)" size="small" shape="circle" class="user-avatar" />
+                        <span class="user-name">{{ data.user?.name || 'N/A' }}</span>
+                    </div>
+                </template>
+            </Column>
+
+            <Column field="created_at" header="Fecha" sortable class="date-column">
+                <template #body="{ data }">
+                    <div class="date-cell">
+                        <i class="pi pi-calendar date-icon"></i>
+                        <div class="date-info">
+                            <span class="date-value">{{ formatDate(data.created_at) }}</span>
+                            <small class="time-value">{{ formatTime(data.created_at) }}</small>
+                        </div>
+                    </div>
+                </template>
+            </Column>
+
+            <Column header="Acciones" class="actions-column" :exportable="false">
+                <template #body="{ data }">
+                    <div class="action-buttons">
+                        <Button icon="pi pi-eye" @click="$emit('view', data)" class="action-button view-button" v-tooltip.top="'Ver detalles'" text rounded />
+                        <Button icon="pi pi-pencil" @click="$emit('edit', data)" class="action-button edit-button" v-tooltip.top="'Editar'" text rounded />
+                        <Button v-if="canBeCancelled(data)" icon="pi pi-times-circle" @click="$emit('correct', data)" class="action-button cancel-button" v-tooltip.top="'Cancelar movimiento'" text rounded />
+                    </div>
+                </template>
+            </Column>
+        </DataTable>
+    </div>
+</template>
 
 <style scoped>
 .stock-movements-table {
@@ -282,7 +245,8 @@ const canBeCancelled = (movement) => {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
-.empty-state, .loading-state {
+.empty-state,
+.loading-state {
     text-align: center;
     padding: 3rem 2rem;
     color: #64748b;
@@ -402,13 +366,15 @@ const canBeCancelled = (movement) => {
     display: inline-block;
 }
 
-.quantity-cell, .value-cell {
+.quantity-cell,
+.value-cell {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.quantity-icon, .value-icon {
+.quantity-icon,
+.value-icon {
     color: #6b7280;
     font-size: 0.9rem;
 }
@@ -517,20 +483,20 @@ const canBeCancelled = (movement) => {
     .reason-text {
         max-width: 120px;
     }
-    
+
     .user-name {
         display: none;
     }
-    
+
     .date-info {
         display: none;
     }
-    
+
     .action-buttons {
         flex-direction: column;
         gap: 0.125rem;
     }
-    
+
     .action-button {
         width: 1.75rem;
         height: 1.75rem;

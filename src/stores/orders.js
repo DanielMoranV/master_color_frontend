@@ -38,14 +38,14 @@ export const useOrdersStore = defineStore('ordersStore', {
                 console.log('💾 OrdersStore: Fetching all orders');
                 const response = await ordersApi.getMyOrders();
                 console.log('💾 OrdersStore: Raw orders response:', response);
-                
+
                 const processed = handleProcessSuccess(response, this);
                 console.log('💾 OrdersStore: Processed orders:', processed);
 
                 if (processed.success) {
                     this.orders = processed.data.orders || processed.data || [];
                     console.log('💾 OrdersStore: Orders set to:', this.orders);
-                    
+
                     // Log structure of first order to understand data format
                     if (this.orders.length > 0) {
                         console.log('💾 OrdersStore: First order structure:', {
@@ -76,14 +76,14 @@ export const useOrdersStore = defineStore('ordersStore', {
                 console.log('💾 OrdersStore: Fetching order by ID:', id);
                 const response = await ordersApi.getOrderById(id);
                 console.log('💾 OrdersStore: Raw API response:', response);
-                
+
                 const processed = handleProcessSuccess(response, this);
                 console.log('💾 OrdersStore: Processed response:', processed);
 
                 if (processed.success) {
                     this.currentOrder = processed.data.order || processed.data;
                     console.log('💾 OrdersStore: Current order set to:', this.currentOrder);
-                    
+
                     // Log the structure of the order to understand the data
                     if (this.currentOrder) {
                         console.log('💾 OrdersStore: Order structure:', {
@@ -93,7 +93,7 @@ export const useOrdersStore = defineStore('ordersStore', {
                             products: this.currentOrder.products,
                             order_details: this.currentOrder.order_details
                         });
-                        
+
                         // Additional detailed logging of each potential products array
                         if (this.currentOrder.items) {
                             console.log('💾 OrdersStore: Items array:', this.currentOrder.items);
@@ -301,9 +301,9 @@ export const useOrdersStore = defineStore('ordersStore', {
         getOrderStatusLabel(status) {
             const statusMap = {
                 pendiente_pago: 'Pendiente de Pago',
-                pendiente: 'Pendiente',
+                pendiente: 'Pagado - Preparando Envío',
                 confirmado: 'Confirmado',
-                procesando: 'En Proceso',
+                procesando: 'En Preparación',
                 enviado: 'Enviado',
                 entregado: 'Entregado',
                 pago_fallido: 'Pago Fallido',
@@ -316,7 +316,7 @@ export const useOrdersStore = defineStore('ordersStore', {
             const statusMap = {
                 pendiente_pago: 'warning',
                 pendiente: 'info',
-                confirmado: 'info',
+                confirmado: 'success',
                 procesando: 'info',
                 enviado: 'success',
                 entregado: 'success',
@@ -324,6 +324,34 @@ export const useOrdersStore = defineStore('ordersStore', {
                 cancelado: 'secondary'
             };
             return statusMap[status] || 'secondary';
+        },
+
+        getOrderStatusIcon(status) {
+            const iconMap = {
+                pendiente_pago: 'pi pi-clock',
+                pendiente: 'pi pi-check-circle',
+                confirmado: 'pi pi-verified',
+                procesando: 'pi pi-cog',
+                enviado: 'pi pi-send',
+                entregado: 'pi pi-check',
+                pago_fallido: 'pi pi-times-circle',
+                cancelado: 'pi pi-ban'
+            };
+            return iconMap[status] || 'pi pi-info-circle';
+        },
+
+        getOrderStatusDescription(status) {
+            const descriptionMap = {
+                pendiente_pago: 'Tu orden está esperando el pago para ser procesada',
+                pendiente: 'Tu pago fue exitoso. Estamos preparando tu pedido para el envío',
+                confirmado: 'Tu orden ha sido confirmada y está siendo preparada',
+                procesando: 'Tu orden está siendo preparada en nuestro almacén',
+                enviado: 'Tu orden ha sido enviada y está en camino',
+                entregado: 'Tu orden ha sido entregada exitosamente',
+                pago_fallido: 'Hubo un problema con el pago. Puedes intentar nuevamente',
+                cancelado: 'Esta orden ha sido cancelada'
+            };
+            return descriptionMap[status] || 'Estado de la orden';
         },
 
         canPayOrder(order) {

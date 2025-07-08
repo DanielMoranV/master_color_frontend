@@ -1,3 +1,336 @@
+<script setup>
+import { ref, reactive, computed, onMounted, watch } from 'vue';
+import { useProductsStore } from '@/stores/products';
+
+const props = defineProps({
+    movement: {
+        type: Object,
+        default: () => ({})
+    },
+    loading: {
+        type: Boolean,
+        default: false
+    },
+    apiErrors: {
+        type: Array,
+        default: () => []
+    }
+});
+
+const emit = defineEmits(['submit', 'cancel']);
+
+const productsStore = useProductsStore();
+
+// Reactive data
+const formData = reactive({
+    movement_type: '',
+    reason: '',
+    voucher_number: '',
+    stocks: []
+});
+
+const errors = ref({});
+const filteredProducts = ref([]);
+const loadingProducts = ref(false);
+
+// Movement types
+const movementTypes = ref([
+    { label: 'Entrada', value: 'entrada' },
+    { label: 'Salida', value: 'salida' },
+    { label: 'Ajuste', value: 'ajuste' },
+    { label: 'Devolución', value: 'devolucion' }
+]);
+
+// Computed properties
+const hasValidationErrors = computed(() => Object.keys(errors.value).length > 0);
+
+// Methods
+const initializeForm = () => {
+    if (props.movement?.id) {
+        // Edit mode
+        formData.movement_type = props.movement.movement_type || '';
+        formData.reason = props.movement.reason || '';
+        formData.voucher_number = props.movement.voucher_number || '';
+
+        // Initialize stocks from movement details
+        if (props.movement.details && props.movement.details.length > 0) {
+            formData.stocks = props.movement.details.map((detail) => ({
+                stock_id: detail.stock.id,
+                quantity: detail.quantity,
+                unit_price: parseFloat(detail.unit_price) || 0,
+                selectedProduct: {
+                    id: detail.stock.product.id,
+                    name: detail.stock.product.name,
+                    sku: detail.stock.product.sku,
+                    stock: {
+                        id: detail.stock.id,
+                        quantity: detail.stock.quantity
+                    }
+                }
+            }));
+        }
+    } else {
+        // Create mode
+        resetForm();
+    }
+};
+
+const resetForm = () => {
+    formData.movement_type = '';
+    formData.reason = '';
+    formData.voucher_number = '';
+    formData.stocks = [];
+    errors.value = {};
+};
+
+const addStockItem = () => {
+    formData.stocks.push({
+        stock_id: null,
+        quantity: 1,
+        unit_price: 0,
+        selectedProduct: null
+    });
+};
+
+const removeStockItem = (index) => {
+    // Validación básica
+    if (index < 0 || index >= formData.stocks.length) {
+        return;
+    }
+
+    const productName = formData.stocks[index].selectedProduct?.name || 'producto';
+
+    // Confirmación simple (opcional)
+    if (formData.stocks.length > 1) {
+        const confirmed = confirm(`¿Estás seguro de que quieres eliminar "${productName}" del movimiento?`);
+        if (!confirmed) {
+            return;
+        }
+    }
+
+    // Remover el item del array
+    formData.stocks.splice(index, 1);
+
+    // Limpiar todos los errores relacionados con stocks para reindexar correctamente
+    const stockErrors = Object.keys(errors.value).filter((key) => key.startsWith('stocks.'));
+    stockErrors.forEach((key) => {
+        delete errors.value[key];
+    });
+
+    // Prevenir eliminar el último producto (opcional)
+    if (formData.stocks.length === 0) {
+        addStockItem();
+    }
+};
+
+const searchProducts = async (event) => {
+    if (!event.query.trim()) {
+        filteredProducts.value = [];
+        return;
+    }
+
+    loadingProducts.value = true;
+    try {
+        await productsStore.fetchProducts();
+
+        const query = event.query.toLowerCase();
+        filteredProducts.value = productsStore.productsList.filter(
+            (product) =>
+                product.name?.toLowerCase().includes(query) ||
+                product.sku?.toLowerCase().includes(query) ||
+                product.barcode?.toLowerCase().includes(query) ||
+                product.brand?.toLowerCase().includes(query) ||
+                product.category?.toLowerCase().includes(query) ||
+                product.presentation?.toLowerCase().includes(query) ||
+                product.description?.toLowerCase().includes(query)
+        );
+    } catch (error) {
+        console.error('Error fetching products:', error);
+        filteredProducts.value = [];
+    } finally {
+        loadingProducts.value = false;
+    }
+};
+
+const onProductSelect = (event, index) => {
+    const product = event.value;
+
+    // Usar el stock_id del producto (ya viene del backend)
+    if (product.stock_id) {
+        formData.stocks[index].stock_id = product.stock_id;
+    } else {
+        // Fallback si por alguna razón no viene el stock_id
+        formData.stocks[index].stock_id = product.id;
+    }
+
+    // Guardar la información completa para mostrar en la UI
+    formData.stocks[index].selectedProduct = {
+        ...product,
+        stock: {
+            id: product.stock_id || product.id,
+            quantity: product.stock_quantity || 0
+        }
+    };
+
+    // Clear related errors
+    delete errors.value[`stocks.${index}.stock_id`];
+};
+
+const getMaxQuantity = (stock, index) => {
+    const stockQuantity = getStockQuantity(stock.selectedProduct);
+
+    if (!stockQuantity) return 999999;
+
+    // For 'salida' movements, limit to current stock
+    if (formData.movement_type === 'salida') {
+        return stockQuantity;
+    }
+
+    return 999999;
+};
+
+const getTotalQuantity = () => {
+    return formData.stocks.reduce((total, stock) => total + (stock.quantity || 0), 0);
+};
+
+const getTotalValue = () => {
+    return formData.stocks.reduce((total, stock) => {
+        return total + (stock.quantity || 0) * (stock.unit_price || 0);
+    }, 0);
+};
+
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat('es-PE', {
+        style: 'currency',
+        currency: 'PEN'
+    }).format(value || 0);
+};
+
+const getProductDisplayText = (product) => {
+    if (!product) return '';
+
+    let displayText = product.name || '';
+
+    // Agregar información adicional entre paréntesis
+    const additionalInfo = [];
+
+    if (product.brand) {
+        additionalInfo.push(product.brand);
+    }
+
+    if (product.sku) {
+        additionalInfo.push(`SKU: ${product.sku}`);
+    }
+
+    if (product.category) {
+        additionalInfo.push(product.category);
+    }
+
+    if (additionalInfo.length > 0) {
+        displayText += ` (${additionalInfo.join(' • ')})`;
+    }
+
+    return displayText;
+};
+
+const getStockBadgeClass = (quantity) => {
+    if (quantity === 0) return 'stock-empty';
+    if (quantity < 10) return 'stock-low';
+    if (quantity < 50) return 'stock-medium';
+    return 'stock-good';
+};
+
+const getStockQuantity = (product) => {
+    if (!product) return 0;
+
+    // Prioridad: stock.quantity > stock_quantity > 0
+    if (product.stock && typeof product.stock.quantity === 'number') {
+        return product.stock.quantity;
+    }
+
+    if (typeof product.stock_quantity === 'number') {
+        return product.stock_quantity;
+    }
+
+    return 0;
+};
+
+const validateForm = () => {
+    errors.value = {};
+
+    // Validate basic fields
+    if (!formData.movement_type) {
+        errors.value.movement_type = 'El tipo de movimiento es requerido';
+    }
+
+    if (!formData.reason || formData.reason.trim().length === 0) {
+        errors.value.reason = 'El motivo es requerido';
+    } else if (formData.reason.length > 500) {
+        errors.value.reason = 'El motivo no puede exceder 500 caracteres';
+    }
+
+    // Validate stocks
+    if (formData.stocks.length === 0) {
+        errors.value.stocks = 'Debe agregar al menos un producto';
+    } else {
+        formData.stocks.forEach((stock, index) => {
+            if (!stock.stock_id) {
+                errors.value[`stocks.${index}.stock_id`] = 'Selecciona un producto';
+            } else if (!stock.selectedProduct) {
+                errors.value[`stocks.${index}.stock_id`] = 'Producto no válido';
+            }
+
+            if (!stock.quantity || stock.quantity <= 0) {
+                errors.value[`stocks.${index}.quantity`] = 'La cantidad debe ser mayor a 0';
+            } else if (formData.movement_type === 'salida' && stock.selectedProduct) {
+                const stockQuantity = getStockQuantity(stock.selectedProduct);
+                if (stock.quantity > stockQuantity) {
+                    errors.value[`stocks.${index}.quantity`] = `Cantidad excede el stock disponible (${stockQuantity})`;
+                }
+            }
+
+            if (stock.unit_price !== null && stock.unit_price < 0) {
+                errors.value[`stocks.${index}.unit_price`] = 'El precio no puede ser negativo';
+            }
+        });
+    }
+
+    return Object.keys(errors.value).length === 0;
+};
+
+const handleSubmit = () => {
+    if (!validateForm()) return;
+
+    const payload = {
+        movement_type: formData.movement_type,
+        reason: formData.reason.trim(),
+        voucher_number: formData.voucher_number?.trim() || null,
+        stocks: formData.stocks.map((stock) => ({
+            stock_id: stock.stock_id,
+            quantity: stock.quantity,
+            unit_price: stock.unit_price || null
+        }))
+    };
+
+    emit('submit', payload);
+};
+
+// Watch for movement prop changes
+watch(
+    () => props.movement,
+    () => {
+        initializeForm();
+    },
+    { deep: true }
+);
+
+// Lifecycle
+onMounted(() => {
+    initializeForm();
+    productsStore.fetchProducts();
+});
+</script>
+
 <template>
     <div class="stock-movement-form">
         <form @submit.prevent="handleSubmit" class="form-container">
@@ -7,7 +340,7 @@
                     <i class="pi pi-info-circle"></i>
                     Información Básica
                 </h3>
-                
+
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="movement_type" class="form-label required">Tipo de Movimiento</label>
@@ -26,28 +359,14 @@
 
                     <div class="form-group">
                         <label for="voucher_number" class="form-label">Número de Comprobante</label>
-                        <InputText
-                            id="voucher_number"
-                            v-model="formData.voucher_number"
-                            placeholder="Ej: FC-2024-001"
-                            :class="{ 'p-invalid': errors.voucher_number }"
-                            class="form-input"
-                        />
+                        <InputText id="voucher_number" v-model="formData.voucher_number" placeholder="Ej: FC-2024-001" :class="{ 'p-invalid': errors.voucher_number }" class="form-input" />
                         <small v-if="errors.voucher_number" class="p-error">{{ errors.voucher_number }}</small>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="reason" class="form-label required">Motivo</label>
-                    <Textarea
-                        id="reason"
-                        v-model="formData.reason"
-                        placeholder="Describe el motivo del movimiento..."
-                        rows="3"
-                        :maxlength="500"
-                        :class="{ 'p-invalid': errors.reason }"
-                        class="form-textarea"
-                    />
+                    <Textarea id="reason" v-model="formData.reason" placeholder="Describe el motivo del movimiento..." rows="3" :maxlength="500" :class="{ 'p-invalid': errors.reason }" class="form-textarea" />
                     <div class="textarea-footer">
                         <small v-if="errors.reason" class="p-error">{{ errors.reason }}</small>
                         <small class="char-counter">{{ formData.reason?.length || 0 }}/500</small>
@@ -62,48 +381,20 @@
                         <i class="pi pi-box"></i>
                         Productos del Movimiento
                     </h3>
-                    <Button
-                        type="button"
-                        label="Agregar Producto"
-                        icon="pi pi-plus"
-                        @click="addStockItem"
-                        class="add-button"
-                        outlined
-                        size="small"
-                    />
+                    <Button type="button" label="Agregar Producto" icon="pi pi-plus" @click="addStockItem" class="add-button" outlined size="small" />
                 </div>
-
 
                 <div v-if="formData.stocks.length === 0" class="empty-stocks">
                     <i class="pi pi-inbox empty-icon"></i>
                     <p>No hay productos agregados</p>
-                    <Button
-                        type="button"
-                        label="Agregar Primer Producto"
-                        icon="pi pi-plus"
-                        @click="addStockItem"
-                        class="add-first-button"
-                    />
+                    <Button type="button" label="Agregar Primer Producto" icon="pi pi-plus" @click="addStockItem" class="add-first-button" />
                 </div>
 
                 <div v-else class="stocks-container">
-                    <div
-                        v-for="(stock, index) in formData.stocks"
-                        :key="index"
-                        class="stock-item"
-                    >
+                    <div v-for="(stock, index) in formData.stocks" :key="index" class="stock-item">
                         <div class="stock-item-header">
                             <span class="stock-item-number">#{{ index + 1 }}</span>
-                            <Button
-                                type="button"
-                                icon="pi pi-trash"
-                                @click="removeStockItem(index)"
-                                class="remove-button"
-                                text
-                                severity="danger"
-                                size="small"
-                                v-tooltip.top="'Eliminar producto'"
-                            />
+                            <Button type="button" icon="pi pi-trash" @click="removeStockItem(index)" class="remove-button" text severity="danger" size="small" v-tooltip.top="'Eliminar producto'" />
                         </div>
 
                         <div class="stock-item-form">
@@ -129,9 +420,7 @@
                                                     <span class="product-name">{{ item.name }}</span>
                                                     <div class="product-badges">
                                                         <span v-if="item.brand" class="badge brand-badge">{{ item.brand }}</span>
-                                                        <span class="badge stock-badge" :class="getStockBadgeClass(getStockQuantity(item))">
-                                                            Stock: {{ getStockQuantity(item) }}
-                                                        </span>
+                                                        <span class="badge stock-badge" :class="getStockBadgeClass(getStockQuantity(item))"> Stock: {{ getStockQuantity(item) }} </span>
                                                     </div>
                                                 </div>
                                                 <div class="product-details">
@@ -254,353 +543,12 @@
 
             <!-- Form Actions -->
             <div class="form-actions">
-                <Button
-                    label="Cancelar"
-                    icon="pi pi-times"
-                    @click="$emit('cancel')"
-                    class="cancel-button"
-                    outlined
-                    type="button"
-                />
-                <Button
-                    :label="movement?.id ? 'Actualizar Movimiento' : 'Crear Movimiento'"
-                    :icon="movement?.id ? 'pi pi-check' : 'pi pi-plus'"
-                    type="submit"
-                    class="submit-button"
-                    :loading="loading"
-                />
+                <Button label="Cancelar" icon="pi pi-times" @click="$emit('cancel')" class="cancel-button" outlined type="button" />
+                <Button :label="movement?.id ? 'Actualizar Movimiento' : 'Crear Movimiento'" :icon="movement?.id ? 'pi pi-check' : 'pi pi-plus'" type="submit" class="submit-button" :loading="loading" />
             </div>
         </form>
     </div>
 </template>
-
-<script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue';
-import { useProductsStore } from '@/stores/products';
-
-const props = defineProps({
-    movement: {
-        type: Object,
-        default: () => ({})
-    },
-    loading: {
-        type: Boolean,
-        default: false
-    },
-    apiErrors: {
-        type: Array,
-        default: () => []
-    }
-});
-
-const emit = defineEmits(['submit', 'cancel']);
-
-const productsStore = useProductsStore();
-
-// Reactive data
-const formData = reactive({
-    movement_type: '',
-    reason: '',
-    voucher_number: '',
-    stocks: []
-});
-
-const errors = ref({});
-const filteredProducts = ref([]);
-const loadingProducts = ref(false);
-
-// Movement types
-const movementTypes = ref([
-    { label: 'Entrada', value: 'entrada' },
-    { label: 'Salida', value: 'salida' },
-    { label: 'Ajuste', value: 'ajuste' },
-    { label: 'Devolución', value: 'devolucion' }
-]);
-
-// Computed properties
-const hasValidationErrors = computed(() => Object.keys(errors.value).length > 0);
-
-// Methods
-const initializeForm = () => {
-    if (props.movement?.id) {
-        // Edit mode
-        formData.movement_type = props.movement.movement_type || '';
-        formData.reason = props.movement.reason || '';
-        formData.voucher_number = props.movement.voucher_number || '';
-        
-        // Initialize stocks from movement details
-        if (props.movement.details && props.movement.details.length > 0) {
-            formData.stocks = props.movement.details.map(detail => ({
-                stock_id: detail.stock.id,
-                quantity: detail.quantity,
-                unit_price: parseFloat(detail.unit_price) || 0,
-                selectedProduct: {
-                    id: detail.stock.product.id,
-                    name: detail.stock.product.name,
-                    sku: detail.stock.product.sku,
-                    stock: {
-                        id: detail.stock.id,
-                        quantity: detail.stock.quantity
-                    }
-                }
-            }));
-        }
-    } else {
-        // Create mode
-        resetForm();
-    }
-};
-
-const resetForm = () => {
-    formData.movement_type = '';
-    formData.reason = '';
-    formData.voucher_number = '';
-    formData.stocks = [];
-    errors.value = {};
-};
-
-const addStockItem = () => {
-    formData.stocks.push({
-        stock_id: null,
-        quantity: 1,
-        unit_price: 0,
-        selectedProduct: null
-    });
-};
-
-const removeStockItem = (index) => {
-    // Validación básica
-    if (index < 0 || index >= formData.stocks.length) {
-        return;
-    }
-
-    const productName = formData.stocks[index].selectedProduct?.name || 'producto';
-    
-    // Confirmación simple (opcional)
-    if (formData.stocks.length > 1) {
-        const confirmed = confirm(`¿Estás seguro de que quieres eliminar "${productName}" del movimiento?`);
-        if (!confirmed) {
-            return;
-        }
-    }
-
-    // Remover el item del array
-    formData.stocks.splice(index, 1);
-
-    // Limpiar todos los errores relacionados con stocks para reindexar correctamente
-    const stockErrors = Object.keys(errors.value).filter(key => key.startsWith('stocks.'));
-    stockErrors.forEach(key => {
-        delete errors.value[key];
-    });
-
-    // Prevenir eliminar el último producto (opcional)
-    if (formData.stocks.length === 0) {
-        addStockItem();
-    }
-};
-
-const searchProducts = async (event) => {
-    if (!event.query.trim()) {
-        filteredProducts.value = [];
-        return;
-    }
-
-    loadingProducts.value = true;
-    try {
-        await productsStore.fetchProducts();
-
-        const query = event.query.toLowerCase();
-        filteredProducts.value = productsStore.productsList.filter(product =>
-            product.name?.toLowerCase().includes(query) ||
-            product.sku?.toLowerCase().includes(query) ||
-            product.barcode?.toLowerCase().includes(query) ||
-            product.brand?.toLowerCase().includes(query) ||
-            product.category?.toLowerCase().includes(query) ||
-            product.presentation?.toLowerCase().includes(query) ||
-            product.description?.toLowerCase().includes(query)
-        );
-    } catch (error) {
-        console.error('Error fetching products:', error);
-        filteredProducts.value = [];
-    } finally {
-        loadingProducts.value = false;
-    }
-};
-
-const onProductSelect = (event, index) => {
-    const product = event.value;
-    
-    // Usar el stock_id del producto (ya viene del backend)
-    if (product.stock_id) {
-        formData.stocks[index].stock_id = product.stock_id;
-    } else {
-        // Fallback si por alguna razón no viene el stock_id
-        formData.stocks[index].stock_id = product.id;
-    }
-    
-    // Guardar la información completa para mostrar en la UI
-    formData.stocks[index].selectedProduct = {
-        ...product,
-        stock: {
-            id: product.stock_id || product.id,
-            quantity: product.stock_quantity || 0
-        }
-    };
-    
-    // Clear related errors
-    delete errors.value[`stocks.${index}.stock_id`];
-};
-
-const getMaxQuantity = (stock, index) => {
-    const stockQuantity = getStockQuantity(stock.selectedProduct);
-    
-    if (!stockQuantity) return 999999;
-    
-    // For 'salida' movements, limit to current stock
-    if (formData.movement_type === 'salida') {
-        return stockQuantity;
-    }
-    
-    return 999999;
-};
-
-const getTotalQuantity = () => {
-    return formData.stocks.reduce((total, stock) => total + (stock.quantity || 0), 0);
-};
-
-const getTotalValue = () => {
-    return formData.stocks.reduce((total, stock) => {
-        return total + ((stock.quantity || 0) * (stock.unit_price || 0));
-    }, 0);
-};
-
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('es-PE', {
-        style: 'currency',
-        currency: 'PEN'
-    }).format(value || 0);
-};
-
-const getProductDisplayText = (product) => {
-    if (!product) return '';
-    
-    let displayText = product.name || '';
-    
-    // Agregar información adicional entre paréntesis
-    const additionalInfo = [];
-    
-    if (product.brand) {
-        additionalInfo.push(product.brand);
-    }
-    
-    if (product.sku) {
-        additionalInfo.push(`SKU: ${product.sku}`);
-    }
-    
-    if (product.category) {
-        additionalInfo.push(product.category);
-    }
-    
-    if (additionalInfo.length > 0) {
-        displayText += ` (${additionalInfo.join(' • ')})`;
-    }
-    
-    return displayText;
-};
-
-const getStockBadgeClass = (quantity) => {
-    if (quantity === 0) return 'stock-empty';
-    if (quantity < 10) return 'stock-low';
-    if (quantity < 50) return 'stock-medium';
-    return 'stock-good';
-};
-
-const getStockQuantity = (product) => {
-    if (!product) return 0;
-    
-    // Prioridad: stock.quantity > stock_quantity > 0
-    if (product.stock && typeof product.stock.quantity === 'number') {
-        return product.stock.quantity;
-    }
-    
-    if (typeof product.stock_quantity === 'number') {
-        return product.stock_quantity;
-    }
-    
-    return 0;
-};
-
-const validateForm = () => {
-    errors.value = {};
-
-    // Validate basic fields
-    if (!formData.movement_type) {
-        errors.value.movement_type = 'El tipo de movimiento es requerido';
-    }
-
-    if (!formData.reason || formData.reason.trim().length === 0) {
-        errors.value.reason = 'El motivo es requerido';
-    } else if (formData.reason.length > 500) {
-        errors.value.reason = 'El motivo no puede exceder 500 caracteres';
-    }
-
-    // Validate stocks
-    if (formData.stocks.length === 0) {
-        errors.value.stocks = 'Debe agregar al menos un producto';
-    } else {
-        formData.stocks.forEach((stock, index) => {
-            if (!stock.stock_id) {
-                errors.value[`stocks.${index}.stock_id`] = 'Selecciona un producto';
-            } else if (!stock.selectedProduct) {
-                errors.value[`stocks.${index}.stock_id`] = 'Producto no válido';
-            }
-
-            if (!stock.quantity || stock.quantity <= 0) {
-                errors.value[`stocks.${index}.quantity`] = 'La cantidad debe ser mayor a 0';
-            } else if (formData.movement_type === 'salida' && stock.selectedProduct) {
-                const stockQuantity = getStockQuantity(stock.selectedProduct);
-                if (stock.quantity > stockQuantity) {
-                    errors.value[`stocks.${index}.quantity`] = `Cantidad excede el stock disponible (${stockQuantity})`;
-                }
-            }
-
-            if (stock.unit_price !== null && stock.unit_price < 0) {
-                errors.value[`stocks.${index}.unit_price`] = 'El precio no puede ser negativo';
-            }
-        });
-    }
-
-    return Object.keys(errors.value).length === 0;
-};
-
-const handleSubmit = () => {
-    if (!validateForm()) return;
-
-    const payload = {
-        movement_type: formData.movement_type,
-        reason: formData.reason.trim(),
-        voucher_number: formData.voucher_number?.trim() || null,
-        stocks: formData.stocks.map(stock => ({
-            stock_id: stock.stock_id,
-            quantity: stock.quantity,
-            unit_price: stock.unit_price || null
-        }))
-    };
-
-    emit('submit', payload);
-};
-
-// Watch for movement prop changes
-watch(() => props.movement, () => {
-    initializeForm();
-}, { deep: true });
-
-// Lifecycle
-onMounted(() => {
-    initializeForm();
-    productsStore.fetchProducts();
-});
-</script>
 
 <style scoped>
 .stock-movement-form {
@@ -664,7 +612,10 @@ onMounted(() => {
     color: #ef4444;
 }
 
-.form-input, .form-select, .form-textarea, .form-autocomplete {
+.form-input,
+.form-select,
+.form-textarea,
+.form-autocomplete {
     width: 100%;
 }
 
@@ -1012,12 +963,12 @@ onMounted(() => {
     .form-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .stocks-summary {
         flex-direction: column;
         gap: 1rem;
     }
-    
+
     .form-actions {
         flex-direction: column;
     }

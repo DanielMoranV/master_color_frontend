@@ -19,7 +19,10 @@ export const useStockMovementsStore = defineStore('stockMovementsStore', {
         getMovementsByType: (state) => (type) => state.stockMovementsList.filter((movement) => movement.movement_type === type),
         findStockMovementById: (state) => (id) => state.stockMovementsList.find((movement) => movement.id === id),
         getTotalValue: (state) => state.stockMovementsList.reduce((total, movement) => total + (movement.total_value || 0), 0),
-        getRecentMovements: (state) => (limit = 5) => state.stockMovementsList.slice(0, limit)
+        getRecentMovements:
+            (state) =>
+            (limit = 5) =>
+                state.stockMovementsList.slice(0, limit)
     },
 
     actions: {
@@ -160,7 +163,7 @@ export const useStockMovementsStore = defineStore('stockMovementsStore', {
 
                 // El backend devuelve tanto el movimiento original cancelado como el nuevo movimiento de anulación
                 const result = processed.data;
-                
+
                 // Actualizar el movimiento original en la lista (marcado como cancelado)
                 const originalIndex = this.stockMovementsList.findIndex((movement) => movement.id == id);
                 if (originalIndex !== -1 && result.original_movement) {

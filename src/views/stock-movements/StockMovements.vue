@@ -1,3 +1,297 @@
+<script setup>
+import { useStockMovementsStore } from '@/stores/stockMovements';
+import { useToast } from 'primevue/usetoast';
+import { computed, onMounted, ref } from 'vue';
+import StockMovementDetail from './StockMovementDetail.vue';
+import StockMovementForm from './StockMovementForm.vue';
+import StockMovementsTable from './StockMovementsTable.vue';
+
+const stockMovementsStore = useStockMovementsStore();
+const toast = useToast();
+
+// Reactive variables
+const movementDialog = ref(false);
+const detailDialog = ref(false);
+const correctionDialog = ref(false);
+const selectedMovement = ref({});
+const searchQuery = ref('');
+const selectedType = ref(null);
+const dateRange = ref(null);
+
+// Movement types for filter
+const movementTypes = ref([
+    { label: 'Entrada', value: 'entrada' },
+    { label: 'Salida', value: 'salida' },
+    { label: 'Ajuste', value: 'ajuste' },
+    { label: 'Devolución', value: 'devolucion' }
+]);
+
+// Computed properties
+const filteredMovements = computed(() => {
+    let filtered = stockMovementsStore.stockMovementsList;
+
+    // Filter by search query
+    if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase();
+        filtered = filtered.filter(
+            (movement) => movement.reason?.toLowerCase().includes(query) || movement.voucher_number?.toLowerCase().includes(query) || movement.user?.name?.toLowerCase().includes(query) || movement.id?.toString().includes(query)
+        );
+    }
+
+    // Filter by movement type
+    if (selectedType.value) {
+        filtered = filtered.filter((movement) => movement.movement_type === selectedType.value);
+    }
+
+    // Filter by date range
+    if (dateRange.value && dateRange.value[0] && dateRange.value[1]) {
+        const startDate = new Date(dateRange.value[0]);
+        const endDate = new Date(dateRange.value[1]);
+        filtered = filtered.filter((movement) => {
+            const movementDate = new Date(movement.created_at);
+            return movementDate >= startDate && movementDate <= endDate;
+        });
+    }
+
+    return filtered;
+});
+
+// Methods
+const fetchMovements = async () => {
+    try {
+        await stockMovementsStore.fetchStockMovements();
+        if (stockMovementsStore.stockMovementsList.length === 0) {
+            toast.add({
+                severity: 'info',
+                summary: 'Información',
+                detail: 'No hay movimientos de stock registrados',
+                life: 3000
+            });
+        }
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al cargar los movimientos de stock',
+            life: 5000
+        });
+    }
+};
+
+const openNew = () => {
+    selectedMovement.value = {};
+    stockMovementsStore.resetState();
+    movementDialog.value = true;
+};
+
+const viewMovement = (movement) => {
+    selectedMovement.value = { ...movement };
+    detailDialog.value = true;
+};
+
+const editMovement = (movement) => {
+    selectedMovement.value = { ...movement };
+    stockMovementsStore.resetState();
+    movementDialog.value = true;
+};
+
+const editFromDetail = () => {
+    detailDialog.value = false;
+    stockMovementsStore.resetState();
+    movementDialog.value = true;
+};
+
+const createCorrectionMovement = async (movement) => {
+    // Verificar si el movimiento ya está cancelado
+    if (isAlreadyCancelled(movement)) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Movimiento ya cancelado',
+            detail: 'Este movimiento ya ha sido cancelado y no puede volver a cancelarse',
+            life: 4000
+        });
+        return;
+    }
+
+    selectedMovement.value = { ...movement };
+    correctionDialog.value = true;
+};
+
+const hideDialog = () => {
+    movementDialog.value = false;
+    selectedMovement.value = {};
+    stockMovementsStore.resetState(); // Clear any validation errors when closing dialog
+};
+
+const handleSaveMovement = async (movementData) => {
+    try {
+        // Reset validation errors before attempting save
+        stockMovementsStore.resetState();
+
+        if (selectedMovement.value.id) {
+            await stockMovementsStore.updateStockMovement(selectedMovement.value.id, movementData);
+            toast.add({
+                severity: 'success',
+                summary: 'Éxito',
+                detail: stockMovementsStore.message,
+                life: 3000
+            });
+        } else {
+            await stockMovementsStore.createStockMovement(movementData);
+            toast.add({
+                severity: 'success',
+                summary: 'Éxito',
+                detail: stockMovementsStore.message,
+                life: 3000
+            });
+        }
+        hideDialog();
+    } catch (error) {
+        // Validation errors are already handled by the store and displayed in the form
+        if (stockMovementsStore.validationErrors && stockMovementsStore.validationErrors.length > 0) {
+            toast.add({
+                severity: 'warn',
+                summary: 'Errores de Validación',
+                detail: 'Por favor, corrige los errores en el formulario',
+                life: 4000
+            });
+        } else {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: stockMovementsStore.error?.message || 'Error al guardar el movimiento',
+                life: 5000
+            });
+        }
+    }
+};
+
+const getInverseMovementType = (movementType) => {
+    const inverseMap = {
+        entrada: 'salida',
+        salida: 'entrada',
+        devolucion: 'salida' // Las devoluciones se anulan con salida
+    };
+    return inverseMap[movementType] || 'ajuste';
+};
+
+const getDialogTitle = () => {
+    if (!selectedMovement.value?.movement_type) return 'Cancelar Movimiento';
+
+    const titles = {
+        entrada: 'Cancelar Movimiento de Entrada',
+        salida: 'Cancelar Movimiento de Salida',
+        devolucion: 'Cancelar Devolución'
+    };
+
+    return titles[selectedMovement.value.movement_type] || 'Cancelar Movimiento';
+};
+
+const getDialogSubtitle = () => {
+    const inverseType = getInverseMovementType(selectedMovement.value?.movement_type);
+    const typeLabels = {
+        entrada: 'entrada',
+        salida: 'salida',
+        devolucion: 'salida'
+    };
+
+    return `Se creará un movimiento de ${typeLabels[inverseType]} para reestablecer el stock`;
+};
+
+const getInverseTypeLabel = () => {
+    const movement = selectedMovement.value;
+    if (!movement) return '';
+
+    const inverseType = getInverseMovementType(movement.movement_type);
+    const typeLabels = {
+        entrada: 'entrada',
+        salida: 'salida',
+        devolucion: 'salida'
+    };
+
+    return typeLabels[inverseType] || 'ajuste';
+};
+
+const getCancellationMessage = () => {
+    const movement = selectedMovement.value;
+    if (!movement) return '';
+
+    const inverseType = getInverseMovementType(movement.movement_type);
+    const typeLabels = {
+        salida: 'salida de productos',
+        entrada: 'entrada de productos'
+    };
+
+    const actionText = typeLabels[inverseType] || 'movimiento';
+
+    return `Se va a crear un movimiento de ${actionText} con la finalidad de reestablecer el stock y cancelar el movimiento número ${movement.id}`;
+};
+
+const isAlreadyCancelled = (movement) => {
+    // Verificar por el campo canceled_at (forma principal)
+    if (movement.canceled_at) {
+        return true;
+    }
+
+    // Verificar por convención de nombres (fallback)
+    if (movement.reason?.includes('CANCELACIÓN') || movement.voucher_number?.startsWith('CANCEL-') || movement.reason?.includes('ANULACIÓN') || movement.voucher_number?.startsWith('ANUL-') || movement.reason?.includes('CORRECCIÓN')) {
+        return true;
+    }
+
+    // Si hay un campo específico para estado (fallback)
+    if (movement.status === 'cancelled' || movement.is_cancelled || movement.status === 'annulled' || movement.is_annulled) {
+        return true;
+    }
+
+    return false;
+};
+
+const confirmCancellation = async () => {
+    try {
+        stockMovementsStore.resetState();
+
+        const movement = selectedMovement.value;
+
+        // Usar el endpoint seguro del backend
+        await stockMovementsStore.cancelStockMovement(movement.id);
+
+        // Refrescar la lista de movimientos para mostrar el movimiento correctivo
+        await fetchMovements();
+
+        toast.add({
+            severity: 'success',
+            summary: 'Movimiento cancelado',
+            detail: stockMovementsStore.message || `Movimiento #${movement.id} cancelado exitosamente`,
+            life: 5000
+        });
+
+        correctionDialog.value = false;
+        selectedMovement.value = {};
+    } catch (error) {
+        if (stockMovementsStore.validationErrors && stockMovementsStore.validationErrors.length > 0) {
+            toast.add({
+                severity: 'warn',
+                summary: 'Errores de Validación',
+                detail: 'Error en los datos del movimiento de cancelación',
+                life: 4000
+            });
+        } else {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: stockMovementsStore.error?.message || 'Error al cancelar el movimiento',
+                life: 5000
+            });
+        }
+    }
+};
+
+// Lifecycle
+onMounted(() => {
+    fetchMovements();
+});
+</script>
+
 <template>
     <div>
         <!-- Header Section with Gradient Background -->
@@ -134,13 +428,7 @@
             <template #footer>
                 <div class="dialog-actions">
                     <Button label="No, mantener movimiento" icon="pi pi-times" @click="correctionDialog = false" outlined />
-                    <Button 
-                        label="Sí, cancelar movimiento" 
-                        icon="pi pi-check" 
-                        @click="confirmCancellation" 
-                        :loading="stockMovementsStore.loading"
-                        severity="danger" 
-                    />
+                    <Button label="Sí, cancelar movimiento" icon="pi pi-check" @click="confirmCancellation" :loading="stockMovementsStore.loading" severity="danger" />
                 </div>
             </template>
         </Dialog>
@@ -148,306 +436,6 @@
         <Toast position="top-right" />
     </div>
 </template>
-
-<script setup>
-import { useStockMovementsStore } from '@/stores/stockMovements';
-import { useToast } from 'primevue/usetoast';
-import { computed, onMounted, ref } from 'vue';
-import StockMovementDetail from './StockMovementDetail.vue';
-import StockMovementForm from './StockMovementForm.vue';
-import StockMovementsTable from './StockMovementsTable.vue';
-
-const stockMovementsStore = useStockMovementsStore();
-const toast = useToast();
-
-// Reactive variables
-const movementDialog = ref(false);
-const detailDialog = ref(false);
-const correctionDialog = ref(false);
-const selectedMovement = ref({});
-const searchQuery = ref('');
-const selectedType = ref(null);
-const dateRange = ref(null);
-
-// Movement types for filter
-const movementTypes = ref([
-    { label: 'Entrada', value: 'entrada' },
-    { label: 'Salida', value: 'salida' },
-    { label: 'Ajuste', value: 'ajuste' },
-    { label: 'Devolución', value: 'devolucion' }
-]);
-
-// Computed properties
-const filteredMovements = computed(() => {
-    let filtered = stockMovementsStore.stockMovementsList;
-
-    // Filter by search query
-    if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase();
-        filtered = filtered.filter(
-            (movement) => movement.reason?.toLowerCase().includes(query) || movement.voucher_number?.toLowerCase().includes(query) || movement.user?.name?.toLowerCase().includes(query) || movement.id?.toString().includes(query)
-        );
-    }
-
-    // Filter by movement type
-    if (selectedType.value) {
-        filtered = filtered.filter((movement) => movement.movement_type === selectedType.value);
-    }
-
-    // Filter by date range
-    if (dateRange.value && dateRange.value[0] && dateRange.value[1]) {
-        const startDate = new Date(dateRange.value[0]);
-        const endDate = new Date(dateRange.value[1]);
-        filtered = filtered.filter((movement) => {
-            const movementDate = new Date(movement.created_at);
-            return movementDate >= startDate && movementDate <= endDate;
-        });
-    }
-
-    return filtered;
-});
-
-// Methods
-const fetchMovements = async () => {
-    try {
-        await stockMovementsStore.fetchStockMovements();
-        if (stockMovementsStore.stockMovementsList.length === 0) {
-            toast.add({
-                severity: 'info',
-                summary: 'Información',
-                detail: 'No hay movimientos de stock registrados',
-                life: 3000
-            });
-        }
-    } catch (error) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Error al cargar los movimientos de stock',
-            life: 5000
-        });
-    }
-};
-
-const openNew = () => {
-    selectedMovement.value = {};
-    stockMovementsStore.resetState();
-    movementDialog.value = true;
-};
-
-const viewMovement = (movement) => {
-    selectedMovement.value = { ...movement };
-    detailDialog.value = true;
-};
-
-const editMovement = (movement) => {
-    selectedMovement.value = { ...movement };
-    stockMovementsStore.resetState();
-    movementDialog.value = true;
-};
-
-const editFromDetail = () => {
-    detailDialog.value = false;
-    stockMovementsStore.resetState();
-    movementDialog.value = true;
-};
-
-const createCorrectionMovement = async (movement) => {
-    // Verificar si el movimiento ya está cancelado
-    if (isAlreadyCancelled(movement)) {
-        toast.add({
-            severity: 'warn',
-            summary: 'Movimiento ya cancelado',
-            detail: 'Este movimiento ya ha sido cancelado y no puede volver a cancelarse',
-            life: 4000
-        });
-        return;
-    }
-    
-    selectedMovement.value = { ...movement };
-    correctionDialog.value = true;
-};
-
-const hideDialog = () => {
-    movementDialog.value = false;
-    selectedMovement.value = {};
-    stockMovementsStore.resetState(); // Clear any validation errors when closing dialog
-};
-
-const handleSaveMovement = async (movementData) => {
-    try {
-        // Reset validation errors before attempting save
-        stockMovementsStore.resetState();
-
-        if (selectedMovement.value.id) {
-            await stockMovementsStore.updateStockMovement(selectedMovement.value.id, movementData);
-            toast.add({
-                severity: 'success',
-                summary: 'Éxito',
-                detail: stockMovementsStore.message,
-                life: 3000
-            });
-        } else {
-            await stockMovementsStore.createStockMovement(movementData);
-            toast.add({
-                severity: 'success',
-                summary: 'Éxito',
-                detail: stockMovementsStore.message,
-                life: 3000
-            });
-        }
-        hideDialog();
-    } catch (error) {
-        // Validation errors are already handled by the store and displayed in the form
-        if (stockMovementsStore.validationErrors && stockMovementsStore.validationErrors.length > 0) {
-            toast.add({
-                severity: 'warn',
-                summary: 'Errores de Validación',
-                detail: 'Por favor, corrige los errores en el formulario',
-                life: 4000
-            });
-        } else {
-            toast.add({
-                severity: 'error',
-                summary: 'Error',
-                detail: stockMovementsStore.error?.message || 'Error al guardar el movimiento',
-                life: 5000
-            });
-        }
-    }
-};
-
-const getInverseMovementType = (movementType) => {
-    const inverseMap = {
-        'entrada': 'salida',
-        'salida': 'entrada',
-        'devolucion': 'salida' // Las devoluciones se anulan con salida
-    };
-    return inverseMap[movementType] || 'ajuste';
-};
-
-const getDialogTitle = () => {
-    if (!selectedMovement.value?.movement_type) return 'Cancelar Movimiento';
-    
-    const titles = {
-        'entrada': 'Cancelar Movimiento de Entrada',
-        'salida': 'Cancelar Movimiento de Salida', 
-        'devolucion': 'Cancelar Devolución'
-    };
-    
-    return titles[selectedMovement.value.movement_type] || 'Cancelar Movimiento';
-};
-
-const getDialogSubtitle = () => {
-    const inverseType = getInverseMovementType(selectedMovement.value?.movement_type);
-    const typeLabels = {
-        'entrada': 'entrada',
-        'salida': 'salida',
-        'devolucion': 'salida'
-    };
-    
-    return `Se creará un movimiento de ${typeLabels[inverseType]} para reestablecer el stock`;
-};
-
-const getInverseTypeLabel = () => {
-    const movement = selectedMovement.value;
-    if (!movement) return '';
-    
-    const inverseType = getInverseMovementType(movement.movement_type);
-    const typeLabels = {
-        'entrada': 'entrada',
-        'salida': 'salida',
-        'devolucion': 'salida'
-    };
-    
-    return typeLabels[inverseType] || 'ajuste';
-};
-
-const getCancellationMessage = () => {
-    const movement = selectedMovement.value;
-    if (!movement) return '';
-    
-    const inverseType = getInverseMovementType(movement.movement_type);
-    const typeLabels = {
-        'salida': 'salida de productos',
-        'entrada': 'entrada de productos'
-    };
-    
-    const actionText = typeLabels[inverseType] || 'movimiento';
-    
-    return `Se va a crear un movimiento de ${actionText} con la finalidad de reestablecer el stock y cancelar el movimiento número ${movement.id}`;
-};
-
-const isAlreadyCancelled = (movement) => {
-    // Verificar por el campo canceled_at (forma principal)
-    if (movement.canceled_at) {
-        return true;
-    }
-    
-    // Verificar por convención de nombres (fallback)
-    if (movement.reason?.includes('CANCELACIÓN') || 
-        movement.voucher_number?.startsWith('CANCEL-') ||
-        movement.reason?.includes('ANULACIÓN') ||
-        movement.voucher_number?.startsWith('ANUL-') ||
-        movement.reason?.includes('CORRECCIÓN')) {
-        return true;
-    }
-    
-    // Si hay un campo específico para estado (fallback)
-    if (movement.status === 'cancelled' || movement.is_cancelled || movement.status === 'annulled' || movement.is_annulled) {
-        return true;
-    }
-    
-    return false;
-};
-
-
-const confirmCancellation = async () => {
-    try {
-        stockMovementsStore.resetState();
-        
-        const movement = selectedMovement.value;
-        
-        // Usar el endpoint seguro del backend
-        await stockMovementsStore.cancelStockMovement(movement.id);
-        
-        // Refrescar la lista de movimientos para mostrar el movimiento correctivo
-        await fetchMovements();
-        
-        toast.add({
-            severity: 'success',
-            summary: 'Movimiento cancelado',
-            detail: stockMovementsStore.message || `Movimiento #${movement.id} cancelado exitosamente`,
-            life: 5000
-        });
-        
-        correctionDialog.value = false;
-        selectedMovement.value = {};
-        
-    } catch (error) {
-        if (stockMovementsStore.validationErrors && stockMovementsStore.validationErrors.length > 0) {
-            toast.add({
-                severity: 'warn',
-                summary: 'Errores de Validación',
-                detail: 'Error en los datos del movimiento de cancelación',
-                life: 4000
-            });
-        } else {
-            toast.add({
-                severity: 'error',
-                summary: 'Error',
-                detail: stockMovementsStore.error?.message || 'Error al cancelar el movimiento',
-                life: 5000
-            });
-        }
-    }
-};
-
-// Lifecycle
-onMounted(() => {
-    fetchMovements();
-});
-</script>
 
 <style scoped>
 .header-section {
@@ -717,14 +705,16 @@ onMounted(() => {
     width: fit-content;
 }
 
-.product-quantity, .product-price {
+.product-quantity,
+.product-price {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.25rem;
 }
 
-.quantity-label, .price-label {
+.quantity-label,
+.price-label {
     font-size: 0.8rem;
     color: #6b7280;
 }

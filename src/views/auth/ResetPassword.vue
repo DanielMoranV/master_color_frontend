@@ -140,28 +140,26 @@ const goToLogin = () => {
                         <label for="password" class="form-label">Nueva contraseña</label>
                         <IconField>
                             <InputIcon class="pi pi-lock" />
-                            <Password 
-                                id="password" 
-                                v-model="password" 
-                                class="w-full" 
-                                :class="{ 'p-invalid': v$.password.$invalid && v$.password.$dirty }" 
-                                :feedback="true" 
-                                :toggleMask="true" 
-                                placeholder="Ingresa tu nueva contraseña" 
-                                :promptLabel="'Ingresa una contraseña segura'" 
-                                :weakLabel="'Débil - Añade números y símbolos'" 
-                                :mediumLabel="'Media - Añade símbolos especiales'" 
-                                :strongLabel="'Fuerte - Excelente contraseña'" 
+                            <Password
+                                id="password"
+                                v-model="password"
+                                class="w-full"
+                                :class="{ 'p-invalid': v$.password.$invalid && v$.password.$dirty }"
+                                :feedback="true"
+                                :toggleMask="true"
+                                placeholder="Ingresa tu nueva contraseña"
+                                :promptLabel="'Ingresa una contraseña segura'"
+                                :weakLabel="'Débil - Añade números y símbolos'"
+                                :mediumLabel="'Media - Añade símbolos especiales'"
+                                :strongLabel="'Fuerte - Excelente contraseña'"
                                 aria-describedby="password-help"
-                                fluid 
+                                fluid
                             />
                         </IconField>
                         <small v-if="v$.password.$invalid && v$.password.$dirty" class="p-error block mt-1">
                             {{ v$.password.$errors[0].$message }}
                         </small>
-                        <small id="password-help" class="text-muted block mt-1" v-else>
-                            Tu contraseña debe tener al menos 8 caracteres. Incluye letras mayúsculas, minúsculas, números y símbolos para mayor seguridad.
-                        </small>
+                        <small id="password-help" class="text-muted block mt-1" v-else> Tu contraseña debe tener al menos 8 caracteres. Incluye letras mayúsculas, minúsculas, números y símbolos para mayor seguridad. </small>
                     </div>
 
                     <div class="field mb-4">
@@ -180,21 +178,14 @@ const goToLogin = () => {
                                 aria-describedby="confirm-password-help"
                             />
                         </IconField>
-                        <small id="confirm-password-help" class="text-muted block mt-1">
-                            Vuelve a escribir tu contraseña para confirmar que coinciden.
-                        </small>
+                        <small id="confirm-password-help" class="text-muted block mt-1"> Vuelve a escribir tu contraseña para confirmar que coinciden. </small>
                         <small v-if="v$.passwordConfirmation.$invalid && v$.passwordConfirmation.$dirty" class="p-error block mt-1">
                             {{ v$.passwordConfirmation.$errors[0].$message }}
                         </small>
                     </div>
 
                     <div class="form-actions">
-                        <Button 
-                            type="submit" 
-                            class="p-button-primary w-full mb-4" 
-                            :loading="loading"
-                            :disabled="loading"
-                        >
+                        <Button type="submit" class="p-button-primary w-full mb-4" :loading="loading" :disabled="loading">
                             <template #loading>
                                 <i class="pi pi-spin pi-spinner mr-2"></i>
                                 <span>Procesando...</span>

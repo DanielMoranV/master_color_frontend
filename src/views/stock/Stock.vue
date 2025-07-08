@@ -1,85 +1,3 @@
-<template>
-    <div class="stock-management">
-        <!-- Header Section with Gradient Background -->
-        <div class="header-section">
-            <div class="header-content">
-                <div class="title-section">
-                    <div class="icon-wrapper">
-                        <i class="pi pi-chart-bar"></i>
-                    </div>
-                    <div>
-                        <h1 class="main-title">Control de Stock</h1>
-                        <p class="subtitle">Visualiza y controla el inventario actual de productos</p>
-                    </div>
-                </div>
-                <div class="header-actions">
-                    <Button label="Actualizar" icon="pi pi-refresh" @click="refreshStock" class="refresh-button" :loading="stockStore.loading" raised />
-                </div>
-            </div>
-        </div>
-
-        <!-- Stock Summary Cards -->
-        <div class="stock-summary">
-            <div class="summary-card low-stock">
-                <div class="card-icon">
-                    <i class="pi pi-exclamation-triangle"></i>
-                </div>
-                <div class="card-content">
-                    <h3>{{ lowStockCount }}</h3>
-                    <p>Stock Bajo</p>
-                </div>
-            </div>
-            <div class="summary-card out-of-stock">
-                <div class="card-icon">
-                    <i class="pi pi-times-circle"></i>
-                </div>
-                <div class="card-content">
-                    <h3>{{ outOfStockCount }}</h3>
-                    <p>Sin Stock</p>
-                </div>
-            </div>
-            <div class="summary-card total-products">
-                <div class="card-icon">
-                    <i class="pi pi-box"></i>
-                </div>
-                <div class="card-content">
-                    <h3>{{ totalProducts }}</h3>
-                    <p>Total Productos</p>
-                </div>
-            </div>
-            <div class="summary-card stock-value">
-                <div class="card-icon">
-                    <i class="pi pi-dollar"></i>
-                </div>
-                <div class="card-content">
-                    <h3>S/ {{ totalStockValue }}</h3>
-                    <p>Valor del Stock</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Content Card -->
-        <div class="content-card">
-            <div class="table-header">
-                <h2 class="table-title">Inventario de Productos</h2>
-                <div class="table-actions">
-                    <div class="search-box">
-                        <i class="pi pi-search"></i>
-                        <input type="text" placeholder="Buscar productos..." v-model="searchQuery" class="search-input" />
-                    </div>
-                    <div class="filter-box">
-                        <Select v-model="stockFilter" :options="filterOptions" optionLabel="label" optionValue="value" placeholder="Filtrar por stock" class="filter-select" />
-                    </div>
-                </div>
-            </div>
-
-            <StockTable :products="filteredProducts" :loading="stockStore.loading" />
-        </div>
-
-        <Toast position="top-right" />
-    </div>
-</template>
-
 <script setup>
 import { useStockStore } from '@/stores/stock';
 import { useToast } from 'primevue/usetoast';
@@ -176,6 +94,88 @@ onMounted(async () => {
     await stockStore.fetchStock();
 });
 </script>
+
+<template>
+    <div class="stock-management">
+        <!-- Header Section with Gradient Background -->
+        <div class="header-section">
+            <div class="header-content">
+                <div class="title-section">
+                    <div class="icon-wrapper">
+                        <i class="pi pi-chart-bar"></i>
+                    </div>
+                    <div>
+                        <h1 class="main-title">Control de Stock</h1>
+                        <p class="subtitle">Visualiza y controla el inventario actual de productos</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <Button label="Actualizar" icon="pi pi-refresh" @click="refreshStock" class="refresh-button" :loading="stockStore.loading" raised />
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock Summary Cards -->
+        <div class="stock-summary">
+            <div class="summary-card low-stock">
+                <div class="card-icon">
+                    <i class="pi pi-exclamation-triangle"></i>
+                </div>
+                <div class="card-content">
+                    <h3>{{ lowStockCount }}</h3>
+                    <p>Stock Bajo</p>
+                </div>
+            </div>
+            <div class="summary-card out-of-stock">
+                <div class="card-icon">
+                    <i class="pi pi-times-circle"></i>
+                </div>
+                <div class="card-content">
+                    <h3>{{ outOfStockCount }}</h3>
+                    <p>Sin Stock</p>
+                </div>
+            </div>
+            <div class="summary-card total-products">
+                <div class="card-icon">
+                    <i class="pi pi-box"></i>
+                </div>
+                <div class="card-content">
+                    <h3>{{ totalProducts }}</h3>
+                    <p>Total Productos</p>
+                </div>
+            </div>
+            <div class="summary-card stock-value">
+                <div class="card-icon">
+                    <i class="pi pi-dollar"></i>
+                </div>
+                <div class="card-content">
+                    <h3>S/ {{ totalStockValue }}</h3>
+                    <p>Valor del Stock</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Card -->
+        <div class="content-card">
+            <div class="table-header">
+                <h2 class="table-title">Inventario de Productos</h2>
+                <div class="table-actions">
+                    <div class="search-box">
+                        <i class="pi pi-search"></i>
+                        <input type="text" placeholder="Buscar productos..." v-model="searchQuery" class="search-input" />
+                    </div>
+                    <div class="filter-box">
+                        <Select v-model="stockFilter" :options="filterOptions" optionLabel="label" optionValue="value" placeholder="Filtrar por stock" class="filter-select" />
+                    </div>
+                </div>
+            </div>
+
+            <StockTable :products="filteredProducts" :loading="stockStore.loading" />
+        </div>
+
+        <Toast position="top-right" />
+    </div>
+</template>
 
 <style scoped>
 .stock-management {

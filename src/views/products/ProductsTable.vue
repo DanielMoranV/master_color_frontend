@@ -1,39 +1,3 @@
-<template>
-    <DataTable :value="products" :loading="loading" class="products-table" responsiveLayout="scroll">
-        <Column field="image_url" header="Imagen" style="width: 80px">
-            <template #body="{ data }">
-                <img v-if="data.image_url" :src="data.image_url" alt="Imagen" style="width: 48px; height: 48px; object-fit: contain; background-color: #f9fafb; border-radius: 6px" />
-                <span v-else class="no-image">-</span>
-            </template>
-        </Column>
-        <Column field="name" header="Nombre" sortable />
-        <Column field="sku" header="SKU" sortable />
-        <Column field="barcode" header="Cód. barras" sortable />
-        <Column field="brand" header="Marca" sortable />
-        <Column field="description" header="Descripción" />
-        <Column field="category" header="Categoría" sortable />
-        <Column field="presentation" header="Presentación" />
-        <Column field="unidad" header="Unidad" />
-        <Column field="user_name" header="Usuario" />
-        <Column header="Acciones" style="width: 120px">
-            <template #body="{ data }">
-                <Button icon="pi pi-pencil" class="p-button-text p-button-sm edit-btn" @click="$emit('edit', data)" />
-                <Button icon="pi pi-trash" class="p-button-text p-button-sm delete-btn" @click="$emit('delete', data)" />
-            </template>
-        </Column>
-
-        <template #empty>
-            <div class="empty-state">
-                <div class="empty-icon">
-                    <i class="pi pi-box"></i>
-                </div>
-                <h3 class="empty-title">No hay productos disponibles</h3>
-                <p class="empty-message">Aún no se han agregado productos al sistema. Comienza creando tu primer producto.</p>
-            </div>
-        </template>
-    </DataTable>
-</template>
-
 <script setup>
 import { ref } from 'vue';
 import { FilterMatchMode } from '@primevue/core/api';
@@ -71,6 +35,42 @@ const deleteProduct = (product) => {
     emit('delete', product);
 };
 </script>
+
+<template>
+    <DataTable :value="products" :loading="loading" class="products-table" responsiveLayout="scroll">
+        <Column field="image_url" header="Imagen" style="width: 80px">
+            <template #body="{ data }">
+                <img v-if="data.image_url" :src="data.image_url" alt="Imagen" style="width: 48px; height: 48px; object-fit: contain; background-color: #f9fafb; border-radius: 6px" />
+                <span v-else class="no-image">-</span>
+            </template>
+        </Column>
+        <Column field="name" header="Nombre" sortable />
+        <Column field="sku" header="SKU" sortable />
+        <Column field="barcode" header="Cód. barras" sortable />
+        <Column field="brand" header="Marca" sortable />
+        <Column field="description" header="Descripción" />
+        <Column field="category" header="Categoría" sortable />
+        <Column field="presentation" header="Presentación" />
+        <Column field="unidad" header="Unidad" />
+        <Column field="user_name" header="Usuario" />
+        <Column header="Acciones" style="width: 120px">
+            <template #body="{ data }">
+                <Button icon="pi pi-pencil" class="p-button-text p-button-sm edit-btn" @click="$emit('edit', data)" />
+                <Button icon="pi pi-trash" class="p-button-text p-button-sm delete-btn" @click="$emit('delete', data)" />
+            </template>
+        </Column>
+
+        <template #empty>
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="pi pi-box"></i>
+                </div>
+                <h3 class="empty-title">No hay productos disponibles</h3>
+                <p class="empty-message">Aún no se han agregado productos al sistema. Comienza creando tu primer producto.</p>
+            </div>
+        </template>
+    </DataTable>
+</template>
 
 <style scoped>
 .products-table {

@@ -1,71 +1,3 @@
-<template>
-    <div class="compact-form">
-        <form @submit.prevent="handleSubmit">
-            <div class="form-grid">
-                <!-- Fila 1: Nombre y Email -->
-                <div class="form-row">
-                    <div class="form-field">
-                        <label for="name" class="field-label">Nombre *</label>
-                        <InputText id="name" v-model="formData.name" :class="{ 'p-invalid': errors.name }" placeholder="Nombre completo" class="compact-input" />
-                        <small v-if="errors.name" class="p-error">{{ errors.name }}</small>
-                    </div>
-                    <div class="form-field">
-                        <label for="email" class="field-label">Email *</label>
-                        <InputText id="email" v-model="formData.email" :class="{ 'p-invalid': errors.email }" placeholder="correo@ejemplo.com" type="email" class="compact-input" />
-                        <small v-if="errors.email" class="p-error">{{ errors.email }}</small>
-                    </div>
-                </div>
-
-                <!-- Fila 2: DNI y Teléfono -->
-                <div class="form-row">
-                    <div class="form-field">
-                        <label for="dni" class="field-label">DNI *</label>
-                        <InputText id="dni" v-model="formData.dni" :class="{ 'p-invalid': errors.dni }" placeholder="12345678" maxlength="8" class="compact-input" @input="formatDNI" />
-                        <small v-if="errors.dni" class="p-error">{{ errors.dni }}</small>
-                    </div>
-                    <div class="form-field">
-                        <label for="phone" class="field-label">Teléfono</label>
-                        <InputText id="phone" v-model="formData.phone" placeholder="912345678" class="compact-input" />
-                    </div>
-                </div>
-
-                <!-- Fila 3: Contraseña (solo crear) y Rol -->
-                <div class="form-row">
-                    <div v-if="!isEdit" class="form-field">
-                        <label for="password" class="field-label">Contraseña *</label>
-                        <Password id="password" v-model="formData.password" :class="{ 'p-invalid': errors.password }" placeholder="Mínimo 6 caracteres" toggleMask :feedback="false" class="compact-input" fluid />
-                        <small v-if="errors.password" class="p-error">{{ errors.password }}</small>
-                    </div>
-                    <div class="form-field">
-                        <label for="role" class="field-label">Rol *</label>
-                        <Select id="role" v-model="formData.role_id" :options="roleOptions" optionLabel="value" optionValue="id" :class="{ 'p-invalid': errors.role_name }" placeholder="Seleccionar rol" class="compact-input" @change="onRoleChange" />
-                        <small v-if="errors.role_name" class="p-error">{{ errors.role_name }}</small>
-                    </div>
-                </div>
-
-                <!-- Fila 4: Estado -->
-                <div class="form-row">
-                    <div class="form-field status-field">
-                        <label class="field-label">Estado</label>
-                        <div class="status-toggle">
-                            <Checkbox id="is_active" v-model="formData.is_active" :binary="true" class="mr-2" />
-                            <label for="is_active" class="status-label">
-                                {{ formData.is_active ? 'Usuario activo' : 'Usuario inactivo' }}
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Botones de acción -->
-            <div class="form-actions">
-                <Button label="Cancelar" icon="pi pi-times" class="p-button-text" @click="$emit('cancel')" type="button" />
-                <Button :label="isEdit ? 'Actualizar' : 'Crear'" :icon="isEdit ? 'pi pi-check' : 'pi pi-plus'" type="submit" :loading="loading" />
-            </div>
-        </form>
-    </div>
-</template>
-
 <script setup>
 import { computed, reactive, watch, onMounted } from 'vue';
 import { useRolesStore } from '@/stores/roles';
@@ -245,6 +177,74 @@ const handleSubmit = () => {
     }
 };
 </script>
+
+<template>
+    <div class="compact-form">
+        <form @submit.prevent="handleSubmit">
+            <div class="form-grid">
+                <!-- Fila 1: Nombre y Email -->
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="name" class="field-label">Nombre *</label>
+                        <InputText id="name" v-model="formData.name" :class="{ 'p-invalid': errors.name }" placeholder="Nombre completo" class="compact-input" />
+                        <small v-if="errors.name" class="p-error">{{ errors.name }}</small>
+                    </div>
+                    <div class="form-field">
+                        <label for="email" class="field-label">Email *</label>
+                        <InputText id="email" v-model="formData.email" :class="{ 'p-invalid': errors.email }" placeholder="correo@ejemplo.com" type="email" class="compact-input" />
+                        <small v-if="errors.email" class="p-error">{{ errors.email }}</small>
+                    </div>
+                </div>
+
+                <!-- Fila 2: DNI y Teléfono -->
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="dni" class="field-label">DNI *</label>
+                        <InputText id="dni" v-model="formData.dni" :class="{ 'p-invalid': errors.dni }" placeholder="12345678" maxlength="8" class="compact-input" @input="formatDNI" />
+                        <small v-if="errors.dni" class="p-error">{{ errors.dni }}</small>
+                    </div>
+                    <div class="form-field">
+                        <label for="phone" class="field-label">Teléfono</label>
+                        <InputText id="phone" v-model="formData.phone" placeholder="912345678" class="compact-input" />
+                    </div>
+                </div>
+
+                <!-- Fila 3: Contraseña (solo crear) y Rol -->
+                <div class="form-row">
+                    <div v-if="!isEdit" class="form-field">
+                        <label for="password" class="field-label">Contraseña *</label>
+                        <Password id="password" v-model="formData.password" :class="{ 'p-invalid': errors.password }" placeholder="Mínimo 6 caracteres" toggleMask :feedback="false" class="compact-input" fluid />
+                        <small v-if="errors.password" class="p-error">{{ errors.password }}</small>
+                    </div>
+                    <div class="form-field">
+                        <label for="role" class="field-label">Rol *</label>
+                        <Select id="role" v-model="formData.role_id" :options="roleOptions" optionLabel="value" optionValue="id" :class="{ 'p-invalid': errors.role_name }" placeholder="Seleccionar rol" class="compact-input" @change="onRoleChange" />
+                        <small v-if="errors.role_name" class="p-error">{{ errors.role_name }}</small>
+                    </div>
+                </div>
+
+                <!-- Fila 4: Estado -->
+                <div class="form-row">
+                    <div class="form-field status-field">
+                        <label class="field-label">Estado</label>
+                        <div class="status-toggle">
+                            <Checkbox id="is_active" v-model="formData.is_active" :binary="true" class="mr-2" />
+                            <label for="is_active" class="status-label">
+                                {{ formData.is_active ? 'Usuario activo' : 'Usuario inactivo' }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="form-actions">
+                <Button label="Cancelar" icon="pi pi-times" class="p-button-text" @click="$emit('cancel')" type="button" />
+                <Button :label="isEdit ? 'Actualizar' : 'Crear'" :icon="isEdit ? 'pi pi-check' : 'pi pi-plus'" type="submit" :loading="loading" />
+            </div>
+        </form>
+    </div>
+</template>
 
 <style scoped>
 .compact-form {

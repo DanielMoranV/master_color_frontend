@@ -1,9 +1,9 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { useToast } from 'primevue/usetoast';
 import { useAuthStore } from '@/stores/auth';
-import { UbigeoUtil } from '@/utils/ubigeo';
+import { UbigeoPostal } from '@/utils/ubigeoPostal';
+import { useToast } from 'primevue/usetoast';
+import { computed, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -36,6 +36,11 @@ const reference = ref('');
 const departments = ref([]);
 const provinces = ref([]);
 const districts = ref([]);
+
+// Datos filtrados para AutoComplete
+const filteredDepartments = ref([]);
+const filteredProvinces = ref([]);
+const filteredDistricts = ref([]);
 
 // Estado para verificación de email
 const registrationComplete = ref(false);
@@ -90,22 +95,36 @@ const onClientTypeChange = () => {
     identityDocumentError.value = '';
 };
 
-// Crear instancia de ubigeo
-const ubigeo = new UbigeoUtil();
+// Crear instancia de ubigeo con códigos postales
+const ubigeo = new UbigeoPostal();
 
 // Funciones para manejar ubigeo
 const loadDepartments = () => {
     try {
         departments.value = ubigeo.getDepartments();
+        filteredDepartments.value = departments.value;
+        console.log('Departments loaded:', departments.value.length);
     } catch (error) {
         console.error('Error loading departments:', error);
-        // Fallback con datos básicos
-        departments.value = [
-            { label: 'Lima', value: '15', code: '15', name: 'Lima' },
-            { label: 'Callao', value: '07', code: '07', name: 'Callao' },
-            { label: 'Arequipa', value: '04', code: '04', name: 'Arequipa' }
-        ];
+        departments.value = [];
+        filteredDepartments.value = [];
     }
+};
+
+// Funciones de filtrado para AutoComplete
+const searchDepartments = (event) => {
+    const query = event.query.toLowerCase();
+    filteredDepartments.value = departments.value.filter((dept) => dept.label.toLowerCase().includes(query));
+};
+
+const searchProvinces = (event) => {
+    const query = event.query.toLowerCase();
+    filteredProvinces.value = provinces.value.filter((prov) => prov.label.toLowerCase().includes(query));
+};
+
+const searchDistricts = (event) => {
+    const query = event.query.toLowerCase();
+    filteredDistricts.value = districts.value.filter((dist) => dist.label.toLowerCase().includes(query));
 };
 
 const onDepartmentChange = () => {
@@ -113,16 +132,23 @@ const onDepartmentChange = () => {
     selectedDistrict.value = null;
     provinces.value = [];
     districts.value = [];
-    
+    filteredProvinces.value = [];
+    filteredDistricts.value = [];
+
     if (selectedDepartment.value) {
+        const departmentName = typeof selectedDepartment.value === 'object' ? selectedDepartment.value.value : selectedDepartment.value;
+
         try {
-            provinces.value = ubigeo.getProvincesByDepartment(selectedDepartment.value);
+            provinces.value = ubigeo.getProvincesByDepartment(departmentName);
+            filteredProvinces.value = provinces.value;
+            console.log('Provinces loaded for', departmentName, ':', provinces.value.length);
         } catch (error) {
             console.error('Error loading provinces:', error);
             provinces.value = [];
+            filteredProvinces.value = [];
         }
     }
-    
+
     // Clear errors
     departmentError.value = '';
     provinceError.value = '';
@@ -132,16 +158,22 @@ const onDepartmentChange = () => {
 const onProvinceChange = () => {
     selectedDistrict.value = null;
     districts.value = [];
-    
+    filteredDistricts.value = [];
+
     if (selectedProvince.value) {
+        const provinceName = typeof selectedProvince.value === 'object' ? selectedProvince.value.value : selectedProvince.value;
+
         try {
-            districts.value = ubigeo.getDistrictsByProvince(selectedProvince.value);
+            districts.value = ubigeo.getDistrictsByProvince(provinceName);
+            filteredDistricts.value = districts.value;
+            console.log('Districts loaded for', provinceName, ':', districts.value.length);
         } catch (error) {
             console.error('Error loading districts:', error);
             districts.value = [];
+            filteredDistricts.value = [];
         }
     }
-    
+
     // Clear errors
     provinceError.value = '';
     districtError.value = '';
@@ -149,13 +181,16 @@ const onProvinceChange = () => {
 
 const onDistrictChange = () => {
     // Auto-fill postal code if available
-    if (selectedDistrict.value) {
-        const district = districts.value.find(d => d.value === selectedDistrict.value);
-        if (district && district.postalCode) {
-            postalCode.value = district.postalCode;
+    if (selectedDistrict.value && selectedProvince.value) {
+        const districtName = typeof selectedDistrict.value === 'object' ? selectedDistrict.value.value : selectedDistrict.value;
+        const provinceName = typeof selectedProvince.value === 'object' ? selectedProvince.value.value : selectedProvince.value;
+
+        const primaryPostalCode = ubigeo.getPrimaryPostalCode(districtName, provinceName);
+        if (primaryPostalCode) {
+            postalCode.value = primaryPostalCode;
         }
     }
-    
+
     districtError.value = '';
 };
 
@@ -176,7 +211,7 @@ const validateForm = () => {
     identityDocumentError.value = '';
     phoneError.value = '';
     termsError.value = '';
-    
+
     // Limpiar errores de dirección
     addressFullError.value = '';
     districtError.value = '';
@@ -315,12 +350,12 @@ const register = async () => {
         identity_document: identityDocument.value,
         document_type: documentType.value,
         phone: phone.value,
-        
+
         // Campos de dirección
         address_full: addressFull.value.trim(),
-        district: getLocationName(districts.value, selectedDistrict.value),
-        province: getLocationName(provinces.value, selectedProvince.value),
-        department: getLocationName(departments.value, selectedDepartment.value),
+        district: typeof selectedDistrict.value === 'object' ? selectedDistrict.value.value : selectedDistrict.value,
+        province: typeof selectedProvince.value === 'object' ? selectedProvince.value.value : selectedProvince.value,
+        department: typeof selectedDepartment.value === 'object' ? selectedDepartment.value.value : selectedDepartment.value,
         postal_code: postalCode.value.trim() || null,
         reference: reference.value.trim() || null
     };
@@ -421,15 +456,15 @@ const verifyEmail = async () => {
                 detail: 'Tu correo electrónico ha sido verificado correctamente',
                 life: 3000
             });
-            
+
             // Check if this was from checkout flow
             const wasCheckoutFlow = localStorage.getItem('wasCheckoutFlow') === 'true';
-            
+
             setTimeout(() => {
                 if (wasCheckoutFlow) {
                     // Clear the checkout flow flag
                     localStorage.removeItem('wasCheckoutFlow');
-                    
+
                     // Redirect to store with cart restoration
                     toast.add({
                         severity: 'info',
@@ -484,10 +519,10 @@ onMounted(() => {
         // Intentar verificar el email automáticamente
         verifyEmail();
     }
-    
+
     // Load departments on component mount
     loadDepartments();
-    
+
     // Show checkout flow message if applicable
     if (isCheckoutFlow.value) {
         toast.add({
@@ -501,57 +536,57 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-1 sm:p-2 md:p-4 py-4 sm:py-6 md:py-8">
-        <div class="w-full max-w-7xl">
-            <div class="bg-white rounded-xl sm:rounded-2xl shadow-xl overflow-hidden border border-gray-200">
-                <div class="flex flex-col xl:flex-row min-h-[450px] sm:min-h-[500px] md:min-h-[600px] max-h-none xl:max-h-screen">
-                    <!-- Panel lateral izquierdo - Optimizado para diferentes tamaños -->
-                    <div class="xl:w-2/5 bg-gradient-to-br from-blue-700 to-blue-800 p-3 sm:p-4 md:p-6 lg:p-8 text-white relative overflow-hidden min-h-[350px] sm:min-h-[380px] md:min-h-[400px] xl:min-h-0">
+    <div class="h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-2">
+        <div class="w-full max-w-7xl h-[calc(100vh-1rem)]">
+            <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 h-full">
+                <div class="flex flex-col xl:flex-row h-full">
+                    <!-- Panel lateral izquierdo - Compacto -->
+                    <div class="xl:w-2/5 bg-gradient-to-br from-blue-700 to-blue-800 p-4 xl:p-6 text-white relative overflow-hidden xl:min-h-0 hidden xl:block">
                         <!-- Elementos decorativos de fondo -->
                         <div class="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 bg-blue-600 opacity-20 rounded-full -translate-y-16 sm:-translate-y-32 translate-x-16 sm:translate-x-32"></div>
                         <div class="absolute bottom-0 left-0 w-24 h-24 sm:w-32 sm:h-32 lg:w-48 lg:h-48 bg-blue-900 opacity-20 rounded-full translate-y-12 sm:translate-y-24 -translate-x-12 sm:-translate-x-24"></div>
 
-                        <div class="relative z-10 h-full flex flex-col justify-between py-2">
+                        <div class="relative z-10 h-full flex flex-col justify-between">
                             <!-- Logo y título -->
-                            <div class="text-center xl:text-left">
-                                <div class="flex items-center justify-center xl:justify-start mb-3 sm:mb-4">
-                                    <div class="w-12 h-12 sm:w-16 sm:h-16 bg-white rounded-lg flex items-center justify-center shadow-lg">
-                                        <img src="/mc.png" alt="Master Color Logo" class="w-10 h-10 sm:w-14 sm:h-14 object-contain" />
+                            <div class="text-left">
+                                <div class="flex items-center mb-2">
+                                    <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-lg">
+                                        <img src="/mc.png" alt="Master Color Logo" class="w-10 h-10 object-contain" />
                                     </div>
                                 </div>
-                                <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2 text-white">Master Color</h1>
-                                <p class="text-sm sm:text-base md:text-lg lg:text-xl text-blue-50 font-light">Únete a nuestra comunidad</p>
+                                <h1 class="text-2xl font-bold mb-1 text-white">Master Color</h1>
+                                <p class="text-blue-50 font-light">Únete a nuestra comunidad</p>
                             </div>
 
-                            <!-- Beneficios de registrarse - Compacto para móviles -->
-                            <div class="space-y-1.5 sm:space-y-2 md:space-y-3 lg:space-y-4 my-3 sm:my-4 md:my-5">
+                            <!-- Beneficios de registrarse - Compacto -->
+                            <div class="space-y-3 my-4">
                                 <div class="flex items-center space-x-3">
-                                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <i class="pi pi-shopping-cart text-blue-700 text-xs sm:text-sm md:text-base"></i>
+                                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <i class="pi pi-shopping-cart text-blue-700 text-sm"></i>
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-xs sm:text-sm md:text-base text-white">Compras Rápidas</h3>
-                                        <p class="text-blue-100 text-[10px] sm:text-xs md:text-sm">Acceso exclusivo a nuestro catálogo</p>
+                                        <h3 class="font-semibold text-sm text-white">Compras Rápidas</h3>
+                                        <p class="text-blue-100 text-xs">Acceso exclusivo a nuestro catálogo</p>
                                     </div>
                                 </div>
 
                                 <div class="flex items-center space-x-3">
-                                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <i class="pi pi-tags text-blue-700 text-sm sm:text-base"></i>
+                                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <i class="pi pi-tags text-blue-700 text-sm"></i>
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-sm sm:text-base text-white">Ofertas Especiales</h3>
-                                        <p class="text-blue-100 text-xs sm:text-sm">Descuentos exclusivos para clientes</p>
+                                        <h3 class="font-semibold text-sm text-white">Ofertas Especiales</h3>
+                                        <p class="text-blue-100 text-xs">Descuentos exclusivos para clientes</p>
                                     </div>
                                 </div>
 
                                 <div class="flex items-center space-x-3">
-                                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <i class="pi pi-truck text-blue-700 text-sm sm:text-base"></i>
+                                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <i class="pi pi-truck text-blue-700 text-sm"></i>
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-sm sm:text-base text-white">Seguimiento de Pedidos</h3>
-                                        <p class="text-blue-100 text-xs sm:text-sm">Rastrea tus compras en tiempo real</p>
+                                        <h3 class="font-semibold text-sm text-white">Seguimiento de Pedidos</h3>
+                                        <p class="text-blue-100 text-xs">Rastrea tus compras en tiempo real</p>
                                     </div>
                                 </div>
                             </div>
@@ -568,8 +603,8 @@ onMounted(() => {
                         </div>
                     </div>
 
-                    <!-- Panel de registro - Optimizado para scroll interno si es necesario -->
-                    <div class="xl:w-3/5 p-2 sm:p-3 md:p-4 lg:p-8 bg-white overflow-y-auto max-h-[70vh] sm:max-h-[75vh] md:max-h-[80vh] xl:max-h-screen">
+                    <!-- Panel de registro - Sin scroll -->
+                    <div class="xl:w-3/5 w-full p-4 xl:p-6 bg-white h-full overflow-y-auto">
                         <!-- Pantalla de verificación de email después del registro -->
                         <div v-if="registrationComplete" class="h-full flex flex-col justify-center items-center px-4 py-8 text-center space-y-6">
                             <div class="w-16 h-16 sm:w-20 sm:h-20 bg-blue-100 rounded-full flex items-center justify-center">
@@ -593,19 +628,29 @@ onMounted(() => {
                         </div>
 
                         <!-- Formulario de registro -->
-                        <div v-else>
-                            <div class="max-w-2xl mx-auto">
-                                <!-- Header del formulario -->
-                                <div class="text-center mb-2 sm:mb-3 md:mb-4 lg:mb-6">
-                                    <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-0.5 sm:mb-1">Crear Cuenta</h2>
-                                    <p class="text-gray-600 text-xs sm:text-sm md:text-base">Regístrate y únete a nosotros</p>
+                        <div v-else class="h-full flex flex-col">
+                            <!-- Header del formulario -->
+                            <div class="text-center mb-3 xl:hidden">
+                                <div class="flex items-center justify-center mb-2">
+                                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+                                        <img src="/mc.png" alt="Master Color Logo" class="w-8 h-8 object-contain" />
+                                    </div>
                                 </div>
+                                <h2 class="text-xl font-bold text-gray-900 mb-1">Crear Cuenta</h2>
+                                <p class="text-gray-600 text-sm">Regístrate en Master Color</p>
+                            </div>
 
-                                <form @submit.prevent="register" class="space-y-2 sm:space-y-3 md:space-y-4">
-                                    <!-- Primera fila: Nombre y Email -->
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="hidden xl:block text-center mb-3">
+                                <h2 class="text-2xl font-bold text-gray-900 mb-1">Crear Cuenta</h2>
+                                <p class="text-gray-600">Regístrate y únete a nosotros</p>
+                            </div>
+
+                            <div class="flex-1 overflow-y-auto">
+                                <form @submit.prevent="register" class="space-y-3">
+                                    <!-- Información personal en 3 columnas -->
+                                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
                                         <div>
-                                            <label for="name" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-1 sm:mb-2">Nombre Completo</label>
+                                            <label for="name" class="block text-sm font-semibold text-gray-800 mb-1">Nombre Completo</label>
                                             <IconField>
                                                 <InputIcon class="pi pi-user" />
                                                 <InputText id="name" v-model="name" type="text" placeholder="Tu nombre completo" class="w-full compact-input" :class="nameError ? 'p-invalid' : ''" @input="nameError = ''" />
@@ -614,24 +659,16 @@ onMounted(() => {
                                         </div>
 
                                         <div>
-                                            <label for="email" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Correo Electrónico</label>
+                                            <label for="email" class="block text-sm font-semibold text-gray-800 mb-1">Correo Electrónico</label>
                                             <IconField>
                                                 <InputIcon class="pi pi-envelope" />
                                                 <InputText id="email" v-model="email" type="email" placeholder="tu@email.com" class="w-full compact-input" :class="emailError ? 'p-invalid' : ''" @input="emailError = ''" />
                                             </IconField>
                                             <small v-if="emailError" class="p-error text-red-600 text-xs mt-1 block">{{ emailError }}</small>
                                         </div>
-                                    </div>
-
-                                    <!-- Segunda fila: Tipo de cliente y Teléfono -->
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label for="clientType" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Tipo de Cliente</label>
-                                            <Select v-model="clientType" :options="clientTypeOptions" optionLabel="label" optionValue="value" placeholder="Selecciona el tipo" class="w-full compact-select" @change="onClientTypeChange" />
-                                        </div>
 
                                         <div>
-                                            <label for="phone" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Teléfono</label>
+                                            <label for="phone" class="block text-sm font-semibold text-gray-800 mb-1">Teléfono</label>
                                             <IconField>
                                                 <InputIcon class="pi pi-phone" />
                                                 <InputText id="phone" v-model="phone" type="tel" placeholder="987654321" class="w-full compact-input" :class="phoneError ? 'p-invalid' : ''" @input="phoneError = ''" />
@@ -640,14 +677,20 @@ onMounted(() => {
                                         </div>
                                     </div>
 
-                                    <!-- Tercera fila: Tipo de documento y Número -->
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Documento y tipo de cliente en 3 columnas -->
+                                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
                                         <div>
-                                            <label for="documentType" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Tipo de Documento</label>
+                                            <label for="clientType" class="block text-sm font-semibold text-gray-800 mb-1">Tipo de Cliente</label>
+                                            <Select v-model="clientType" :options="clientTypeOptions" optionLabel="label" optionValue="value" placeholder="Selecciona el tipo" class="w-full compact-select" @change="onClientTypeChange" />
+                                        </div>
+
+                                        <div>
+                                            <label for="documentType" class="block text-sm font-semibold text-gray-800 mb-1">Tipo de Documento</label>
                                             <Select v-model="documentType" :options="documentTypeOptions" optionLabel="label" optionValue="value" placeholder="Tipo de documento" class="w-full compact-select" />
                                         </div>
+
                                         <div>
-                                            <label for="identityDocument" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Número de Documento</label>
+                                            <label for="identityDocument" class="block text-sm font-semibold text-gray-800 mb-1">Número de Documento</label>
                                             <InputText
                                                 id="identityDocument"
                                                 v-model="identityDocument"
@@ -661,10 +704,10 @@ onMounted(() => {
                                         </div>
                                     </div>
 
-                                    <!-- Cuarta fila: Contraseñas -->
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Contraseñas en 2 columnas -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <div>
-                                            <label for="password" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Contraseña</label>
+                                            <label for="password" class="block text-sm font-semibold text-gray-800 mb-1">Contraseña</label>
                                             <div class="relative">
                                                 <IconField>
                                                     <InputIcon class="pi pi-lock" />
@@ -687,7 +730,7 @@ onMounted(() => {
                                             <small v-if="passwordError" class="p-error text-red-600 text-xs mt-1 block">{{ passwordError }}</small>
                                         </div>
                                         <div>
-                                            <label for="confirmPassword" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Confirmar Contraseña</label>
+                                            <label for="confirmPassword" class="block text-sm font-semibold text-gray-800 mb-1">Confirmar Contraseña</label>
                                             <div class="relative">
                                                 <IconField>
                                                     <InputIcon class="pi pi-lock" />
@@ -712,146 +755,143 @@ onMounted(() => {
                                     </div>
 
                                     <!-- Sección de Dirección -->
-                                    <div class="bg-gray-50 p-3 sm:p-4 rounded-lg border">
-                                        <h3 class="text-sm sm:text-base font-semibold text-gray-800 mb-3 flex items-center">
+                                    <div class="bg-gray-50 p-3 rounded-lg border">
+                                        <h3 class="text-sm font-semibold text-gray-800 mb-2 flex items-center">
                                             <i class="pi pi-map-marker mr-2 text-blue-600"></i>
                                             Dirección de Entrega
                                         </h3>
-                                        
+
                                         <!-- Dirección completa -->
-                                        <div class="mb-4">
-                                            <label for="addressFull" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Dirección Completa *</label>
+                                        <div class="mb-3">
+                                            <label for="addressFull" class="block text-sm font-semibold text-gray-800 mb-1">Dirección Completa *</label>
                                             <IconField>
                                                 <InputIcon class="pi pi-home" />
-                                                <InputText 
-                                                    id="addressFull" 
-                                                    v-model="addressFull" 
-                                                    type="text" 
-                                                    placeholder="Ej: Av. Los Olivos 123, Mz A Lt 5" 
-                                                    class="w-full compact-input" 
-                                                    :class="addressFullError ? 'p-invalid' : ''" 
-                                                    @input="addressFullError = ''" 
+                                                <InputText
+                                                    id="addressFull"
+                                                    v-model="addressFull"
+                                                    type="text"
+                                                    placeholder="Ej: Av. Los Olivos 123, Mz A Lt 5"
+                                                    class="w-full compact-input"
+                                                    :class="addressFullError ? 'p-invalid' : ''"
+                                                    @input="addressFullError = ''"
+                                                    fluid
                                                 />
                                             </IconField>
                                             <small v-if="addressFullError" class="p-error text-red-600 text-xs mt-1 block">{{ addressFullError }}</small>
                                         </div>
 
-                                        <!-- Primera fila: Departamento y Provincia -->
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <!-- Ubicación en 3 columnas -->
+                                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-3">
                                             <div>
-                                                <label for="department" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Departamento *</label>
-                                                <Select 
+                                                <label for="department" class="block text-sm font-semibold text-gray-800 mb-1">Departamento *</label>
+                                                <AutoComplete
                                                     id="department"
-                                                    v-model="selectedDepartment" 
-                                                    :options="departments" 
-                                                    optionLabel="label" 
-                                                    optionValue="value" 
-                                                    placeholder="Selecciona el departamento" 
-                                                    class="w-full compact-select" 
+                                                    v-model="selectedDepartment"
+                                                    :suggestions="filteredDepartments"
+                                                    optionLabel="label"
+                                                    placeholder="Busca departamento"
+                                                    class="w-full compact-autocomplete"
                                                     :class="departmentError ? 'p-invalid' : ''"
+                                                    @complete="searchDepartments"
                                                     @change="onDepartmentChange"
+                                                    forceSelection
+                                                    fluid
                                                 />
                                                 <small v-if="departmentError" class="p-error text-red-600 text-xs mt-1 block">{{ departmentError }}</small>
                                             </div>
 
                                             <div>
-                                                <label for="province" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Provincia *</label>
-                                                <Select 
+                                                <label for="province" class="block text-sm font-semibold text-gray-800 mb-1">Provincia *</label>
+                                                <AutoComplete
                                                     id="province"
-                                                    v-model="selectedProvince" 
-                                                    :options="provinces" 
-                                                    optionLabel="label" 
-                                                    optionValue="value" 
-                                                    placeholder="Selecciona la provincia" 
-                                                    class="w-full compact-select" 
+                                                    v-model="selectedProvince"
+                                                    :suggestions="filteredProvinces"
+                                                    optionLabel="label"
+                                                    placeholder="Busca provincia"
+                                                    class="w-full compact-autocomplete"
                                                     :class="provinceError ? 'p-invalid' : ''"
                                                     :disabled="!selectedDepartment || provinces.length === 0"
+                                                    @complete="searchProvinces"
                                                     @change="onProvinceChange"
+                                                    forceSelection
+                                                    fluid
                                                 />
                                                 <small v-if="provinceError" class="p-error text-red-600 text-xs mt-1 block">{{ provinceError }}</small>
                                             </div>
-                                        </div>
 
-                                        <!-- Segunda fila: Distrito y Código Postal -->
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                             <div>
-                                                <label for="district" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Distrito *</label>
-                                                <Select 
+                                                <label for="district" class="block text-sm font-semibold text-gray-800 mb-1">Distrito *</label>
+                                                <AutoComplete
                                                     id="district"
-                                                    v-model="selectedDistrict" 
-                                                    :options="districts" 
-                                                    optionLabel="label" 
-                                                    optionValue="value" 
-                                                    placeholder="Selecciona el distrito" 
-                                                    class="w-full compact-select" 
+                                                    v-model="selectedDistrict"
+                                                    :suggestions="filteredDistricts"
+                                                    optionLabel="label"
+                                                    placeholder="Busca distrito"
+                                                    class="w-full compact-autocomplete"
                                                     :class="districtError ? 'p-invalid' : ''"
                                                     :disabled="!selectedProvince || districts.length === 0"
+                                                    @complete="searchDistricts"
                                                     @change="onDistrictChange"
+                                                    forceSelection
+                                                    fluid
                                                 />
                                                 <small v-if="districtError" class="p-error text-red-600 text-xs mt-1 block">{{ districtError }}</small>
                                             </div>
+                                        </div>
 
+                                        <!-- Código postal y referencia en 2 columnas -->
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                             <div>
-                                                <label for="postalCode" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Código Postal</label>
+                                                <label for="postalCode" class="block text-sm font-semibold text-gray-800 mb-1">Código Postal</label>
                                                 <IconField>
                                                     <InputIcon class="pi pi-hashtag" />
-                                                    <InputText 
-                                                        id="postalCode" 
-                                                        v-model="postalCode" 
-                                                        type="text" 
-                                                        placeholder="Ej: 15434" 
-                                                        class="w-full compact-input" 
-                                                        :class="postalCodeError ? 'p-invalid' : ''" 
-                                                        @input="postalCodeError = ''" 
-                                                    />
+                                                    <InputText id="postalCode" v-model="postalCode" type="text" placeholder="Ej: 15434" class="w-full compact-input" :class="postalCodeError ? 'p-invalid' : ''" @input="postalCodeError = ''" fluid />
                                                 </IconField>
                                                 <small v-if="postalCodeError" class="p-error text-red-600 text-xs mt-1 block">{{ postalCodeError }}</small>
                                             </div>
-                                        </div>
 
-                                        <!-- Referencia -->
-                                        <div>
-                                            <label for="reference" class="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">Referencia</label>
-                                            <IconField>
-                                                <InputIcon class="pi pi-info-circle" />
-                                                <InputText 
-                                                    id="reference" 
-                                                    v-model="reference" 
-                                                    type="text" 
-                                                    placeholder="Ej: Frente al parque, casa verde" 
-                                                    class="w-full compact-input" 
-                                                    :class="referenceError ? 'p-invalid' : ''" 
-                                                    @input="referenceError = ''" 
-                                                />
-                                            </IconField>
-                                            <small v-if="referenceError" class="p-error text-red-600 text-xs mt-1 block">{{ referenceError }}</small>
+                                            <div>
+                                                <label for="reference" class="block text-sm font-semibold text-gray-800 mb-1">Referencia</label>
+                                                <IconField>
+                                                    <InputIcon class="pi pi-info-circle" />
+                                                    <InputText
+                                                        id="reference"
+                                                        v-model="reference"
+                                                        type="text"
+                                                        placeholder="Ej: Frente al parque, casa verde"
+                                                        class="w-full compact-input"
+                                                        :class="referenceError ? 'p-invalid' : ''"
+                                                        @input="referenceError = ''"
+                                                        fluid
+                                                    />
+                                                </IconField>
+                                                <small v-if="referenceError" class="p-error text-red-600 text-xs mt-1 block">{{ referenceError }}</small>
+                                            </div>
                                         </div>
                                     </div>
 
                                     <!-- Términos y condiciones -->
-                                    <div class="py-1 sm:py-2">
-                                        <div class="flex items-start">
-                                            <Checkbox v-model="acceptTerms" :binary="true" id="acceptTerms" class="mr-3 mt-1" />
-                                            <label for="acceptTerms" class="text-xs sm:text-sm text-gray-700 cursor-pointer leading-tight sm:leading-relaxed">
-                                                Acepto los
-                                                <a href="#" class="text-blue-600 hover:text-blue-800 underline">términos y condiciones</a>
-                                                y la
-                                                <a href="#" class="text-blue-600 hover:text-blue-800 underline">política de privacidad</a>
-                                            </label>
-                                        </div>
-                                        <small v-if="termsError" class="p-error text-red-600 text-xs mt-1 block">{{ termsError }}</small>
+                                    <div class="flex items-start space-x-2">
+                                        <Checkbox v-model="acceptTerms" :binary="true" id="acceptTerms" class="mt-1" />
+                                        <label for="acceptTerms" class="text-sm text-gray-700 cursor-pointer">
+                                            Acepto los
+                                            <a href="#" class="text-blue-600 hover:text-blue-800 underline">términos y condiciones</a>
+                                            y la
+                                            <a href="#" class="text-blue-600 hover:text-blue-800 underline">política de privacidad</a>
+                                        </label>
                                     </div>
-
-                                    <!-- Botones de acción -->
-                                    <div class="space-y-2 sm:space-y-3 pt-1 sm:pt-2">
-                                        <Button type="submit" label="Crear Cuenta" icon="pi pi-user-plus" class="w-full compact-button bg-blue-600 border-blue-600 hover:bg-blue-700 hover:border-blue-700" :loading="loading" />
-
-                                        <div class="text-center">
-                                            <span class="text-xs sm:text-sm text-gray-600">¿Ya tienes una cuenta? </span>
-                                            <Button type="button" label="Iniciar Sesión" class="p-button-link text-blue-600 hover:text-blue-800 p-0 h-auto text-xs sm:text-sm" @click="goToLogin" />
-                                        </div>
-                                    </div>
+                                    <small v-if="termsError" class="p-error text-red-600 text-xs block">{{ termsError }}</small>
                                 </form>
+                            </div>
+
+                            <!-- Botones fijos en la parte inferior -->
+                            <div class="border-t pt-3 mt-3 space-y-2">
+                                <Button type="submit" label="Crear Cuenta" icon="pi pi-user-plus" class="w-full compact-button bg-blue-600 border-blue-600 hover:bg-blue-700 hover:border-blue-700" :loading="loading" @click="register" />
+
+                                <div class="text-center">
+                                    <span class="text-sm text-gray-600">¿Ya tienes una cuenta? </span>
+                                    <Button type="button" label="Iniciar Sesión" class="p-button-link text-blue-600 hover:text-blue-800 p-0 h-auto text-sm" @click="goToLogin" />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -872,7 +912,8 @@ onMounted(() => {
     }
 
     .compact-input :deep(.p-inputtext),
-    .compact-select :deep(.p-select .p-select-label) {
+    .compact-select :deep(.p-select .p-select-label),
+    .compact-autocomplete :deep(.p-autocomplete .p-autocomplete-input) {
         padding: 0.375rem 0.625rem;
         font-size: 0.6875rem;
     }
@@ -888,7 +929,7 @@ onMounted(() => {
 }
 /* Estilos compactos para mejor uso del espacio */
 .compact-input :deep(.p-inputtext) {
-    padding: 0.75rem 1rem;
+    padding: 0.625rem 0.875rem;
     border-radius: 0.5rem;
     border: 1.5px solid #d1d5db;
     font-size: 0.875rem;
@@ -917,12 +958,41 @@ onMounted(() => {
 }
 
 .compact-select :deep(.p-select .p-select-label) {
-    padding: 0.75rem 1rem;
+    padding: 0.625rem 0.875rem;
     font-size: 0.875rem;
 }
 
+.compact-autocomplete :deep(.p-autocomplete) {
+    border-radius: 0.5rem;
+    border: 1.5px solid #d1d5db;
+    transition: all 0.2s ease;
+}
+
+.compact-autocomplete :deep(.p-autocomplete:not(.p-disabled).p-focus) {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.compact-autocomplete :deep(.p-autocomplete.p-invalid) {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.compact-autocomplete :deep(.p-autocomplete .p-autocomplete-input) {
+    padding: 0.625rem 0.875rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    background: transparent;
+}
+
+.compact-autocomplete :deep(.p-autocomplete .p-autocomplete-input:focus) {
+    outline: none;
+    box-shadow: none;
+}
+
 .compact-button :deep(.p-button) {
-    padding: 0.75rem 1.5rem;
+    padding: 0.625rem 1.25rem;
     border-radius: 0.5rem;
     font-weight: 600;
     font-size: 0.875rem;
@@ -930,13 +1000,13 @@ onMounted(() => {
 }
 
 :deep(.p-input-icon-left > i:first-of-type) {
-    left: 1rem;
+    left: 0.875rem;
     color: #6b7280;
     font-size: 0.875rem;
 }
 
 :deep(.p-input-icon-left > .p-inputtext) {
-    padding-left: 2.75rem;
+    padding-left: 2.5rem;
 }
 
 :deep(.p-checkbox) {
@@ -963,6 +1033,11 @@ onMounted(() => {
     }
 
     .compact-select :deep(.p-select .p-select-label) {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.8125rem;
+    }
+
+    .compact-autocomplete :deep(.p-autocomplete .p-autocomplete-input) {
         padding: 0.625rem 0.875rem;
         font-size: 0.8125rem;
     }

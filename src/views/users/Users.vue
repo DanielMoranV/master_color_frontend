@@ -1,93 +1,3 @@
-<template>
-    <div class="users-management">
-        <!-- Header Section with Gradient Background -->
-        <div class="header-section">
-            <div class="header-content">
-                <div class="title-section">
-                    <div class="icon-wrapper">
-                        <i class="pi pi-users"></i>
-                    </div>
-                    <div>
-                        <h1 class="main-title">Gestión de Usuarios</h1>
-                        <p class="subtitle">Administra y controla los usuarios del sistema</p>
-                    </div>
-                </div>
-                <Button label="Nuevo Usuario" icon="pi pi-plus" @click="openNew" class="create-button" raised />
-            </div>
-        </div>
-
-        <!-- Main Content Card -->
-        <div class="content-card">
-            <div class="table-header">
-                <h2 class="table-title">Lista de Usuarios</h2>
-                <div class="table-actions">
-                    <div class="search-box">
-                        <i class="pi pi-search"></i>
-                        <input type="text" placeholder="Buscar usuarios..." v-model="searchQuery" class="search-input" />
-                    </div>
-                </div>
-            </div>
-
-            <UsersTable :users="filteredUsers" :loading="usersStore.loading" @edit="editUser" @delete="confirmDeleteUser" />
-        </div>
-
-        <!-- Enhanced User Dialog -->
-        <Dialog v-model:visible="userDialog" :style="{ width: '650px' }" :header="selectedUser?.id ? 'Editar Usuario' : 'Nuevo Usuario'" :modal="true" class="user-dialog">
-            <template #header>
-                <div class="dialog-header">
-                    <div class="dialog-icon">
-                        <i :class="selectedUser?.id ? 'pi pi-user-edit' : 'pi pi-user-plus'"></i>
-                    </div>
-                    <div>
-                        <h3>{{ selectedUser?.id ? 'Editar Usuario' : 'Nuevo Usuario' }}</h3>
-                        <p>{{ selectedUser?.id ? 'Modifica la información del usuario' : 'Completa los datos del nuevo usuario' }}</p>
-                    </div>
-                </div>
-            </template>
-
-            <UserForm :user="selectedUser" :loading="usersStore.loading" @submit="handleSaveUser" @cancel="hideDialog" />
-        </Dialog>
-
-        <!-- Enhanced Delete Dialog -->
-        <Dialog v-model:visible="deleteUserDialog" :style="{ width: '480px' }" header="Confirmar Eliminación" :modal="true" class="delete-dialog">
-            <template #header>
-                <div class="dialog-header danger">
-                    <div class="dialog-icon danger">
-                        <i class="pi pi-exclamation-triangle"></i>
-                    </div>
-                    <div>
-                        <h3>Confirmar Eliminación</h3>
-                        <p>Esta acción no se puede deshacer</p>
-                    </div>
-                </div>
-            </template>
-
-            <div class="delete-content">
-                <div class="warning-box">
-                    <i class="pi pi-info-circle"></i>
-                    <div>
-                        <p class="warning-text">
-                            ¿Estás seguro de que quieres eliminar a
-                            <strong>{{ selectedUser.name }}</strong
-                            >?
-                        </p>
-                        <p class="warning-subtext">Se perderán todos los datos asociados al usuario.</p>
-                    </div>
-                </div>
-            </div>
-
-            <template #footer>
-                <div class="dialog-actions">
-                    <Button label="Cancelar" icon="pi pi-times" class="cancel-button" @click="deleteUserDialog = false" outlined />
-                    <Button label="Eliminar" icon="pi pi-trash" class="delete-button" @click="deleteUser" :loading="usersStore.loading" />
-                </div>
-            </template>
-        </Dialog>
-
-        <Toast position="top-right" />
-    </div>
-</template>
-
 <script setup>
 import { useRolesStore } from '@/stores/roles';
 import { useUsersStore } from '@/stores/users';
@@ -224,6 +134,96 @@ onMounted(async () => {
     await rolesStore.fetchRoles();
 });
 </script>
+
+<template>
+    <div class="users-management">
+        <!-- Header Section with Gradient Background -->
+        <div class="header-section">
+            <div class="header-content">
+                <div class="title-section">
+                    <div class="icon-wrapper">
+                        <i class="pi pi-users"></i>
+                    </div>
+                    <div>
+                        <h1 class="main-title">Gestión de Usuarios</h1>
+                        <p class="subtitle">Administra y controla los usuarios del sistema</p>
+                    </div>
+                </div>
+                <Button label="Nuevo Usuario" icon="pi pi-plus" @click="openNew" class="create-button" raised />
+            </div>
+        </div>
+
+        <!-- Main Content Card -->
+        <div class="content-card">
+            <div class="table-header">
+                <h2 class="table-title">Lista de Usuarios</h2>
+                <div class="table-actions">
+                    <div class="search-box">
+                        <i class="pi pi-search"></i>
+                        <input type="text" placeholder="Buscar usuarios..." v-model="searchQuery" class="search-input" />
+                    </div>
+                </div>
+            </div>
+
+            <UsersTable :users="filteredUsers" :loading="usersStore.loading" @edit="editUser" @delete="confirmDeleteUser" />
+        </div>
+
+        <!-- Enhanced User Dialog -->
+        <Dialog v-model:visible="userDialog" :style="{ width: '650px' }" :header="selectedUser?.id ? 'Editar Usuario' : 'Nuevo Usuario'" :modal="true" class="user-dialog">
+            <template #header>
+                <div class="dialog-header">
+                    <div class="dialog-icon">
+                        <i :class="selectedUser?.id ? 'pi pi-user-edit' : 'pi pi-user-plus'"></i>
+                    </div>
+                    <div>
+                        <h3>{{ selectedUser?.id ? 'Editar Usuario' : 'Nuevo Usuario' }}</h3>
+                        <p>{{ selectedUser?.id ? 'Modifica la información del usuario' : 'Completa los datos del nuevo usuario' }}</p>
+                    </div>
+                </div>
+            </template>
+
+            <UserForm :user="selectedUser" :loading="usersStore.loading" @submit="handleSaveUser" @cancel="hideDialog" />
+        </Dialog>
+
+        <!-- Enhanced Delete Dialog -->
+        <Dialog v-model:visible="deleteUserDialog" :style="{ width: '480px' }" header="Confirmar Eliminación" :modal="true" class="delete-dialog">
+            <template #header>
+                <div class="dialog-header danger">
+                    <div class="dialog-icon danger">
+                        <i class="pi pi-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <h3>Confirmar Eliminación</h3>
+                        <p>Esta acción no se puede deshacer</p>
+                    </div>
+                </div>
+            </template>
+
+            <div class="delete-content">
+                <div class="warning-box">
+                    <i class="pi pi-info-circle"></i>
+                    <div>
+                        <p class="warning-text">
+                            ¿Estás seguro de que quieres eliminar a
+                            <strong>{{ selectedUser.name }}</strong
+                            >?
+                        </p>
+                        <p class="warning-subtext">Se perderán todos los datos asociados al usuario.</p>
+                    </div>
+                </div>
+            </div>
+
+            <template #footer>
+                <div class="dialog-actions">
+                    <Button label="Cancelar" icon="pi pi-times" class="cancel-button" @click="deleteUserDialog = false" outlined />
+                    <Button label="Eliminar" icon="pi pi-trash" class="delete-button" @click="deleteUser" :loading="usersStore.loading" />
+                </div>
+            </template>
+        </Dialog>
+
+        <Toast position="top-right" />
+    </div>
+</template>
 
 <style scoped>
 .users-management {

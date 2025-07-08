@@ -33,6 +33,12 @@ const menuConfig = ref([
                 icon: 'pi pi-fw pi-user',
                 to: '/profile',
                 public: true
+            },
+            {
+                label: 'Direcciones',
+                icon: 'pi pi-fw pi-map-marker',
+                to: '/addresses',
+                roles: [ROLES.CLIENT]
             }
         ]
     },
