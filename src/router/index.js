@@ -109,10 +109,10 @@ const router = createRouter({
             meta: { roles: ['client'] }
         },
         {
-            path: '/payment-return',
+            path: '/payment-return/:status',
             name: 'payment-return',
-            component: () => import('@/views/orders/PaymentReturn.vue'),
-            meta: { roles: ['client'] }
+            component: () => import('@/views/payment/PaymentReturn.vue'),
+            meta: { public: true } // Pública para manejar redirecciones de MercadoPago
         },
         {
             path: '/accessdenied',

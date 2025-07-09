@@ -70,131 +70,131 @@ const handleUseClassicMode = () => {
     emit('use-classic-mode');
 };
 
-// Select payment method
-const selectPaymentMethod = async (method) => {
-    if (paymentMethod.value === method) return;
+// Select payment method (unused but kept for potential future use)
+// const selectPaymentMethod = async (method) => {
+//     if (paymentMethod.value === method) return;
 
-    console.log('Selecting payment method:', method);
+//     console.log('Selecting payment method:', method);
 
-    // Destroy existing bricks
-    await destroyBricks();
+//     // Destroy existing bricks
+//     await destroyBricks();
 
-    paymentMethod.value = method;
+//     paymentMethod.value = method;
 
-    if (method === 'card' || method === 'wallet') {
-        // Wait for DOM update and element creation
-        await nextTick();
+//     if (method === 'card' || method === 'wallet') {
+//         // Wait for DOM update and element creation
+//         await nextTick();
 
-        // Add a small delay to ensure DOM is fully updated
-        await new Promise((resolve) => setTimeout(resolve, 100));
+//         // Add a small delay to ensure DOM is fully updated
+//         await new Promise((resolve) => setTimeout(resolve, 100));
 
-        await loadPaymentBrick();
-    }
-};
+//         await loadPaymentBrick();
+//     }
+// };
 
-// Load payment brick based on selected method
-const loadPaymentBrick = async () => {
-    try {
-        if (paymentMethod.value === 'card') {
-            await loadCardBrick();
-        } else if (paymentMethod.value === 'wallet') {
-            await loadWalletBrick();
-        }
-    } catch (err) {
-        console.error('Error loading payment brick:', err);
-        error.value = 'Error al cargar el método de pago';
-    }
-};
+// Load payment brick based on selected method (unused but kept for potential future use)
+// const loadPaymentBrick = async () => {
+//     try {
+//         if (paymentMethod.value === 'card') {
+//             await loadCardBrick();
+//         } else if (paymentMethod.value === 'wallet') {
+//             await loadWalletBrick();
+//         }
+//     } catch (err) {
+//         console.error('Error loading payment brick:', err);
+//         error.value = 'Error al cargar el método de pago';
+//     }
+// };
 
-// Load card payment brick
-const loadCardBrick = async () => {
-    try {
-        // Wait for DOM element to be available
-        await nextTick();
+// Load card payment brick (unused but kept for potential future use)
+// const loadCardBrick = async () => {
+//     try {
+//         // Wait for DOM element to be available
+//         await nextTick();
 
-        // Check if element exists
-        const element = document.getElementById('cardPaymentBrick');
-        if (!element) {
-            console.error('Card payment brick element not found in DOM');
-            throw new Error('Elemento de pago no encontrado. Intenta recargar la página.');
-        }
+//         // Check if element exists
+//         const element = document.getElementById('cardPaymentBrick');
+//         if (!element) {
+//             console.error('Card payment brick element not found in DOM');
+//             throw new Error('Elemento de pago no encontrado. Intenta recargar la página.');
+//         }
 
-        console.log('Creating card payment brick for element:', element);
-        console.log('Order data:', props.orderData);
-        console.log('Order total:', props.orderData.total, 'Parsed:', parseFloat(props.orderData.total));
+//         console.log('Creating card payment brick for element:', element);
+//         console.log('Order data:', props.orderData);
+//         console.log('Order total:', props.orderData.total, 'Parsed:', parseFloat(props.orderData.total));
 
-        cardBrick.value = await mercadoPagoService.createCardPaymentBrick('cardPaymentBrick', {
-            initialization: {
-                amount: parseFloat(props.orderData.total),
-                preferenceId: props.preferenceData?.preference_id || null
-            },
-            customization: {
-                paymentMethods: {
-                    creditCard: 'all',
-                    debitCard: 'all',
-                    mercadoPago: props.preferenceData?.preference_id ? 'all' : 'wallet_purchase'
-                }
-            },
-            callbacks: {
-                onSubmit: async (cardFormData) => {
-                    return await processCardPayment(cardFormData);
-                },
-                onError: (error) => {
-                    console.error('Card brick error:', error);
-                    toast.add({
-                        severity: 'error',
-                        summary: 'Error en el pago',
-                        detail: 'Hubo un error al procesar tu tarjeta',
-                        life: 5000
-                    });
-                }
-            }
-        });
-    } catch (error) {
-        console.error('Error creating card brick:', error);
-        throw error;
-    }
-};
+//         cardBrick.value = await mercadoPagoService.createCardPaymentBrick('cardPaymentBrick', {
+//             initialization: {
+//                 amount: parseFloat(props.orderData.total),
+//                 preferenceId: props.preferenceData?.preference_id || null
+//             },
+//             customization: {
+//                 paymentMethods: {
+//                     creditCard: 'all',
+//                     debitCard: 'all',
+//                     mercadoPago: props.preferenceData?.preference_id ? 'all' : 'wallet_purchase'
+//                 }
+//             },
+//             callbacks: {
+//                 onSubmit: async (cardFormData) => {
+//                     return await processCardPayment(cardFormData);
+//                 },
+//                 onError: (error) => {
+//                     console.error('Card brick error:', error);
+//                     toast.add({
+//                         severity: 'error',
+//                         summary: 'Error en el pago',
+//                         detail: 'Hubo un error al procesar tu tarjeta',
+//                         life: 5000
+//                     });
+//                 }
+//             }
+//         });
+//     } catch (error) {
+//         console.error('Error creating card brick:', error);
+//         throw error;
+//     }
+// };
 
-// Load wallet payment brick
-const loadWalletBrick = async () => {
-    try {
-        // Wait for DOM element to be available
-        await nextTick();
+// Load wallet payment brick (unused but kept for potential future use)
+// const loadWalletBrick = async () => {
+//     try {
+//         // Wait for DOM element to be available
+//         await nextTick();
 
-        // Check if element exists
-        const element = document.getElementById('walletPaymentBrick');
-        if (!element) {
-            console.error('Wallet payment brick element not found in DOM');
-            throw new Error('Elemento de pago no encontrado. Intenta recargar la página.');
-        }
+//         // Check if element exists
+//         const element = document.getElementById('walletPaymentBrick');
+//         if (!element) {
+//             console.error('Wallet payment brick element not found in DOM');
+//             throw new Error('Elemento de pago no encontrado. Intenta recargar la página.');
+//         }
 
-        console.log('Creating wallet payment brick for element:', element);
+//         console.log('Creating wallet payment brick for element:', element);
 
-        walletBrick.value = await mercadoPagoService.createWalletBrick('walletPaymentBrick', {
-            initialization: {
-                preferenceId: props.preferenceData.preference_id || null
-            },
-            callbacks: {
-                onSubmit: async (walletFormData) => {
-                    return await processWalletPayment(walletFormData);
-                },
-                onError: (error) => {
-                    console.error('Wallet brick error:', error);
-                    toast.add({
-                        severity: 'error',
-                        summary: 'Error en el pago',
-                        detail: 'Hubo un error al procesar el pago con MercadoPago',
-                        life: 5000
-                    });
-                }
-            }
-        });
-    } catch (error) {
-        console.error('Error creating wallet brick:', error);
-        throw error;
-    }
-};
+//         walletBrick.value = await mercadoPagoService.createWalletBrick('walletPaymentBrick', {
+//             initialization: {
+//                 preferenceId: props.preferenceData.preference_id || null
+//             },
+//             callbacks: {
+//                 onSubmit: async (walletFormData) => {
+//                     return await processWalletPayment(walletFormData);
+//                 },
+//                 onError: (error) => {
+//                     console.error('Wallet brick error:', error);
+//                     toast.add({
+//                         severity: 'error',
+//                         summary: 'Error en el pago',
+//                         detail: 'Hubo un error al procesar el pago con MercadoPago',
+//                         life: 5000
+//                     });
+//                 }
+//             }
+//         });
+//     } catch (error) {
+//         console.error('Error creating wallet brick:', error);
+//         throw error;
+//     }
+// };
 
 // Process card payment
 const processCardPayment = async (cardFormData) => {
@@ -215,16 +215,18 @@ const processCardPayment = async (cardFormData) => {
         if (result && result.success) {
             toast.add({
                 severity: 'success',
-                summary: 'Redirigiendo a MercadoPago',
-                detail: 'Serás redirigido para completar el pago',
+                summary: 'Procesando pago',
+                detail: 'Procesando tu pago de forma segura',
                 life: 3000
             });
 
-            // Redirigir a MercadoPago usando la preferencia generada
+            // Redirigir a MercadoPago en la misma pestaña
             const paymentUrl = result.data.sandbox_init_point || result.data.init_point;
             if (paymentUrl) {
                 // Guardar ID de orden para verificar el pago después
                 localStorage.setItem('currentOrderId', props.orderData.id);
+
+                // Redirigir directamente en la misma pestaña
                 window.location.href = paymentUrl;
             } else {
                 throw new Error('No se pudo obtener el enlace de pago');
@@ -277,7 +279,7 @@ const processWalletPayment = async (walletFormData) => {
         console.log('Processing wallet payment for order:', props.orderData.id);
         console.log('Wallet form data:', walletFormData);
 
-        // For wallet payments, redirect to MercadoPago if init_point is provided
+        // For wallet payments, redirect to MercadoPago
         if (walletFormData.init_point) {
             localStorage.setItem('currentOrderId', props.orderData.id);
             window.location.href = walletFormData.init_point;
@@ -291,8 +293,8 @@ const processWalletPayment = async (walletFormData) => {
         if (result.success) {
             toast.add({
                 severity: 'success',
-                summary: 'Redirigiendo a MercadoPago',
-                detail: 'Serás redirigido para completar el pago',
+                summary: 'Procesando pago',
+                detail: 'Procesando tu pago de forma segura',
                 life: 3000
             });
 
@@ -410,8 +412,8 @@ const proceedToMercadoPago = async () => {
 
             toast.add({
                 severity: 'success',
-                summary: 'Redirigiendo a MercadoPago',
-                detail: 'Serás redirigido para completar el pago de forma segura',
+                summary: 'Procesando pago',
+                detail: 'Procesando tu pago de forma segura',
                 life: 3000
             });
 
@@ -421,14 +423,10 @@ const proceedToMercadoPago = async () => {
                 // Save order ID for payment verification after redirect (según la guía)
                 localStorage.setItem('pendingOrderId', props.orderData.id);
 
-                // Add return URLs to the payment URL if not already configured in backend
-                const urlWithReturns = new URL(paymentUrl);
+                // Log the payment URL for debugging
                 const returnUrl = `${window.location.origin}/payment-return`;
-
-                // Note: These parameters might be overridden by backend configuration
-                if (!urlWithReturns.searchParams.has('back_urls')) {
-                    console.log('🔗 MercadoPago: Adding return URL:', returnUrl);
-                }
+                console.log('🔗 MercadoPago: Return URL configured:', returnUrl);
+                console.log('🔗 MercadoPago: Payment URL:', paymentUrl);
 
                 console.log('🚀 MercadoPago: Redirecting to payment page...');
                 window.location.href = paymentUrl;
@@ -523,7 +521,7 @@ onUnmounted(() => {
             <!-- Payment Method Selection -->
             <div class="space-y-4">
                 <h3 class="font-semibold text-gray-800">Proceder al pago</h3>
-                <p class="text-gray-600">Serás redirigido a MercadoPago para completar tu pago de forma segura</p>
+                <p class="text-gray-600">Completa tu pago de forma segura sin salir de la aplicación</p>
 
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div class="flex items-center">

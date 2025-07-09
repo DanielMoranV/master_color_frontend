@@ -24,7 +24,7 @@ const toast = useToast();
 
 // Estado
 const loading = ref(false);
-const useBricks = ref(false); // Cambiar a false para usar modo clásico por defecto
+const useBricks = ref(true); // Activar modo Bricks por defecto para pagos integrados
 const preferenceData = ref(null);
 
 // Computed
@@ -42,8 +42,8 @@ watch(
     () => props.visible,
     async (newValue) => {
         if (newValue && props.order?.id) {
-            // En modo clásico, iniciar directamente el pago
-            await switchToClassicMode();
+            // Inicializar preferencia de pago para modo Bricks
+            await initializePaymentPreference();
         }
     }
 );
@@ -166,44 +166,22 @@ const switchToClassicMode = async () => {
 
             console.log('💳 URL de pago generada:', paymentUrl);
 
-            // Intentar abrir en nueva ventana
-            paymentWindow.value = window.open(paymentUrl, 'mercadopago_payment', 'width=900,height=700,scrollbars=yes,resizable=yes,status=yes,location=yes');
+            // Usar iframe integrado en lugar de nueva ventana
+            console.log('💳 Usando iframe integrado para el pago');
 
-            if (paymentWindow.value) {
-                // Ventana abierta exitosamente
-                toast.add({
-                    severity: 'info',
-                    summary: 'Redirigiendo a MercadoPago',
-                    detail: 'Complete su pago en la nueva ventana. Detectaremos automáticamente cuando termine.',
-                    life: 6000
-                });
+            toast.add({
+                severity: 'info',
+                summary: 'Preparando pago',
+                detail: 'Abriendo formulario de pago integrado...',
+                life: 3000
+            });
 
-                // Guardar ID de orden para polling
-                localStorage.setItem('pendingOrderId', props.order.id);
-                localStorage.setItem('currentOrderId', props.order.id);
+            // Guardar ID de orden para polling
+            localStorage.setItem('pendingOrderId', props.order.id);
+            localStorage.setItem('currentOrderId', props.order.id);
 
-                // Iniciar polling para detectar finalización del pago
-                startPaymentPolling();
-            } else {
-                // Popup bloqueado, usar redirect
-                console.log('💳 Popup bloqueado, redirigiendo directamente');
-
-                toast.add({
-                    severity: 'warn',
-                    summary: 'Redirigiendo...',
-                    detail: 'Su navegador bloqueó la ventana emergente. Será redirigido para completar el pago.',
-                    life: 4000
-                });
-
-                // Guardar ID antes del redirect
-                localStorage.setItem('pendingOrderId', props.order.id);
-                localStorage.setItem('currentOrderId', props.order.id);
-
-                // Redirect directo después de un pequeño delay
-                setTimeout(() => {
-                    window.location.href = paymentUrl;
-                }, 2000);
-            }
+            // Redirigir directamente a MercadoPago
+            window.location.href = paymentUrl;
         } else {
             throw new Error(result.message || 'Error al generar enlace de MercadoPago');
         }
@@ -220,95 +198,95 @@ const switchToClassicMode = async () => {
     }
 };
 
-// Start polling for payment status
-const startPaymentPolling = () => {
-    if (pollingInterval.value) {
-        clearInterval(pollingInterval.value);
-    }
+// Start polling for payment status (unused but kept for potential future use)
+// const startPaymentPolling = () => {
+//     if (pollingInterval.value) {
+//         clearInterval(pollingInterval.value);
+//     }
 
-    isPolling.value = true;
-    let attempts = 0;
-    const maxAttempts = 60; // 5 minutes (60 * 5 seconds)
+//     isPolling.value = true;
+//     let attempts = 0;
+//     const maxAttempts = 60; // 5 minutes (60 * 5 seconds)
 
-    pollingInterval.value = setInterval(async () => {
-        attempts++;
-        console.log(`💳 Payment polling attempt ${attempts}/${maxAttempts}`);
+//     pollingInterval.value = setInterval(async () => {
+//         attempts++;
+//         console.log(`💳 Payment polling attempt ${attempts}/${maxAttempts}`);
 
-        try {
-            // Check if payment window is closed
-            if (paymentWindow.value && paymentWindow.value.closed) {
-                console.log('💳 Payment window closed, checking payment status...');
-            }
+//         try {
+//             // Check if payment window is closed
+//             if (paymentWindow.value && paymentWindow.value.closed) {
+//                 console.log('💳 Payment window closed, checking payment status...');
+//             }
 
-            // Check payment status
-            const response = await ordersStore.checkPaymentStatus(props.order.id);
+//             // Check payment status
+//             const response = await ordersStore.checkPaymentStatus(props.order.id);
 
-            if (response.success && ordersStore.paymentStatus) {
-                const status = ordersStore.paymentStatus;
-                console.log('💳 Payment status:', status);
+//             if (response.success && ordersStore.paymentStatus) {
+//                 const status = ordersStore.paymentStatus;
+//                 console.log('💳 Payment status:', status);
 
-                // Payment completed successfully
-                if (status.payment_status === 'approved' && status.order_status === 'pendiente') {
-                    stopPolling();
-                    localStorage.removeItem('pendingOrderId');
+//                 // Payment completed successfully
+//                 if (status.payment_status === 'approved' && status.order_status === 'pendiente') {
+//                     stopPolling();
+//                     localStorage.removeItem('pendingOrderId');
 
-                    toast.add({
-                        severity: 'success',
-                        summary: 'Pago Completado',
-                        detail: 'Tu pago ha sido procesado exitosamente',
-                        life: 5000
-                    });
+//                     toast.add({
+//                         severity: 'success',
+//                         summary: 'Pago Completado',
+//                         detail: 'Tu pago ha sido procesado exitosamente',
+//                         life: 5000
+//                     });
 
-                    emit('payment-success', status);
-                    closeModal();
-                    return;
-                }
+//                     emit('payment-success', status);
+//                     closeModal();
+//                     return;
+//                 }
 
-                // Payment failed or rejected
-                if (status.payment_status === 'rejected' || status.order_status === 'pago_fallido') {
-                    stopPolling();
-                    localStorage.removeItem('pendingOrderId');
+//                 // Payment failed or rejected
+//                 if (status.payment_status === 'rejected' || status.order_status === 'pago_fallido') {
+//                     stopPolling();
+//                     localStorage.removeItem('pendingOrderId');
 
-                    toast.add({
-                        severity: 'error',
-                        summary: 'Pago Rechazado',
-                        detail: 'El pago fue rechazado. Puedes intentar nuevamente.',
-                        life: 5000
-                    });
+//                     toast.add({
+//                         severity: 'error',
+//                         summary: 'Pago Rechazado',
+//                         detail: 'El pago fue rechazado. Puedes intentar nuevamente.',
+//                         life: 5000
+//                     });
 
-                    emit('payment-failed', { message: 'Pago rechazado' });
-                    return;
-                }
-            }
+//                     emit('payment-failed', { message: 'Pago rechazado' });
+//                     return;
+//                 }
+//             }
 
-            // Stop polling after max attempts
-            if (attempts >= maxAttempts) {
-                stopPolling();
+//             // Stop polling after max attempts
+//             if (attempts >= maxAttempts) {
+//                 stopPolling();
 
-                toast.add({
-                    severity: 'warn',
-                    summary: 'Verificación en progreso',
-                    detail: 'La verificación del pago continúa. Te notificaremos cuando esté listo.',
-                    life: 8000
-                });
-            }
-        } catch (error) {
-            console.error('Error polling payment status:', error);
+//                 toast.add({
+//                     severity: 'warn',
+//                     summary: 'Verificación en progreso',
+//                     detail: 'La verificación del pago continúa. Te notificaremos cuando esté listo.',
+//                     life: 8000
+//                 });
+//             }
+//         } catch (error) {
+//             console.error('Error polling payment status:', error);
 
-            // Stop polling after too many errors
-            if (attempts >= 10) {
-                stopPolling();
+//             // Stop polling after too many errors
+//             if (attempts >= 10) {
+//                 stopPolling();
 
-                toast.add({
-                    severity: 'error',
-                    summary: 'Error de verificación',
-                    detail: 'No se pudo verificar el estado del pago. Contacta con soporte.',
-                    life: 8000
-                });
-            }
-        }
-    }, 5000); // Poll every 5 seconds
-};
+//                 toast.add({
+//                     severity: 'error',
+//                     summary: 'Error de verificación',
+//                     detail: 'No se pudo verificar el estado del pago. Contacta con soporte.',
+//                     life: 8000
+//                 });
+//             }
+//         }
+//     }, 5000); // Poll every 5 seconds
+// };
 
 // Stop polling
 const stopPolling = () => {
@@ -355,14 +333,14 @@ onBeforeUnmount(() => {
                 <MercadoPagoCheckout :order-data="order" :preference-data="preferenceData" @payment-success="handlePaymentSuccess" @payment-error="handlePaymentError" @payment-pending="handlePaymentPending" @use-classic-mode="switchToClassicMode" />
             </div>
 
-            <!-- Payment Polling Status -->
+            <!-- Payment Polling Status (fallback) -->
             <div v-else-if="isPolling" class="polling-status">
                 <div class="polling-content">
                     <div class="polling-icon">
                         <i class="pi pi-spin pi-spinner text-4xl text-blue-500"></i>
                     </div>
                     <h3 class="polling-title">Esperando confirmación de pago</h3>
-                    <p class="polling-description">Hemos abierto MercadoPago en una nueva ventana. Complete su pago allí y regrese aquí. Detectaremos automáticamente cuando el pago se complete.</p>
+                    <p class="polling-description">Hemos redirigido a MercadoPago. La página se actualizará automáticamente cuando el pago se complete.</p>
                     <div class="polling-actions">
                         <Button @click="stopPolling" label="Cancelar verificación" icon="pi pi-times" class="p-button-outlined p-button-danger" />
                     </div>
@@ -394,25 +372,9 @@ onBeforeUnmount(() => {
                     </div>
 
                     <div class="action-buttons">
-                        <Button @click="switchToClassicMode" class="pay-button" size="large" :loading="loading" :disabled="isPolling">
+                        <Button @click="initializePaymentPreference" class="pay-button" size="large" :loading="loading" :disabled="isPolling">
                             <i class="pi pi-credit-card mr-2"></i>
                             Pagar con MercadoPago
-                        </Button>
-
-                        <!-- Opción alternativa para modo Bricks (oculta por defecto) -->
-                        <Button
-                            v-if="false"
-                            @click="
-                                useBricks = true;
-                                initializePaymentPreference();
-                            "
-                            class="bricks-option-button"
-                            outlined
-                            size="small"
-                            :disabled="isPolling || loading"
-                        >
-                            <i class="pi pi-credit-card mr-2"></i>
-                            Usar formulario integrado
                         </Button>
                     </div>
                 </div>
@@ -549,20 +511,6 @@ onBeforeUnmount(() => {
     cursor: not-allowed;
     box-shadow: none;
     transform: none;
-}
-
-.bricks-option-button {
-    border-color: #6366f1;
-    color: #6366f1;
-    font-weight: 500;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-size: 0.9rem;
-}
-
-.bricks-option-button:hover {
-    background: #6366f1;
-    color: white;
 }
 
 /* Payment Polling Status */

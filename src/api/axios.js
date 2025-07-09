@@ -1,5 +1,5 @@
-import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
+import axios from 'axios';
 
 // Crear instancia de Axios con configuración base
 const api = axios.create({

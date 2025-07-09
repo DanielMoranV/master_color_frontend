@@ -71,17 +71,17 @@ export const quickTest = async () => {
 // Función para probar la integración con el wrapper
 export const testWrapperIntegration = async () => {
     console.log('🔧 Testing MercadoPago Wrapper Integration...');
-    
+
     try {
         // Importar utilidades de validación
         const { validateMercadoPagoWrapperIntegration } = await import('./validateMercadoPagoWrapper');
-        
+
         // Ejecutar validación del wrapper
         const wrapperResults = await validateMercadoPagoWrapperIntegration();
-        
+
         // Ejecutar test básico de MercadoPago
         const basicResults = await testMercadoPagoIntegration();
-        
+
         const combinedResults = {
             success: wrapperResults.success && basicResults.success,
             wrapperCompatible: wrapperResults.success,
@@ -91,15 +91,14 @@ export const testWrapperIntegration = async () => {
                 mercadoPago: basicResults.details
             }
         };
-        
+
         if (combinedResults.success) {
             console.log('🎉 MercadoPago with Wrapper integration is fully ready!');
         } else {
             console.log('⚠️  Integration has some issues that need attention.');
         }
-        
+
         return combinedResults;
-        
     } catch (error) {
         console.error('❌ Error testing wrapper integration:', error);
         return {

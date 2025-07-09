@@ -1,6 +1,6 @@
 /**
  * Validation utility for MercadoPago Wrapper Integration
- * 
+ *
  * This utility validates that the frontend is compatible with the new
  * MercadoPago wrapper implementation in the backend.
  */
@@ -9,7 +9,7 @@ import { ordersApi } from '@/api/index';
 
 export const validateMercadoPagoWrapperIntegration = async () => {
     console.log('🔍 Validating MercadoPago Wrapper Integration...');
-    
+
     const validationResults = {
         apiEndpoint: false,
         responseFormat: false,
@@ -32,7 +32,7 @@ export const validateMercadoPagoWrapperIntegration = async () => {
 
         // Test 2: Verify response format compatibility
         console.log('2️⃣ Checking response format compatibility...');
-        
+
         // Mock a successful response to test format
         const mockWrapperResponse = {
             data: {
@@ -40,14 +40,12 @@ export const validateMercadoPagoWrapperIntegration = async () => {
                 init_point: 'https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=test-123',
                 sandbox_init_point: 'https://sandbox.mercadopago.com.ar/checkout/v1/redirect?pref_id=test-123',
                 order_id: 42,
-                total_amount: 150.00
+                total_amount: 150.0
             }
         };
 
         const requiredFields = ['preference_id', 'init_point', 'sandbox_init_point', 'order_id', 'total_amount'];
-        const hasAllFields = requiredFields.every(field => 
-            mockWrapperResponse.data.hasOwnProperty(field)
-        );
+        const hasAllFields = requiredFields.every((field) => mockWrapperResponse.data.hasOwnProperty(field));
 
         if (hasAllFields) {
             validationResults.responseFormat = true;
@@ -59,11 +57,11 @@ export const validateMercadoPagoWrapperIntegration = async () => {
 
         // Test 3: Verify error handling compatibility
         console.log('3️⃣ Checking error handling compatibility...');
-        
+
         // Check if error handling utilities are available
         try {
             const { handleProcessError, handleProcessSuccess } = await import('@/utils/apiHelpers');
-            
+
             if (typeof handleProcessError === 'function' && typeof handleProcessSuccess === 'function') {
                 validationResults.errorHandling = true;
                 console.log('✅ Error handling utilities are available');
@@ -78,20 +76,16 @@ export const validateMercadoPagoWrapperIntegration = async () => {
 
         // Test 4: Verify payment flow components
         console.log('4️⃣ Checking payment flow components...');
-        
-        const paymentFlowComponents = [
-            'ordersApi.generatePaymentLink',
-            'ordersApi.getPaymentStatus',
-            'ordersApi.cancelOrder'
-        ];
 
-        const componentResults = paymentFlowComponents.map(component => {
+        const paymentFlowComponents = ['ordersApi.generatePaymentLink', 'ordersApi.getPaymentStatus', 'ordersApi.cancelOrder'];
+
+        const componentResults = paymentFlowComponents.map((component) => {
             const [api, method] = component.split('.');
             const apiObj = api === 'ordersApi' ? ordersApi : null;
             return apiObj && typeof apiObj[method] === 'function';
         });
 
-        if (componentResults.every(result => result)) {
+        if (componentResults.every((result) => result)) {
             validationResults.paymentFlow = true;
             console.log('✅ Payment flow components are available');
         } else {
@@ -101,8 +95,8 @@ export const validateMercadoPagoWrapperIntegration = async () => {
 
         // Overall validation
         const allTestsPassed = Object.values(validationResults)
-            .filter(val => typeof val === 'boolean')
-            .every(val => val);
+            .filter((val) => typeof val === 'boolean')
+            .every((val) => val);
 
         validationResults.success = allTestsPassed;
 
@@ -115,7 +109,6 @@ export const validateMercadoPagoWrapperIntegration = async () => {
         }
 
         return validationResults;
-
     } catch (error) {
         console.error('💥 Validation failed with error:', error);
         validationResults.errors.push(`Validation error: ${error.message}`);
@@ -128,14 +121,14 @@ export const validateMercadoPagoWrapperIntegration = async () => {
  */
 export const quickValidation = async () => {
     const results = await validateMercadoPagoWrapperIntegration();
-    
+
     console.log('\n📊 Validation Summary:');
     console.table({
         'API Endpoint': results.apiEndpoint ? '✅ Pass' : '❌ Fail',
         'Response Format': results.responseFormat ? '✅ Pass' : '❌ Fail',
         'Error Handling': results.errorHandling ? '✅ Pass' : '❌ Fail',
         'Payment Flow': results.paymentFlow ? '✅ Pass' : '❌ Fail',
-        'Overall': results.success ? '✅ Compatible' : '❌ Issues Found'
+        Overall: results.success ? '✅ Compatible' : '❌ Issues Found'
     });
 
     if (results.errors.length > 0) {
@@ -159,7 +152,7 @@ export const quickValidation = async () => {
  */
 export const checkIntegrationReadiness = () => {
     console.log('🔎 Checking MercadoPago Wrapper Integration Readiness...');
-    
+
     const readinessChecks = {
         environmentVariables: !!import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY,
         apiStructure: typeof ordersApi === 'object' && ordersApi !== null,
@@ -168,7 +161,7 @@ export const checkIntegrationReadiness = () => {
         cancelEndpoint: typeof ordersApi.cancelOrder === 'function'
     };
 
-    const allReady = Object.values(readinessChecks).every(check => check);
+    const allReady = Object.values(readinessChecks).every((check) => check);
 
     console.log('📋 Readiness Status:');
     Object.entries(readinessChecks).forEach(([check, passed]) => {
