@@ -68,9 +68,57 @@ export const quickTest = async () => {
     return result;
 };
 
+// Función para probar la integración con el wrapper
+export const testWrapperIntegration = async () => {
+    console.log('🔧 Testing MercadoPago Wrapper Integration...');
+    
+    try {
+        // Importar utilidades de validación
+        const { validateMercadoPagoWrapperIntegration } = await import('./validateMercadoPagoWrapper');
+        
+        // Ejecutar validación del wrapper
+        const wrapperResults = await validateMercadoPagoWrapperIntegration();
+        
+        // Ejecutar test básico de MercadoPago
+        const basicResults = await testMercadoPagoIntegration();
+        
+        const combinedResults = {
+            success: wrapperResults.success && basicResults.success,
+            wrapperCompatible: wrapperResults.success,
+            mercadoPagoReady: basicResults.success,
+            details: {
+                wrapper: wrapperResults,
+                mercadoPago: basicResults.details
+            }
+        };
+        
+        if (combinedResults.success) {
+            console.log('🎉 MercadoPago with Wrapper integration is fully ready!');
+        } else {
+            console.log('⚠️  Integration has some issues that need attention.');
+        }
+        
+        return combinedResults;
+        
+    } catch (error) {
+        console.error('❌ Error testing wrapper integration:', error);
+        return {
+            success: false,
+            error: error.message,
+            wrapperCompatible: false,
+            mercadoPagoReady: false
+        };
+    }
+};
+
 // Auto-ejecutar en desarrollo si hay parámetro de debug
 if (import.meta.env.DEV && window.location.search.includes('debug=mp')) {
     quickTest();
+}
+
+// Auto-ejecutar test de wrapper si hay parámetro específico
+if (import.meta.env.DEV && window.location.search.includes('debug=wrapper')) {
+    testWrapperIntegration();
 }
 
 export default testMercadoPagoIntegration;
