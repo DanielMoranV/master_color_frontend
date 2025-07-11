@@ -153,3 +153,15 @@ export const addressesApi = {
     // Marcar dirección como principal
     setMainAddress: (id) => axios.patch(`/client/addresses/${id}/set-main`)
 };
+
+// Funciones para manejo de retorno de pagos de MercadoPago
+export const paymentReturnApi = {
+    // Procesar retorno de pago de MercadoPago (sin autenticación)
+    processPaymentReturn: (payload) =>
+        axios.post('/payment-return', payload, {
+            // Sin headers de autenticación
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+};

@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
+import { paymentReturnApi } from '@/api';
 
 const route = useRoute();
 const router = useRouter();
@@ -11,85 +12,203 @@ const status = ref('processing'); // processing, success, error, pending
 const message = ref('Procesando la información de tu pago. Por favor, espera...');
 const icon = ref('pi pi-spin pi-spinner');
 
-onMounted(() => {
-    // Get status from URL path parameter
-    const { status: routeStatus } = route.params;
+// Helper function to get order_id from various sources
+const getOrderId = () => {
+    // Try to get from query params first (external_reference from MercadoPago)
+    const { external_reference } = route.query;
+    if (external_reference) return external_reference;
 
-    // Get other data from query parameters
-    const {
-        payment_id,
-        external_reference: orderId,
-        collection_status,
-        status: queryStatus // MercadoPago still sends a 'status' query param
-    } = route.query;
+    // Try to get from localStorage (if stored during checkout)
+    const storedOrderId = localStorage.getItem('currentOrderId');
+    if (storedOrderId) return storedOrderId;
+
+    // Try to get from sessionStorage
+    const sessionOrderId = sessionStorage.getItem('currentOrderId');
+    if (sessionOrderId) return sessionOrderId;
+
+    return null;
+};
+
+// Helper function to start polling for payment status
+const startPolling = (orderId, maxAttempts = 10, intervalMs = 5000) => {
+    let attempts = 0;
+
+    const poll = async () => {
+        attempts++;
+        try {
+            const response = await paymentReturnApi.processPaymentReturn({
+                payment_id: route.query.payment_id,
+                order_id: orderId
+            });
+
+            if (response.data.processed) {
+                // Payment was processed successfully
+                status.value = 'success';
+                icon.value = 'pi pi-check-circle';
+                message.value = '¡Tu pago ha sido procesado correctamente!';
+
+                toast.add({
+                    severity: 'success',
+                    summary: 'Pago Procesado',
+                    detail: 'Tu pedido ha sido confirmado y el stock actualizado.',
+                    life: 8000
+                });
+
+                setTimeout(() => {
+                    router.push(`/orders?highlight=${orderId}`);
+                }, 3000);
+                return;
+            }
+
+            // If not processed and we haven't reached max attempts, continue polling
+            if (attempts < maxAttempts) {
+                setTimeout(poll, intervalMs);
+            } else {
+                // Max attempts reached, show pending status
+                status.value = 'pending';
+                icon.value = 'pi pi-clock';
+                message.value = 'El procesamiento del pago está tomando más tiempo del esperado.';
+
+                toast.add({
+                    severity: 'warn',
+                    summary: 'Procesamiento Pendiente',
+                    detail: 'Te notificaremos cuando el pago sea confirmado.',
+                    life: 8000
+                });
+
+                setTimeout(() => {
+                    router.push(`/orders?highlight=${orderId}`);
+                }, 4000);
+            }
+        } catch (error) {
+            console.error('Error during polling:', error);
+            if (attempts >= maxAttempts) {
+                status.value = 'error';
+                icon.value = 'pi pi-exclamation-triangle';
+                message.value = 'Error al verificar el estado del pago.';
+
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error de Verificación',
+                    detail: 'No pudimos verificar el estado del pago. Contacta soporte si el problema persiste.',
+                    life: 8000
+                });
+
+                setTimeout(() => {
+                    router.push('/orders');
+                }, 4000);
+            } else {
+                setTimeout(poll, intervalMs);
+            }
+        }
+    };
+
+    poll();
+};
+
+onMounted(async () => {
+    // Get payment_id from MercadoPago redirect
+    const { payment_id } = route.query;
+
+    // Get order_id from available sources
+    const orderId = getOrderId();
 
     console.log('Payment return params:', route.params);
     console.log('Payment return query:', route.query);
+    console.log('Detected order_id:', orderId);
 
-    let redirectPath = '/';
-    let toastSeverity = 'info';
-    let toastSummary = 'Estado del Pago';
-    let toastDetail = '';
+    if (!payment_id) {
+        status.value = 'error';
+        icon.value = 'pi pi-exclamation-triangle';
+        message.value = 'No se recibió información del pago.';
 
-    // Determine the final status, preferring the URL path status
-    const finalStatus = routeStatus || collection_status || queryStatus;
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Faltan parámetros de pago requeridos.',
+            life: 8000
+        });
 
-    switch (finalStatus) {
-        case 'success': // For /payment-return/success
-        case 'approved': // For /payment-return/approved
-            status.value = 'success';
-            icon.value = 'pi pi-check-circle';
-            message.value = '¡Tu pago ha sido aprobado!';
-            toastSeverity = 'success';
-            toastSummary = 'Pago Exitoso';
-            toastDetail = `El pago con ID ${payment_id} fue procesado correctamente.`;
-            redirectPath = orderId ? `/orders?highlight=${orderId}` : '/orders';
-            break;
-
-        case 'pending': // For /payment-return/pending
-        case 'in_process': // For /payment-return/in_process
-            status.value = 'pending';
-            icon.value = 'pi pi-clock';
-            message.value = 'Tu pago está pendiente de aprobación.';
-            toastSeverity = 'warn';
-            toastSummary = 'Pago Pendiente';
-            toastDetail = 'Te notificaremos cuando el pago sea aprobado.';
-            redirectPath = orderId ? `/orders?highlight=${orderId}` : '/orders';
-            break;
-
-        case 'failure': // For /payment-return/failure
-        case 'rejected': // For /payment-return/rejected
-            status.value = 'error';
-            icon.value = 'pi pi-times-circle';
-            message.value = 'Tu pago ha sido rechazado.';
-            toastSeverity = 'error';
-            toastSummary = 'Pago Rechazado';
-            toastDetail = 'El pago fue rechazado. Por favor, intenta nuevamente.';
-            redirectPath = '/cart'; // Or back to the payment selection
-            break;
-
-        default:
-            status.value = 'error';
-            icon.value = 'pi pi-exclamation-triangle';
-            message.value = 'No se pudo determinar el estado del pago.';
-            toastSeverity = 'error';
-            toastSummary = 'Error Desconocido';
-            toastDetail = 'Hubo un problema al procesar la respuesta del pago.';
-            redirectPath = '/';
-            break;
+        setTimeout(() => {
+            router.push('/');
+        }, 4000);
+        return;
     }
 
-    toast.add({
-        severity: toastSeverity,
-        summary: toastSummary,
-        detail: toastDetail,
-        life: 8000
-    });
+    if (!orderId) {
+        status.value = 'error';
+        icon.value = 'pi pi-exclamation-triangle';
+        message.value = 'No se pudo identificar el pedido.';
 
-    // Redirect after a short delay to allow the user to see the message
-    setTimeout(() => {
-        router.push(redirectPath);
-    }, 4000);
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se encontró información del pedido.',
+            life: 8000
+        });
+
+        setTimeout(() => {
+            router.push('/orders');
+        }, 4000);
+        return;
+    }
+
+    try {
+        // Call backend to process payment return
+        const response = await paymentReturnApi.processPaymentReturn({
+            payment_id,
+            order_id: orderId
+        });
+
+        if (response.data.processed) {
+            // Payment was processed immediately
+            status.value = 'success';
+            icon.value = 'pi pi-check-circle';
+            message.value = '¡Tu pago ha sido procesado correctamente!';
+
+            toast.add({
+                severity: 'success',
+                summary: 'Pago Exitoso',
+                detail: 'Tu pedido ha sido confirmado y el stock actualizado.',
+                life: 8000
+            });
+
+            // Clean up stored order ID
+            localStorage.removeItem('currentOrderId');
+            sessionStorage.removeItem('currentOrderId');
+
+            setTimeout(() => {
+                router.push(`/orders?highlight=${orderId}`);
+            }, 3000);
+        } else {
+            // Payment not yet processed, start polling
+            message.value = 'Verificando el estado de tu pago...';
+            startPolling(orderId);
+        }
+    } catch (error) {
+        console.error('Error processing payment return:', error);
+
+        // If backend call fails, start polling as fallback
+        if (error.response?.status >= 500) {
+            message.value = 'Verificando el estado de tu pago...';
+            startPolling(orderId);
+        } else {
+            status.value = 'error';
+            icon.value = 'pi pi-exclamation-triangle';
+            message.value = 'Error al procesar la información del pago.';
+
+            toast.add({
+                severity: 'error',
+                summary: 'Error de Procesamiento',
+                detail: 'No pudimos procesar la información del pago. Contacta soporte.',
+                life: 8000
+            });
+
+            setTimeout(() => {
+                router.push('/orders');
+            }, 4000);
+        }
+    }
 });
 </script>
 
@@ -135,10 +254,18 @@ onMounted(() => {
     animation: pi-spin 1.5s infinite linear;
 }
 
-.status-success { color: #10b981; }
-.status-error { color: #ef4444; }
-.status-pending { color: #f59e0b; }
-.status-processing { color: #3b82f6; }
+.status-success {
+    color: #10b981;
+}
+.status-error {
+    color: #ef4444;
+}
+.status-pending {
+    color: #f59e0b;
+}
+.status-processing {
+    color: #3b82f6;
+}
 
 .status-title {
     font-size: 1.75rem;
