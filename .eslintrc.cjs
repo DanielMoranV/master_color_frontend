@@ -6,7 +6,8 @@ module.exports = {
     env: {
         node: true
     },
-    extends: ['plugin:vue/vue3-essential', 'eslint:recommended', '@vue/eslint-config-prettier'],
+    extends: ['plugin:vue/vue3-recommended', 'plugin:prettier/recommended'],
+    plugins: ['prettier'],
     parserOptions: {
         ecmaVersion: 'latest'
     },
@@ -19,11 +20,6 @@ module.exports = {
                 order: ['script', 'template', 'style']
             }
         ],
-        'prettier/prettier': [
-            'error',
-            {
-                endOfLine: 'auto'
-            }
-        ]
+        'prettier/prettier': 'error'
     }
 };
