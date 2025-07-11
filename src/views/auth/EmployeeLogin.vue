@@ -189,8 +189,8 @@ const submitForgotPassword = async () => {
                 <p class="text-gray-700 mb-4">Hemos enviado un enlace de recuperación a tu correo electrónico. Por favor revisa tu bandeja de entrada y sigue las instrucciones.</p>
             </div>
             <div class="flex justify-end pt-4">
-                <Button v-if="!forgotPasswordSuccess" label="Cancelar" icon="pi pi-times" class="p-button-outlined p-button-secondary mr-2" @click="closeForgotPasswordDialog" :disabled="forgotPasswordLoading" />
-                <Button v-if="!forgotPasswordSuccess" label="Enviar enlace" icon="pi pi-envelope" class="p-button-primary" @click="submitForgotPassword" :loading="forgotPasswordLoading" />
+                <Button v-if="!forgotPasswordSuccess" label="Cancelar" icon="pi pi-times" class="p-button-outlined p-button-secondary mr-2" :disabled="forgotPasswordLoading" @click="closeForgotPasswordDialog" />
+                <Button v-if="!forgotPasswordSuccess" label="Enviar enlace" icon="pi pi-envelope" class="p-button-primary" :loading="forgotPasswordLoading" @click="submitForgotPassword" />
                 <Button v-else label="Cerrar" icon="pi pi-check" class="p-button-primary" @click="closeForgotPasswordDialog" />
             </div>
         </div>
@@ -265,7 +265,7 @@ const submitForgotPassword = async () => {
                                 <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-1 sm:mb-2">Bienvenido, Empleado</h2>
                                 <p class="text-gray-700 text-base sm:text-lg font-medium">Accede con tus credenciales internas</p>
                             </div>
-                            <form @submit.prevent="login" class="space-y-4 sm:space-y-5 md:space-y-6">
+                            <form class="space-y-4 sm:space-y-5 md:space-y-6" @submit.prevent="login">
                                 <!-- Campo de email -->
                                 <div>
                                     <label for="email" class="block text-sm font-bold text-gray-800 mb-3">Correo Electrónico</label>
@@ -308,10 +308,10 @@ const submitForgotPassword = async () => {
                                 <!-- Checkbox recordarme -->
                                 <div class="flex items-center justify-between mt-2 mb-1">
                                     <div class="flex items-center">
-                                        <Checkbox v-model="rememberMe" inputId="rememberMe" class="mr-2" />
+                                        <Checkbox v-model="rememberMe" input-id="rememberMe" class="mr-2" />
                                         <label for="rememberMe" class="text-sm text-gray-700 cursor-pointer select-none">Recordarme</label>
                                     </div>
-                                    <a href="#" @click.prevent="openForgotPasswordDialog" class="text-sm text-blue-700 hover:text-blue-800 font-semibold">¿Olvidaste tu contraseña?</a>
+                                    <a href="#" class="text-sm text-blue-700 hover:text-blue-800 font-semibold" @click.prevent="openForgotPasswordDialog">¿Olvidaste tu contraseña?</a>
                                 </div>
                                 <!-- Botón de login -->
                                 <Button

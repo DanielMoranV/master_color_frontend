@@ -37,7 +37,7 @@ const deleteProduct = (product) => {
 </script>
 
 <template>
-    <DataTable :value="products" :loading="loading" class="products-table" responsiveLayout="scroll">
+    <DataTable :value="products" :loading="loading" class="products-table" responsive-layout="scroll">
         <Column field="image_url" header="Imagen" style="width: 80px">
             <template #body="{ data }">
                 <img v-if="data.image_url" :src="data.image_url" alt="Imagen" style="width: 48px; height: 48px; object-fit: contain; background-color: #f9fafb; border-radius: 6px" />

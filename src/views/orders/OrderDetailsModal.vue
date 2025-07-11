@@ -346,7 +346,7 @@ watch([isVisible, () => props.orderId], async ([visible, orderId]) => {
                     <p>Order Details: {{ order?.order_details?.length || 0 }}</p>
                     <p>Is Loading: {{ ordersStore.isLoading }}</p>
                     <p>Has Error: {{ !!ordersStore.getError }}</p>
-                    <Button @click="debugRefresh" label="Debug Refresh" class="p-button-sm" style="margin-top: 0.5rem" />
+                    <Button label="Debug Refresh" class="p-button-sm" style="margin-top: 0.5rem" @click="debugRefresh" />
                 </div>
                 <div class="products-list">
                     <div v-for="item in orderItems" :key="item.id" class="product-item">
@@ -447,9 +447,9 @@ watch([isVisible, () => props.orderId], async ([visible, orderId]) => {
 
         <template #footer>
             <div class="modal-actions">
-                <Button label="Cerrar" icon="pi pi-times" @click="closeModal" class="p-button-outlined" />
-                <Button v-if="canCancelOrder" label="Cancelar Orden" icon="pi pi-ban" @click="cancelOrder" class="p-button-outlined p-button-danger" />
-                <Button v-if="canRetryPayment" label="Pagar Ahora" icon="pi pi-credit-card" @click="retryPayment" class="payment-button" />
+                <Button label="Cerrar" icon="pi pi-times" class="p-button-outlined" @click="closeModal" />
+                <Button v-if="canCancelOrder" label="Cancelar Orden" icon="pi pi-ban" class="p-button-outlined p-button-danger" @click="cancelOrder" />
+                <Button v-if="canRetryPayment" label="Pagar Ahora" icon="pi pi-credit-card" class="payment-button" @click="retryPayment" />
             </div>
         </template>
     </Dialog>

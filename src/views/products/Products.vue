@@ -166,7 +166,7 @@ onMounted(async () => {
                         <p class="subtitle">Administra y controla los productos del sistema</p>
                     </div>
                 </div>
-                <Button label="Nuevo Producto" icon="pi pi-plus" @click="openNew" class="create-button" raised />
+                <Button label="Nuevo Producto" icon="pi pi-plus" class="create-button" raised @click="openNew" />
             </div>
         </div>
 
@@ -177,7 +177,7 @@ onMounted(async () => {
                 <div class="table-actions">
                     <div class="search-box">
                         <i class="pi pi-search"></i>
-                        <input type="text" placeholder="Buscar productos..." v-model="searchQuery" class="search-input" />
+                        <input v-model="searchQuery" type="text" placeholder="Buscar productos..." class="search-input" />
                     </div>
                 </div>
             </div>
@@ -220,7 +220,7 @@ onMounted(async () => {
             <template #footer>
                 <div class="dialog-actions-compact">
                     <Button label="Cancelar" class="p-button-text" @click="deleteProductDialog = false" />
-                    <Button label="Eliminar" icon="pi pi-trash" severity="danger" @click="deleteProduct" :loading="productsStore.loading" />
+                    <Button label="Eliminar" icon="pi pi-trash" severity="danger" :loading="productsStore.loading" @click="deleteProduct" />
                 </div>
             </template>
         </Dialog>

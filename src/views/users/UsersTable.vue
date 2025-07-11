@@ -138,19 +138,19 @@ const exportCSV = () => {
     <div class="users-table">
         <DataTable
             ref="dt"
-            :value="users"
             v-model:filters="filters"
+            :value="users"
             :paginator="true"
             :rows="10"
-            :rowsPerPageOptions="[5, 10, 25, 50]"
+            :rows-per-page-options="[5, 10, 25, 50]"
             :loading="loading"
-            dataKey="id"
-            filterDisplay="menu"
-            :globalFilterFields="['name', 'email', 'role_name', 'phone', 'dni']"
-            responsiveLayout="scroll"
+            data-key="id"
+            filter-display="menu"
+            :global-filter-fields="['name', 'email', 'role_name', 'phone', 'dni']"
+            responsive-layout="scroll"
             class="p-datatable-gridlines"
-            :metaKeySelection="false"
-            :rowHover="true"
+            :meta-key-selection="false"
+            :row-hover="true"
         >
             <template #empty>
                 <div class="empty-state">
@@ -164,7 +164,7 @@ const exportCSV = () => {
 
             <template #loading>
                 <div class="text-center py-4">
-                    <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="8" />
+                    <ProgressSpinner style="width: 50px; height: 50px" stroke-width="8" />
                     <p class="text-500 mt-2">Cargando usuarios...</p>
                 </div>
             </template>
@@ -225,8 +225,8 @@ const exportCSV = () => {
             <Column header="Acciones" style="min-width: 10rem">
                 <template #body="{ data }">
                     <div class="flex gap-2">
-                        <Button icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-warning" @click="editUser(data)" v-tooltip.top="'Editar'" />
-                        <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" @click="deleteUser(data)" v-tooltip.top="'Eliminar'" />
+                        <Button v-tooltip.top="'Editar'" icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-warning" @click="editUser(data)" />
+                        <Button v-tooltip.top="'Eliminar'" icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" @click="deleteUser(data)" />
                     </div>
                 </template>
             </Column>

@@ -306,7 +306,7 @@ watch(
 </script>
 
 <template>
-    <form @submit.prevent="saveAddress" class="space-y-4">
+    <form class="space-y-4" @submit.prevent="saveAddress">
         <!-- Dirección completa -->
         <div>
             <label for="address_full" class="block text-sm font-medium text-gray-700 mb-2"> Dirección Completa * </label>
@@ -323,13 +323,13 @@ watch(
                     id="department"
                     v-model="selectedDepartment"
                     :suggestions="filteredDepartments"
-                    @complete="filterDepartments"
-                    optionLabel="label"
+                    option-label="label"
                     placeholder="Seleccionar departamento"
-                    forceSelection
+                    force-selection
                     class="w-full"
                     :class="{ 'p-invalid': errors.department }"
                     dropdown
+                    @complete="filterDepartments"
                 />
                 <small v-if="errors.department" class="text-red-500">{{ errors.department }}</small>
             </div>
@@ -341,14 +341,14 @@ watch(
                     id="province"
                     v-model="selectedProvince"
                     :suggestions="filteredProvinces"
-                    @complete="filterProvinces"
-                    optionLabel="label"
+                    option-label="label"
                     placeholder="Seleccionar provincia"
-                    forceSelection
+                    force-selection
                     :disabled="!selectedDepartment"
                     class="w-full"
                     :class="{ 'p-invalid': errors.province }"
                     dropdown
+                    @complete="filterProvinces"
                 />
                 <small v-if="errors.province" class="text-red-500">{{ errors.province }}</small>
             </div>
@@ -360,14 +360,14 @@ watch(
                     id="district"
                     v-model="selectedDistrict"
                     :suggestions="filteredDistricts"
-                    @complete="filterDistricts"
-                    optionLabel="label"
+                    option-label="label"
                     placeholder="Seleccionar distrito"
-                    forceSelection
+                    force-selection
                     :disabled="!selectedProvince"
                     class="w-full"
                     :class="{ 'p-invalid': errors.district }"
                     dropdown
+                    @complete="filterDistricts"
                 />
                 <small v-if="errors.district" class="text-red-500">{{ errors.district }}</small>
             </div>
@@ -405,7 +405,7 @@ watch(
 
         <!-- Botones -->
         <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-            <Button label="Cancelar" class="p-button-outlined" @click="cancel" :disabled="loading" />
+            <Button label="Cancelar" class="p-button-outlined" :disabled="loading" @click="cancel" />
             <Button type="submit" :label="isEditing ? 'Actualizar' : 'Crear Dirección'" :loading="loading" class="bg-blue-600 border-blue-600 hover:bg-blue-700" />
         </div>
     </form>

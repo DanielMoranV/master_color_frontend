@@ -84,7 +84,7 @@ onBeforeMount(() => {
 
         <div class="layout-topbar-actions">
             <!-- Cart icon for clients only -->
-            <button v-if="authStore.userRole === 'client'" type="button" class="layout-topbar-action cart-button" @click="goToCart" v-tooltip="'Ir a la tienda'">
+            <button v-if="authStore.userRole === 'client'" v-tooltip="'Ir a la tienda'" type="button" class="layout-topbar-action cart-button" @click="goToCart">
                 <i class="pi pi-shopping-cart"></i>
             </button>
 
@@ -105,23 +105,23 @@ onBeforeMount(() => {
             </div>
 
             <button
-                class="layout-topbar-menu-button layout-topbar-action"
                 v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"
+                class="layout-topbar-menu-button layout-topbar-action"
             >
                 <i class="pi pi-ellipsis-v"></i>
             </button>
 
             <div class="layout-topbar-menu hidden lg:block">
                 <div class="layout-topbar-menu-content">
-                    <button @click="goToRefresh()" type="button" class="layout-topbar-action">
+                    <button type="button" class="layout-topbar-action" @click="goToRefresh()">
                         <i class="pi pi-refresh"></i>
                         <span>Actualizar</span>
                     </button>
-                    <button @click="goToProfile()" type="button" class="layout-topbar-action">
+                    <button type="button" class="layout-topbar-action" @click="goToProfile()">
                         <i class="pi pi-user"></i>
                         <span>Perfil</span>
                     </button>
-                    <button @click="confirmLogout()" type="button" class="layout-topbar-action">
+                    <button type="button" class="layout-topbar-action" @click="confirmLogout()">
                         <i class="pi pi-sign-out"></i>
                         <span>Salir</span>
                     </button>
@@ -139,7 +139,7 @@ onBeforeMount(() => {
         </div>
         <template #footer>
             <Button label="No" icon="pi pi-times" text @click="logoutDialog = false" />
-            <Button label="Sí" icon="pi pi-check" @click="logout" :loading="authStore.loading" />
+            <Button label="Sí" icon="pi pi-check" :loading="authStore.loading" @click="logout" />
         </template>
     </Dialog>
 </template>

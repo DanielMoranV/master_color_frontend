@@ -117,7 +117,7 @@ const getStockChangeIcon = (detail) => {
 <template>
     <div class="stock-movement-detail">
         <div v-if="!movement" class="loading-state">
-            <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="4" />
+            <ProgressSpinner style="width: 50px; height: 50px" stroke-width="4" />
             <p>Cargando detalles del movimiento...</p>
         </div>
 
@@ -154,7 +154,7 @@ const getStockChangeIcon = (detail) => {
                             <span class="info-label">Motivo:</span>
                             <span class="info-value">{{ movement.reason }}</span>
                         </div>
-                        <div class="info-item" v-if="movement.voucher_number">
+                        <div v-if="movement.voucher_number" class="info-item">
                             <span class="info-label">Número de Comprobante:</span>
                             <span class="info-value voucher">{{ movement.voucher_number }}</span>
                         </div>
@@ -199,7 +199,7 @@ const getStockChangeIcon = (detail) => {
                     </template>
                 </Card>
 
-                <Card class="summary-card" v-if="movement.total_value">
+                <Card v-if="movement.total_value" class="summary-card">
                     <template #content>
                         <div class="summary-content">
                             <div class="summary-icon value-icon">
@@ -213,7 +213,7 @@ const getStockChangeIcon = (detail) => {
                     </template>
                 </Card>
 
-                <Card class="summary-card" v-if="movement.average_price">
+                <Card v-if="movement.average_price" class="summary-card">
                     <template #content>
                         <div class="summary-content">
                             <div class="summary-icon average-icon">
@@ -242,7 +242,7 @@ const getStockChangeIcon = (detail) => {
                         <p>No hay detalles de productos disponibles</p>
                     </div>
 
-                    <DataTable v-else :value="movement.details" responsiveLayout="scroll" class="details-table" stripedRows>
+                    <DataTable v-else :value="movement.details" responsive-layout="scroll" class="details-table" striped-rows>
                         <Column field="stock.product.name" header="Producto" class="product-column">
                             <template #body="{ data }">
                                 <div class="product-cell">
@@ -262,7 +262,7 @@ const getStockChangeIcon = (detail) => {
                             </template>
                         </Column>
 
-                        <Column field="unit_price" header="Precio Unit." class="price-column" v-if="hasUnitPrices">
+                        <Column v-if="hasUnitPrices" field="unit_price" header="Precio Unit." class="price-column">
                             <template #body="{ data }">
                                 <div class="price-cell">
                                     <span v-if="data.unit_price" class="price-value">{{ formatCurrency(data.unit_price) }}</span>
@@ -290,7 +290,7 @@ const getStockChangeIcon = (detail) => {
                             </template>
                         </Column>
 
-                        <Column header="Subtotal" class="subtotal-column" v-if="hasUnitPrices">
+                        <Column v-if="hasUnitPrices" header="Subtotal" class="subtotal-column">
                             <template #body="{ data }">
                                 <div class="subtotal-cell">
                                     <span v-if="data.unit_price" class="subtotal-value">

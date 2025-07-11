@@ -226,23 +226,23 @@ const submitPasswordChange = async () => {
 
                 <div class="field mb-4">
                     <label for="currentPassword" class="block text-900 font-medium mb-2">Contraseña actual</label>
-                    <Password id="currentPassword" v-model="currentPassword" class="w-full" :feedback="false" :toggleMask="true" placeholder="Ingresa tu contraseña actual" fluid />
+                    <Password id="currentPassword" v-model="currentPassword" class="w-full" :feedback="false" :toggle-mask="true" placeholder="Ingresa tu contraseña actual" fluid />
                 </div>
 
                 <div class="field mb-4">
                     <label for="newPassword" class="block text-900 font-medium mb-2">Nueva contraseña</label>
-                    <Password id="newPassword" v-model="newPassword" class="w-full" :feedback="true" :toggleMask="true" placeholder="Ingresa tu nueva contraseña" fluid />
+                    <Password id="newPassword" v-model="newPassword" class="w-full" :feedback="true" :toggle-mask="true" placeholder="Ingresa tu nueva contraseña" fluid />
                 </div>
 
                 <div class="field mb-4">
                     <label for="confirmPassword" class="block text-900 font-medium mb-2">Confirmar contraseña</label>
-                    <Password id="confirmPassword" v-model="confirmPassword" class="w-full" :feedback="false" :toggleMask="true" placeholder="Confirma tu nueva contraseña" fluid />
+                    <Password id="confirmPassword" v-model="confirmPassword" class="w-full" :feedback="false" :toggle-mask="true" placeholder="Confirma tu nueva contraseña" fluid />
                 </div>
 
                 <div class="mt-4">
                     <div class="flex flex-column md:flex-row justify-content-center align-items-center gap-3">
-                        <Button label="Cancelar" icon="pi pi-times" class="p-button-outlined p-button-secondary w-full md:w-auto" @click="cancelPasswordChange" :disabled="passwordLoading" />
-                        <Button label="Cambiar contraseña" icon="pi pi-check" class="p-button-primary w-full md:w-auto" @click="submitPasswordChange" :loading="passwordLoading" />
+                        <Button label="Cancelar" icon="pi pi-times" class="p-button-outlined p-button-secondary w-full md:w-auto" :disabled="passwordLoading" @click="cancelPasswordChange" />
+                        <Button label="Cambiar contraseña" icon="pi pi-check" class="p-button-primary w-full md:w-auto" :loading="passwordLoading" @click="submitPasswordChange" />
                     </div>
                 </div>
             </div>
@@ -267,8 +267,8 @@ const submitPasswordChange = async () => {
                             </div>
                         </div>
                         <div class="quick-actions">
-                            <Button icon="pi pi-cog" class="p-button-text p-button-rounded" v-tooltip.left="'Configuración'" @click="openSettings" />
-                            <Button icon="pi pi-share-alt" class="p-button-text p-button-rounded" v-tooltip.left="'Compartir perfil'" @click="shareProfile" />
+                            <Button v-tooltip.left="'Configuración'" icon="pi pi-cog" class="p-button-text p-button-rounded" @click="openSettings" />
+                            <Button v-tooltip.left="'Compartir perfil'" icon="pi pi-share-alt" class="p-button-text p-button-rounded" @click="shareProfile" />
                         </div>
                     </div>
                 </div>
@@ -289,7 +289,7 @@ const submitPasswordChange = async () => {
                     <div class="info-card">
                         <div class="card-header">
                             <h3><i class="pi pi-user mr-2"></i>Información Personal</h3>
-                            <Button icon="pi pi-pencil" class="p-button-text p-button-sm" @click="editProfile" label="Editar" />
+                            <Button icon="pi pi-pencil" class="p-button-text p-button-sm" label="Editar" @click="editProfile" />
                         </div>
                         <Divider class="my-3" />
 
@@ -310,7 +310,7 @@ const submitPasswordChange = async () => {
                                 <div class="info-value">{{ user.email }}</div>
                             </div>
 
-                            <div class="info-item" v-if="user.phone">
+                            <div v-if="user.phone" class="info-item">
                                 <div class="info-label">
                                     <i class="pi pi-phone"></i>
                                     <span>Teléfono</span>
@@ -318,7 +318,7 @@ const submitPasswordChange = async () => {
                                 <div class="info-value">{{ user.phone }}</div>
                             </div>
 
-                            <div class="info-item" v-if="user.created_at">
+                            <div v-if="user.created_at" class="info-item">
                                 <div class="info-label">
                                     <i class="pi pi-calendar"></i>
                                     <span>Miembro desde</span>
@@ -357,7 +357,7 @@ const submitPasswordChange = async () => {
                         <Divider class="my-3" />
                         <div class="actions-list">
                             <Button label="Editar Perfil" icon="pi pi-user-edit" class="action-btn p-button-outlined" @click="editProfile" />
-                            <Button v-if="!user.email_verified_at" label="Verificar Email" icon="pi pi-envelope" class="action-btn p-button-warning" @click="resendVerification" :loading="verificationLoading" />
+                            <Button v-if="!user.email_verified_at" label="Verificar Email" icon="pi pi-envelope" class="action-btn p-button-warning" :loading="verificationLoading" @click="resendVerification" />
                             <Button label="Cambiar Contraseña" icon="pi pi-lock" class="action-btn p-button-outlined" @click="changePassword" />
                             <Button label="Configurar Notificaciones" icon="pi pi-bell" class="action-btn p-button-outlined" @click="configureNotifications" />
                         </div>

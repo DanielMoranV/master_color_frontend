@@ -149,7 +149,7 @@ onMounted(async () => {
                         <p class="subtitle">Administra y controla los usuarios del sistema</p>
                     </div>
                 </div>
-                <Button label="Nuevo Usuario" icon="pi pi-plus" @click="openNew" class="create-button" raised />
+                <Button label="Nuevo Usuario" icon="pi pi-plus" class="create-button" raised @click="openNew" />
             </div>
         </div>
 
@@ -160,7 +160,7 @@ onMounted(async () => {
                 <div class="table-actions">
                     <div class="search-box">
                         <i class="pi pi-search"></i>
-                        <input type="text" placeholder="Buscar usuarios..." v-model="searchQuery" class="search-input" />
+                        <input v-model="searchQuery" type="text" placeholder="Buscar usuarios..." class="search-input" />
                     </div>
                 </div>
             </div>
@@ -215,8 +215,8 @@ onMounted(async () => {
 
             <template #footer>
                 <div class="dialog-actions">
-                    <Button label="Cancelar" icon="pi pi-times" class="cancel-button" @click="deleteUserDialog = false" outlined />
-                    <Button label="Eliminar" icon="pi pi-trash" class="delete-button" @click="deleteUser" :loading="usersStore.loading" />
+                    <Button label="Cancelar" icon="pi pi-times" class="cancel-button" outlined @click="deleteUserDialog = false" />
+                    <Button label="Eliminar" icon="pi pi-trash" class="delete-button" :loading="usersStore.loading" @click="deleteUser" />
                 </div>
             </template>
         </Dialog>

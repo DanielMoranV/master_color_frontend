@@ -110,7 +110,7 @@ onMounted(async () => {
                     </div>
                 </div>
                 <div class="header-actions">
-                    <Button label="Actualizar" icon="pi pi-refresh" @click="refreshStock" class="refresh-button" :loading="stockStore.loading" raised />
+                    <Button label="Actualizar" icon="pi pi-refresh" class="refresh-button" :loading="stockStore.loading" raised @click="refreshStock" />
                 </div>
             </div>
         </div>
@@ -162,10 +162,10 @@ onMounted(async () => {
                 <div class="table-actions">
                     <div class="search-box">
                         <i class="pi pi-search"></i>
-                        <input type="text" placeholder="Buscar productos..." v-model="searchQuery" class="search-input" />
+                        <input v-model="searchQuery" type="text" placeholder="Buscar productos..." class="search-input" />
                     </div>
                     <div class="filter-box">
-                        <Select v-model="stockFilter" :options="filterOptions" optionLabel="label" optionValue="value" placeholder="Filtrar por stock" class="filter-select" />
+                        <Select v-model="stockFilter" :options="filterOptions" option-label="label" option-value="value" placeholder="Filtrar por stock" class="filter-select" />
                     </div>
                 </div>
             </div>

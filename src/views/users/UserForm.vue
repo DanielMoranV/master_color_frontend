@@ -213,12 +213,22 @@ const handleSubmit = () => {
                 <div class="form-row">
                     <div v-if="!isEdit" class="form-field">
                         <label for="password" class="field-label">Contraseña *</label>
-                        <Password id="password" v-model="formData.password" :class="{ 'p-invalid': errors.password }" placeholder="Mínimo 6 caracteres" toggleMask :feedback="false" class="compact-input" fluid />
+                        <Password id="password" v-model="formData.password" :class="{ 'p-invalid': errors.password }" placeholder="Mínimo 6 caracteres" toggle-mask :feedback="false" class="compact-input" fluid />
                         <small v-if="errors.password" class="p-error">{{ errors.password }}</small>
                     </div>
                     <div class="form-field">
                         <label for="role" class="field-label">Rol *</label>
-                        <Select id="role" v-model="formData.role_id" :options="roleOptions" optionLabel="value" optionValue="id" :class="{ 'p-invalid': errors.role_name }" placeholder="Seleccionar rol" class="compact-input" @change="onRoleChange" />
+                        <Select
+                            id="role"
+                            v-model="formData.role_id"
+                            :options="roleOptions"
+                            option-label="value"
+                            option-value="id"
+                            :class="{ 'p-invalid': errors.role_name }"
+                            placeholder="Seleccionar rol"
+                            class="compact-input"
+                            @change="onRoleChange"
+                        />
                         <small v-if="errors.role_name" class="p-error">{{ errors.role_name }}</small>
                     </div>
                 </div>
@@ -239,7 +249,7 @@ const handleSubmit = () => {
 
             <!-- Botones de acción -->
             <div class="form-actions">
-                <Button label="Cancelar" icon="pi pi-times" class="p-button-text" @click="$emit('cancel')" type="button" />
+                <Button label="Cancelar" icon="pi pi-times" class="p-button-text" type="button" @click="$emit('cancel')" />
                 <Button :label="isEdit ? 'Actualizar' : 'Crear'" :icon="isEdit ? 'pi pi-check' : 'pi pi-plus'" type="submit" :loading="loading" />
             </div>
         </form>

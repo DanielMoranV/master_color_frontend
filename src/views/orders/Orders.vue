@@ -622,9 +622,9 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
                 <div class="header-actions">
-                    <Button v-if="!showOrderForm && !showOrdersList" label="Volver a la Tienda" icon="pi pi-arrow-left" @click="goBackToStore" class="back-button" outlined />
-                    <Button v-if="!showOrderForm && !showOrdersList" label="Ver Mis Órdenes" icon="pi pi-list" @click="viewMyOrders" class="orders-button" />
-                    <Button v-if="showOrdersList" label="Nueva Orden" icon="pi pi-plus" @click="startNewOrder" class="new-order-button" />
+                    <Button v-if="!showOrderForm && !showOrdersList" label="Volver a la Tienda" icon="pi pi-arrow-left" class="back-button" outlined @click="goBackToStore" />
+                    <Button v-if="!showOrderForm && !showOrdersList" label="Ver Mis Órdenes" icon="pi pi-list" class="orders-button" @click="viewMyOrders" />
+                    <Button v-if="showOrdersList" label="Nueva Orden" icon="pi pi-plus" class="new-order-button" @click="startNewOrder" />
                 </div>
             </div>
         </div>
@@ -677,7 +677,7 @@ onBeforeUnmount(() => {
             </div>
 
             <!-- Order Form -->
-            <form @submit.prevent="submitOrder" class="order-form">
+            <form class="order-form" @submit.prevent="submitOrder">
                 <div class="form-sections">
                     <!-- Delivery Address Selection -->
                     <div class="form-section">
@@ -688,18 +688,18 @@ onBeforeUnmount(() => {
 
                         <div v-if="addresses.length === 0" class="no-addresses">
                             <p class="no-addresses-text">No tienes direcciones guardadas</p>
-                            <Button label="Agregar Dirección" icon="pi pi-plus" @click="showNewAddressForm = true" class="add-address-button" />
+                            <Button label="Agregar Dirección" icon="pi pi-plus" class="add-address-button" @click="showNewAddressForm = true" />
                         </div>
 
                         <div v-else class="addresses-selection">
                             <div class="form-group">
                                 <label class="form-label required">Selecciona dirección de entrega</label>
                                 <div class="addresses-grid">
-                                    <div v-for="address in addresses" :key="address.id" @click="selectedAddressId = address.id" class="address-card" :class="{ selected: selectedAddressId === address.id }">
+                                    <div v-for="address in addresses" :key="address.id" class="address-card" :class="{ selected: selectedAddressId === address.id }" @click="selectedAddressId = address.id">
                                         <div class="address-header">
                                             <div class="address-indicator">
-                                                <i class="pi pi-check" v-if="selectedAddressId === address.id"></i>
-                                                <i class="pi pi-circle" v-else></i>
+                                                <i v-if="selectedAddressId === address.id" class="pi pi-check"></i>
+                                                <i v-else class="pi pi-circle"></i>
                                             </div>
                                             <span v-if="address.is_main" class="main-badge">Principal</span>
                                         </div>
@@ -715,7 +715,7 @@ onBeforeUnmount(() => {
                             </div>
 
                             <div class="address-actions">
-                                <Button label="Agregar Nueva Dirección" icon="pi pi-plus" @click="showNewAddressForm = true" class="p-button-outlined" type="button" />
+                                <Button label="Agregar Nueva Dirección" icon="pi pi-plus" class="p-button-outlined" type="button" @click="showNewAddressForm = true" />
                             </div>
                         </div>
                     </div>
@@ -735,7 +735,7 @@ onBeforeUnmount(() => {
 
                 <!-- Form Actions -->
                 <div class="form-actions">
-                    <Button type="button" label="Cancelar" icon="pi pi-times" @click="cancelOrder" class="cancel-button" outlined />
+                    <Button type="button" label="Cancelar" icon="pi pi-times" class="cancel-button" outlined @click="cancelOrder" />
                     <Button type="submit" label="Proceder al Pago" icon="pi pi-credit-card" class="submit-button" :loading="loading || paymentLoading" :disabled="!selectedAddressId || orderItems.length === 0" />
                 </div>
             </form>
@@ -752,12 +752,12 @@ onBeforeUnmount(() => {
                 <i class="pi pi-shopping-cart empty-icon"></i>
                 <h3>No tienes órdenes de compra</h3>
                 <p>Cuando realices tu primera compra, aparecerá aquí</p>
-                <Button label="Ir a la Tienda" icon="pi pi-shopping-bag" @click="goBackToStore" class="shop-button" />
+                <Button label="Ir a la Tienda" icon="pi pi-shopping-bag" class="shop-button" @click="goBackToStore" />
             </div>
 
             <!-- Orders table -->
             <div v-else class="orders-table">
-                <DataTable :value="orders" responsiveLayout="scroll" class="orders-datatable">
+                <DataTable :value="orders" responsive-layout="scroll" class="orders-datatable">
                     <Column field="id" header="Orden #" style="min-width: 100px">
                         <template #body="slotProps">
                             <strong>#{{ slotProps.data.id }}</strong>
@@ -816,12 +816,12 @@ onBeforeUnmount(() => {
                             <div class="order-actions">
                                 <Button
                                     v-if="slotProps.data.status === 'pendiente_pago' || slotProps.data.status === 'pago_fallido'"
+                                    v-tooltip="'Pagar'"
                                     icon="pi pi-credit-card"
                                     class="p-button-rounded p-button-sm"
                                     @click="retryPayment(slotProps.data.id)"
-                                    v-tooltip="'Pagar'"
                                 />
-                                <Button icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-sm" @click="viewOrderDetails(slotProps.data)" v-tooltip="'Ver detalles'" />
+                                <Button v-tooltip="'Ver detalles'" icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-sm" @click="viewOrderDetails(slotProps.data)" />
                             </div>
                         </template>
                     </Column>
@@ -837,15 +837,15 @@ onBeforeUnmount(() => {
                 <p>Aquí puedes gestionar tus pedidos y realizar nuevas compras</p>
 
                 <div class="welcome-actions">
-                    <Button v-if="orderItems.length > 0" label="Procesar Carrito" icon="pi pi-shopping-cart" @click="startNewOrder" class="primary-action" />
-                    <Button label="Ver Mis Órdenes" icon="pi pi-list" @click="viewMyOrders" class="secondary-action" outlined />
+                    <Button v-if="orderItems.length > 0" label="Procesar Carrito" icon="pi pi-shopping-cart" class="primary-action" @click="startNewOrder" />
+                    <Button label="Ver Mis Órdenes" icon="pi pi-list" class="secondary-action" outlined @click="viewMyOrders" />
                 </div>
             </div>
         </div>
 
         <!-- New Address Dialog -->
         <Dialog v-model:visible="showNewAddressForm" modal header="Agregar Nueva Dirección" :style="{ width: '90vw', maxWidth: '600px' }">
-            <form @submit.prevent="addNewAddress" class="new-address-form">
+            <form class="new-address-form" @submit.prevent="addNewAddress">
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label required">Dirección completa</label>
@@ -879,12 +879,12 @@ onBeforeUnmount(() => {
                 </div>
 
                 <div class="form-group checkbox-group">
-                    <Checkbox v-model="newAddressForm.is_main" :binary="true" id="isMain" />
+                    <Checkbox id="isMain" v-model="newAddressForm.is_main" :binary="true" />
                     <label for="isMain" class="checkbox-label"> Establecer como dirección principal </label>
                 </div>
 
                 <div class="dialog-actions">
-                    <Button type="button" label="Cancelar" icon="pi pi-times" @click="showNewAddressForm = false" class="p-button-outlined" />
+                    <Button type="button" label="Cancelar" icon="pi pi-times" class="p-button-outlined" @click="showNewAddressForm = false" />
                     <Button type="submit" label="Agregar Dirección" icon="pi pi-check" :loading="loading" />
                 </div>
             </form>

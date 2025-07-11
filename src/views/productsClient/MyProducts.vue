@@ -45,11 +45,18 @@ onMounted(() => {
     <div class="my-products-container">
         <h2 class="page-title">Historial de Compras</h2>
 
-        <DataTable :value="purchases" :loading="loading" data-key="order_id" :paginator="true" :rows="10"
+        <DataTable
+            :value="purchases"
+            :loading="loading"
+            data-key="order_id"
+            :paginator="true"
+            :rows="10"
             :rows-per-page-options="[5, 10, 20]"
             paginator-template="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-            current-page-report-template="{first} al {last} de {totalRecords} productos" responsive-layout="scroll"
-            striped-rows>
+            current-page-report-template="{first} al {last} de {totalRecords} productos"
+            responsive-layout="scroll"
+            striped-rows
+        >
             <template #empty>
                 <div class="empty-state">
                     <i class="pi pi-shopping-bag" style="font-size: 3rem; color: var(--text-color-secondary)" />
@@ -68,8 +75,7 @@ onMounted(() => {
             <Column header="Imagen" style="width: 80px">
                 <template #body="{ data }">
                     <div class="product-image-container">
-                        <img v-if="data.product?.image_url" :src="data.product.image_url" :alt="data.product?.name"
-                            class="product-image" @error="$event.target.style.display = 'none'" />
+                        <img v-if="data.product?.image_url" :src="data.product.image_url" :alt="data.product?.name" class="product-image" @error="$event.target.style.display = 'none'" />
                         <div v-else class="no-image">
                             <i class="pi pi-image" />
                         </div>
@@ -101,8 +107,7 @@ onMounted(() => {
             <!-- Estado de la orden -->
             <Column field="order_status" header="Estado de Orden" sortable style="width: 160px; text-align: center">
                 <template #body="{ data }">
-                    <Tag :value="getStatusLabel(data.order_status)" :severity="getStatusSeverity(data.order_status)"
-                        class="status-tag" />
+                    <Tag :value="getStatusLabel(data.order_status)" :severity="getStatusSeverity(data.order_status)" class="status-tag" />
                 </template>
             </Column>
         </DataTable>

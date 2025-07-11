@@ -260,7 +260,7 @@ const handleSubmit = () => {
                     <div class="form-row">
                         <div class="form-field">
                             <label for="category" class="field-label">Categoría</label>
-                            <Select id="category" v-model="formData.category" :options="categoriesOptions" optionLabel="label" optionValue="value" placeholder="Categoría del producto" class="compact-input" />
+                            <Select id="category" v-model="formData.category" :options="categoriesOptions" option-label="label" option-value="value" placeholder="Categoría del producto" class="compact-input" />
                         </div>
                         <div class="form-field">
                             <label for="presentation" class="field-label">Presentación</label>
@@ -272,7 +272,7 @@ const handleSubmit = () => {
                     <div class="form-row">
                         <div class="form-field">
                             <label for="unidad" class="field-label">Unidad *</label>
-                            <Select id="unidad" v-model="formData.unidad" :options="unidadOptions" optionLabel="label" optionValue="value" :class="{ 'p-invalid': errors.unidad }" placeholder="Selecciona unidad" class="compact-input" />
+                            <Select id="unidad" v-model="formData.unidad" :options="unidadOptions" option-label="label" option-value="value" :class="{ 'p-invalid': errors.unidad }" placeholder="Selecciona unidad" class="compact-input" />
                             <small v-if="errors.unidad" class="p-error">{{ errors.unidad }}</small>
                         </div>
                         <div class="form-field">
@@ -296,14 +296,14 @@ const handleSubmit = () => {
                     <div class="form-row image-upload-row">
                         <div class="form-field image-field">
                             <label class="field-label">Seleccionar Imagen</label>
-                            <FileUpload mode="basic" :choose-label="selectedImage ? 'Cambiar imagen' : 'Seleccionar imagen'" accept="image/*" :max-file-size="5000000" @select="onImageSelect" @clear="onImageClear" class="compact-upload" />
+                            <FileUpload mode="basic" :choose-label="selectedImage ? 'Cambiar imagen' : 'Seleccionar imagen'" accept="image/*" :max-file-size="5000000" class="compact-upload" @select="onImageSelect" @clear="onImageClear" />
                             <small class="upload-hint">Formatos: JPG, PNG, GIF. Máximo 5MB</small>
                         </div>
-                        <div class="form-field image-preview-field" v-if="imagePreview">
+                        <div v-if="imagePreview" class="form-field image-preview-field">
                             <label class="field-label">Vista previa</label>
                             <div class="image-preview">
                                 <img :src="imagePreview" alt="Vista previa" class="preview-image" />
-                                <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-sm remove-image-btn" @click="removeImage" type="button" v-tooltip="'Eliminar imagen'" />
+                                <Button v-tooltip="'Eliminar imagen'" icon="pi pi-times" class="p-button-rounded p-button-danger p-button-sm remove-image-btn" type="button" @click="removeImage" />
                             </div>
                         </div>
                     </div>
@@ -412,7 +412,7 @@ const handleSubmit = () => {
 
             <!-- Botones de acción -->
             <div class="form-actions">
-                <Button label="Cancelar" icon="pi pi-times" class="p-button-text" @click="$emit('cancel')" type="button" />
+                <Button label="Cancelar" icon="pi pi-times" class="p-button-text" type="button" @click="$emit('cancel')" />
                 <Button :label="isEdit ? 'Actualizar' : 'Crear'" :icon="isEdit ? 'pi pi-check' : 'pi pi-plus'" type="submit" :loading="loading" />
             </div>
         </form>

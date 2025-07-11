@@ -156,7 +156,7 @@ onMounted(() => {
                 <h2 class="text-2xl font-bold text-gray-800 mb-2">Mis Direcciones</h2>
                 <p class="text-gray-600">Gestiona tus direcciones de entrega</p>
             </div>
-            <Button label="Agregar Dirección" icon="pi pi-plus" @click="openAddressForm()" class="bg-blue-600 border-blue-600 hover:bg-blue-700" />
+            <Button label="Agregar Dirección" icon="pi pi-plus" class="bg-blue-600 border-blue-600 hover:bg-blue-700" @click="openAddressForm()" />
         </div>
 
         <!-- Estado de carga -->
@@ -170,7 +170,7 @@ onMounted(() => {
             <i class="pi pi-map-marker text-6xl text-gray-300 mb-4"></i>
             <h3 class="text-xl text-gray-500 mb-2">No tienes direcciones registradas</h3>
             <p class="text-gray-400 mb-6">Agrega tu primera dirección para realizar pedidos</p>
-            <Button label="Agregar Primera Dirección" icon="pi pi-plus" @click="openAddressForm()" class="bg-blue-600 border-blue-600 hover:bg-blue-700" />
+            <Button label="Agregar Primera Dirección" icon="pi pi-plus" class="bg-blue-600 border-blue-600 hover:bg-blue-700" @click="openAddressForm()" />
         </div>
 
         <!-- Lista de direcciones -->
@@ -220,11 +220,11 @@ onMounted(() => {
                 <!-- Acciones -->
                 <div class="flex justify-between items-center pt-3 border-t border-gray-200">
                     <div class="flex space-x-2">
-                        <Button icon="pi pi-pencil" size="small" class="p-button-outlined p-button-sm" v-tooltip="'Editar dirección'" @click="openAddressForm(address)" />
-                        <Button icon="pi pi-trash" size="small" class="p-button-outlined p-button-danger p-button-sm" v-tooltip="'Eliminar dirección'" @click="confirmDeleteAddress(address)" :disabled="addresses.length === 1" />
+                        <Button v-tooltip="'Editar dirección'" icon="pi pi-pencil" size="small" class="p-button-outlined p-button-sm" @click="openAddressForm(address)" />
+                        <Button v-tooltip="'Eliminar dirección'" icon="pi pi-trash" size="small" class="p-button-outlined p-button-danger p-button-sm" :disabled="addresses.length === 1" @click="confirmDeleteAddress(address)" />
                     </div>
 
-                    <Button v-if="!address.is_main" label="Hacer Principal" size="small" class="p-button-text p-button-sm text-blue-600" @click="setMainAddress(address.id)" :loading="isLoading" />
+                    <Button v-if="!address.is_main" label="Hacer Principal" size="small" class="p-button-text p-button-sm text-blue-600" :loading="isLoading" @click="setMainAddress(address.id)" />
                 </div>
             </div>
         </div>

@@ -122,7 +122,7 @@ const goToLogin = () => {
                     </div>
                 </div>
 
-                <form @submit.prevent="handleSubmit" v-if="!success" class="reset-form">
+                <form v-if="!success" class="reset-form" @submit.prevent="handleSubmit">
                     <div class="field mb-4">
                         <label for="email" class="form-label">Correo electrónico</label>
                         <span class="p-input-icon-left w-full">
@@ -146,12 +146,12 @@ const goToLogin = () => {
                                 class="w-full"
                                 :class="{ 'p-invalid': v$.password.$invalid && v$.password.$dirty }"
                                 :feedback="true"
-                                :toggleMask="true"
+                                :toggle-mask="true"
                                 placeholder="Ingresa tu nueva contraseña"
-                                :promptLabel="'Ingresa una contraseña segura'"
-                                :weakLabel="'Débil - Añade números y símbolos'"
-                                :mediumLabel="'Media - Añade símbolos especiales'"
-                                :strongLabel="'Fuerte - Excelente contraseña'"
+                                :prompt-label="'Ingresa una contraseña segura'"
+                                :weak-label="'Débil - Añade números y símbolos'"
+                                :medium-label="'Media - Añade símbolos especiales'"
+                                :strong-label="'Fuerte - Excelente contraseña'"
                                 aria-describedby="password-help"
                                 fluid
                             />
@@ -159,7 +159,7 @@ const goToLogin = () => {
                         <small v-if="v$.password.$invalid && v$.password.$dirty" class="p-error block mt-1">
                             {{ v$.password.$errors[0].$message }}
                         </small>
-                        <small id="password-help" class="text-muted block mt-1" v-else> Tu contraseña debe tener al menos 8 caracteres. Incluye letras mayúsculas, minúsculas, números y símbolos para mayor seguridad. </small>
+                        <small v-else id="password-help" class="text-muted block mt-1"> Tu contraseña debe tener al menos 8 caracteres. Incluye letras mayúsculas, minúsculas, números y símbolos para mayor seguridad. </small>
                     </div>
 
                     <div class="field mb-4">
@@ -172,7 +172,7 @@ const goToLogin = () => {
                                 class="w-full"
                                 :class="{ 'p-invalid': v$.passwordConfirmation.$invalid && v$.passwordConfirmation.$dirty }"
                                 :feedback="false"
-                                :toggleMask="true"
+                                :toggle-mask="true"
                                 fluid
                                 placeholder="Confirma tu nueva contraseña"
                                 aria-describedby="confirm-password-help"
@@ -190,11 +190,11 @@ const goToLogin = () => {
                                 <i class="pi pi-spin pi-spinner mr-2"></i>
                                 <span>Procesando...</span>
                             </template>
-                            <i class="pi pi-lock mr-2" v-if="!loading"></i>
+                            <i v-if="!loading" class="pi pi-lock mr-2"></i>
                             <span>Restablecer contraseña</span>
                         </Button>
                         <div class="flex align-items-center justify-content-center">
-                            <a @click="goToLogin" class="back-link">Volver al inicio de sesión</a>
+                            <a class="back-link" @click="goToLogin">Volver al inicio de sesión</a>
                         </div>
                     </div>
                 </form>

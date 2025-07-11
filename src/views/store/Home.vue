@@ -411,12 +411,12 @@ onBeforeUnmount(() => {
                             <div class="relative">
                                 <Menu id="user_menu" ref="userMenu" :model="userMenuItems" :popup="true" class="user-menu" />
                                 <Button
+                                    v-tooltip="isSmallScreen ? currentUserName : 'Menú de usuario'"
                                     icon="pi pi-user"
                                     :label="isSmallScreen ? undefined : currentUserName"
                                     class="p-button-outlined p-button-lg shadow-md user-button"
                                     :class="{ 'p-button-icon-only': isSmallScreen }"
                                     @click="toggleUserMenu"
-                                    v-tooltip="isSmallScreen ? currentUserName : 'Menú de usuario'"
                                 />
                             </div>
                         </template>
@@ -453,9 +453,9 @@ onBeforeUnmount(() => {
                             <div
                                 v-for="category in availableCategories"
                                 :key="category.id"
-                                @click="selectCategory(category)"
                                 class="flex items-center p-2 sm:p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-50 text-sm sm:text-base"
                                 :class="selectedCategory === category ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-600' : 'text-gray-700 hover:text-blue-600'"
+                                @click="selectCategory(category)"
                             >
                                 <i :class="['pi', category.icon, 'mr-3']"></i>
                                 <span class="font-medium">{{ category.label }}</span>
@@ -485,7 +485,7 @@ onBeforeUnmount(() => {
                                 <span class="text-sm font-medium text-gray-700">Ordenar por:</span>
                             </div>
                             <div class="w-full sm:w-auto">
-                                <Select v-model="sortOption" :options="sortOptions" optionLabel="label" optionValue="value" placeholder="Seleccionar orden" class="w-full sm:w-64 sort-select" />
+                                <Select v-model="sortOption" :options="sortOptions" option-label="label" option-value="value" placeholder="Seleccionar orden" class="w-full sm:w-64 sort-select" />
                             </div>
                         </div>
                     </div>
@@ -533,7 +533,7 @@ onBeforeUnmount(() => {
                                     {{ product.name }}
                                 </h3>
 
-                                <p class="text-sm text-gray-600 mb-3 line-clamp-2" v-tooltip.top="product.description && product.description.length > 100 ? product.description : null">
+                                <p v-tooltip.top="product.description && product.description.length > 100 ? product.description : null" class="text-sm text-gray-600 mb-3 line-clamp-2">
                                     {{ product.description }}
                                 </p>
 

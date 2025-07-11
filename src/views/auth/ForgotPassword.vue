@@ -92,7 +92,7 @@ const goToLogin = () => {
                     </div>
                 </div>
 
-                <form @submit.prevent="handleSubmit" v-if="!success" class="forgot-form">
+                <form v-if="!success" class="forgot-form" @submit.prevent="handleSubmit">
                     <div class="field mb-4">
                         <label for="email" class="form-label">Correo electrónico</label>
                         <span class="p-input-icon-left w-full">
@@ -112,11 +112,11 @@ const goToLogin = () => {
                                 <i class="pi pi-spin pi-spinner mr-2"></i>
                                 <span>Enviando...</span>
                             </template>
-                            <i class="pi pi-envelope mr-2" v-if="!loading"></i>
+                            <i v-if="!loading" class="pi pi-envelope mr-2"></i>
                             <span>Enviar enlace de recuperación</span>
                         </Button>
                         <div class="flex align-items-center justify-content-center">
-                            <a @click="goToLogin" class="back-link">Volver al inicio de sesión</a>
+                            <a class="back-link" @click="goToLogin">Volver al inicio de sesión</a>
                         </div>
                     </div>
                 </form>

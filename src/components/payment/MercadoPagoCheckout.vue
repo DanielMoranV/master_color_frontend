@@ -491,8 +491,7 @@ onUnmounted(() => {
 <template>
     <div class="mercadopago-checkout">
         <!-- Loading, Error, or Config Error State -->
-        <PaymentFallback v-if="loading || error || configError" :error="initializationError" :config-error="configError"
-            @retry="handleRetry" @use-classic-mode="handleUseClassicMode" />
+        <PaymentFallback v-if="loading || error || configError" :error="initializationError" :config-error="configError" @retry="handleRetry" @use-classic-mode="handleUseClassicMode" />
 
         <!-- Payment Options -->
         <div v-else class="space-y-6">
@@ -529,20 +528,16 @@ onUnmounted(() => {
                         <i class="pi pi-shield text-blue-600 text-2xl mr-3"></i>
                         <div class="flex-1">
                             <h4 class="font-semibold text-blue-800">Pago seguro con MercadoPago</h4>
-                            <p class="text-blue-700 text-sm mt-1">Acepta tarjetas de crédito, débito, transferencias
-                                bancarias y otros métodos de pago</p>
+                            <p class="text-blue-700 text-sm mt-1">Acepta tarjetas de crédito, débito, transferencias bancarias y otros métodos de pago</p>
                         </div>
                     </div>
 
-                    <Button @click="proceedToMercadoPago" label="Pagar con MercadoPago" icon="pi pi-external-link"
-                        class="mt-4 w-full bg-blue-600 border-blue-600 hover:bg-blue-700" :loading="processing"
-                        size="large" />
+                    <Button label="Pagar con MercadoPago" icon="pi pi-external-link" class="mt-4 w-full bg-blue-600 border-blue-600 hover:bg-blue-700" :loading="processing" size="large" @click="proceedToMercadoPago" />
                 </div>
             </div>
 
             <!-- Payment Method Instructions -->
-            <div v-if="!paymentMethod"
-                class="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+            <div v-if="!paymentMethod" class="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                 <i class="pi pi-arrow-up text-4xl text-gray-400 mb-4"></i>
                 <h3 class="text-lg font-medium text-gray-700 mb-2">Selecciona un método de pago</h3>
                 <p class="text-gray-500">Elige cómo deseas pagar tu pedido para continuar</p>
@@ -562,11 +557,10 @@ onUnmounted(() => {
                         <i class="pi pi-info-circle text-blue-500 mr-3 mt-1"></i>
                         <div>
                             <h4 class="font-medium text-blue-800">Transferencia Bancaria</h4>
-                            <p class="text-blue-700 text-sm mt-1">Después de confirmar tu pedido, recibirás los datos
-                                bancarios para realizar la transferencia.</p>
+                            <p class="text-blue-700 text-sm mt-1">Después de confirmar tu pedido, recibirás los datos bancarios para realizar la transferencia.</p>
                         </div>
                     </div>
-                    <Button @click="processBankTransfer" label="Confirmar Pedido" class="mt-4" :loading="processing" />
+                    <Button label="Confirmar Pedido" class="mt-4" :loading="processing" @click="processBankTransfer" />
                 </div>
             </div>
 

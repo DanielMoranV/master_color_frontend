@@ -36,7 +36,7 @@ onBeforeUnmount(() => {
                 <ProgressBar :value="value"></ProgressBar>
             </div>
             <div class="md:w-1/2">
-                <ProgressBar :value="50" :showValue="false"></ProgressBar>
+                <ProgressBar :value="50" :show-value="false"></ProgressBar>
             </div>
         </div>
     </div>
@@ -69,7 +69,7 @@ onBeforeUnmount(() => {
                 <div class="font-semibold my-4">Button</div>
                 <div class="flex gap-2">
                     <Button label="Emails" badge="8" class="mr-2"></Button>
-                    <Button label="Messages" icon="pi pi-users" severity="warn" badge="8" badgeClass="p-badge-danger"></Button>
+                    <Button label="Messages" icon="pi pi-users" severity="warn" badge="8" badge-class="p-badge-danger"></Button>
                 </div>
 
                 <div class="font-semibold my-4">Sizes</div>

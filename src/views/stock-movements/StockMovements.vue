@@ -306,7 +306,7 @@ onMounted(() => {
                         <p class="subtitle">Administra y controla los movimientos de inventario</p>
                     </div>
                 </div>
-                <Button label="Nuevo Movimiento" icon="pi pi-plus" @click="openNew" class="create-button" raised />
+                <Button label="Nuevo Movimiento" icon="pi pi-plus" class="create-button" raised @click="openNew" />
             </div>
         </div>
 
@@ -317,11 +317,11 @@ onMounted(() => {
                 <div class="table-actions">
                     <div class="search-box">
                         <i class="pi pi-search"></i>
-                        <input type="text" placeholder="Buscar movimientos..." v-model="searchQuery" class="search-input" />
+                        <input v-model="searchQuery" type="text" placeholder="Buscar movimientos..." class="search-input" />
                     </div>
                     <div class="filter-section">
-                        <Select v-model="selectedType" :options="movementTypes" optionLabel="label" optionValue="value" placeholder="Tipo de movimiento" showClear class="type-filter" />
-                        <DatePicker v-model="dateRange" selectionMode="range" placeholder="Rango de fechas" dateFormat="dd/mm/yy" showClear class="date-filter" />
+                        <Select v-model="selectedType" :options="movementTypes" option-label="label" option-value="value" placeholder="Tipo de movimiento" show-clear class="type-filter" />
+                        <DatePicker v-model="dateRange" selection-mode="range" placeholder="Rango de fechas" date-format="dd/mm/yy" show-clear class="date-filter" />
                     </div>
                 </div>
             </div>
@@ -343,7 +343,7 @@ onMounted(() => {
                 </div>
             </template>
 
-            <StockMovementForm :movement="selectedMovement" :loading="stockMovementsStore.loading" :apiErrors="stockMovementsStore.validationErrors" @submit="handleSaveMovement" @cancel="hideDialog" />
+            <StockMovementForm :movement="selectedMovement" :loading="stockMovementsStore.loading" :api-errors="stockMovementsStore.validationErrors" @submit="handleSaveMovement" @cancel="hideDialog" />
         </Dialog>
 
         <!-- Movement Detail Dialog -->
@@ -352,7 +352,7 @@ onMounted(() => {
 
             <template #footer>
                 <div class="dialog-actions">
-                    <Button label="Cerrar" icon="pi pi-times" @click="detailDialog = false" outlined />
+                    <Button label="Cerrar" icon="pi pi-times" outlined @click="detailDialog = false" />
                     <Button label="Editar" icon="pi pi-pencil" @click="editFromDetail" />
                 </div>
             </template>
@@ -396,7 +396,7 @@ onMounted(() => {
                                 <span class="quantity-label">Cantidad:</span>
                                 <span class="quantity-value">{{ detail.quantity }}</span>
                             </div>
-                            <div class="product-price" v-if="detail.unit_price">
+                            <div v-if="detail.unit_price" class="product-price">
                                 <span class="price-label">Precio:</span>
                                 <span class="price-value">S/ {{ parseFloat(detail.unit_price).toFixed(2) }}</span>
                             </div>
@@ -427,8 +427,8 @@ onMounted(() => {
 
             <template #footer>
                 <div class="dialog-actions">
-                    <Button label="No, mantener movimiento" icon="pi pi-times" @click="correctionDialog = false" outlined />
-                    <Button label="Sí, cancelar movimiento" icon="pi pi-check" @click="confirmCancellation" :loading="stockMovementsStore.loading" severity="danger" />
+                    <Button label="No, mantener movimiento" icon="pi pi-times" outlined @click="correctionDialog = false" />
+                    <Button label="Sí, cancelar movimiento" icon="pi pi-check" :loading="stockMovementsStore.loading" severity="danger" @click="confirmCancellation" />
                 </div>
             </template>
         </Dialog>

@@ -44,8 +44,8 @@ const useClassicMode = () => {
                 <h3 class="error-title">Error al cargar el sistema de pagos</h3>
                 <p class="error-message">{{ error }}</p>
                 <div class="error-actions">
-                    <Button @click="retry" label="Reintentar" icon="pi pi-refresh" class="retry-button" :loading="retrying" />
-                    <Button @click="useClassicMode" label="Usar método clásico" icon="pi pi-external-link" class="classic-button" outlined />
+                    <Button label="Reintentar" icon="pi pi-refresh" class="retry-button" :loading="retrying" @click="retry" />
+                    <Button label="Usar método clásico" icon="pi pi-external-link" class="classic-button" outlined @click="useClassicMode" />
                 </div>
             </div>
         </div>
@@ -65,7 +65,7 @@ const useClassicMode = () => {
                     Obtén tu clave pública en:
                     <a href="https://www.mercadopago.com.pe/developers" target="_blank" rel="noopener"> MercadoPago Developers </a>
                 </p>
-                <Button @click="useClassicMode" label="Continuar sin Bricks" icon="pi pi-arrow-right" class="continue-button" />
+                <Button label="Continuar sin Bricks" icon="pi pi-arrow-right" class="continue-button" @click="useClassicMode" />
             </div>
         </div>
 

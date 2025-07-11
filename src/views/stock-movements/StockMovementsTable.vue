@@ -129,17 +129,17 @@ const canBeCancelled = (movement) => {
         <DataTable
             :value="movements"
             :loading="loading"
-            dataKey="id"
+            data-key="id"
             :paginator="true"
             :rows="10"
-            :rowsPerPageOptions="[5, 10, 25, 50]"
-            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} movimientos"
-            responsiveLayout="scroll"
-            :globalFilterFields="['reason', 'voucher_number', 'user.name', 'movement_type']"
+            :rows-per-page-options="[5, 10, 25, 50]"
+            paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+            current-page-report-template="Mostrando {first} a {last} de {totalRecords} movimientos"
+            responsive-layout="scroll"
+            :global-filter-fields="['reason', 'voucher_number', 'user.name', 'movement_type']"
             class="custom-table"
-            stripedRows
-            sortMode="multiple"
+            striped-rows
+            sort-mode="multiple"
         >
             <template #empty>
                 <div class="empty-state">
@@ -151,7 +151,7 @@ const canBeCancelled = (movement) => {
 
             <template #loading>
                 <div class="loading-state">
-                    <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="4" />
+                    <ProgressSpinner style="width: 50px; height: 50px" stroke-width="4" />
                     <p>Cargando movimientos...</p>
                 </div>
             </template>
@@ -224,9 +224,9 @@ const canBeCancelled = (movement) => {
             <Column header="Acciones" class="actions-column" :exportable="false">
                 <template #body="{ data }">
                     <div class="action-buttons">
-                        <Button icon="pi pi-eye" @click="$emit('view', data)" class="action-button view-button" v-tooltip.top="'Ver detalles'" text rounded />
-                        <Button icon="pi pi-pencil" @click="$emit('edit', data)" class="action-button edit-button" v-tooltip.top="'Editar'" text rounded />
-                        <Button v-if="canBeCancelled(data)" icon="pi pi-times-circle" @click="$emit('correct', data)" class="action-button cancel-button" v-tooltip.top="'Cancelar movimiento'" text rounded />
+                        <Button v-tooltip.top="'Ver detalles'" icon="pi pi-eye" class="action-button view-button" text rounded @click="$emit('view', data)" />
+                        <Button v-tooltip.top="'Editar'" icon="pi pi-pencil" class="action-button edit-button" text rounded @click="$emit('edit', data)" />
+                        <Button v-if="canBeCancelled(data)" v-tooltip.top="'Cancelar movimiento'" icon="pi pi-times-circle" class="action-button cancel-button" text rounded @click="$emit('correct', data)" />
                     </div>
                 </template>
             </Column>

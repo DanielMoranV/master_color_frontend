@@ -646,7 +646,7 @@ onMounted(() => {
                             </div>
 
                             <div class="flex-1 overflow-y-auto">
-                                <form @submit.prevent="register" class="space-y-3">
+                                <form class="space-y-3" @submit.prevent="register">
                                     <!-- Información personal en 3 columnas -->
                                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
                                         <div>
@@ -681,12 +681,12 @@ onMounted(() => {
                                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
                                         <div>
                                             <label for="clientType" class="block text-sm font-semibold text-gray-800 mb-1">Tipo de Cliente</label>
-                                            <Select v-model="clientType" :options="clientTypeOptions" optionLabel="label" optionValue="value" placeholder="Selecciona el tipo" class="w-full compact-select" @change="onClientTypeChange" />
+                                            <Select v-model="clientType" :options="clientTypeOptions" option-label="label" option-value="value" placeholder="Selecciona el tipo" class="w-full compact-select" @change="onClientTypeChange" />
                                         </div>
 
                                         <div>
                                             <label for="documentType" class="block text-sm font-semibold text-gray-800 mb-1">Tipo de Documento</label>
-                                            <Select v-model="documentType" :options="documentTypeOptions" optionLabel="label" optionValue="value" placeholder="Tipo de documento" class="w-full compact-select" />
+                                            <Select v-model="documentType" :options="documentTypeOptions" option-label="label" option-value="value" placeholder="Tipo de documento" class="w-full compact-select" />
                                         </div>
 
                                         <div>
@@ -773,8 +773,8 @@ onMounted(() => {
                                                     placeholder="Ej: Av. Los Olivos 123, Mz A Lt 5"
                                                     class="w-full compact-input"
                                                     :class="addressFullError ? 'p-invalid' : ''"
-                                                    @input="addressFullError = ''"
                                                     fluid
+                                                    @input="addressFullError = ''"
                                                 />
                                             </IconField>
                                             <small v-if="addressFullError" class="p-error text-red-600 text-xs mt-1 block">{{ addressFullError }}</small>
@@ -788,14 +788,14 @@ onMounted(() => {
                                                     id="department"
                                                     v-model="selectedDepartment"
                                                     :suggestions="filteredDepartments"
-                                                    optionLabel="label"
+                                                    option-label="label"
                                                     placeholder="Busca departamento"
                                                     class="w-full compact-autocomplete"
                                                     :class="departmentError ? 'p-invalid' : ''"
+                                                    force-selection
+                                                    fluid
                                                     @complete="searchDepartments"
                                                     @change="onDepartmentChange"
-                                                    forceSelection
-                                                    fluid
                                                 />
                                                 <small v-if="departmentError" class="p-error text-red-600 text-xs mt-1 block">{{ departmentError }}</small>
                                             </div>
@@ -806,15 +806,15 @@ onMounted(() => {
                                                     id="province"
                                                     v-model="selectedProvince"
                                                     :suggestions="filteredProvinces"
-                                                    optionLabel="label"
+                                                    option-label="label"
                                                     placeholder="Busca provincia"
                                                     class="w-full compact-autocomplete"
                                                     :class="provinceError ? 'p-invalid' : ''"
                                                     :disabled="!selectedDepartment || provinces.length === 0"
+                                                    force-selection
+                                                    fluid
                                                     @complete="searchProvinces"
                                                     @change="onProvinceChange"
-                                                    forceSelection
-                                                    fluid
                                                 />
                                                 <small v-if="provinceError" class="p-error text-red-600 text-xs mt-1 block">{{ provinceError }}</small>
                                             </div>
@@ -825,15 +825,15 @@ onMounted(() => {
                                                     id="district"
                                                     v-model="selectedDistrict"
                                                     :suggestions="filteredDistricts"
-                                                    optionLabel="label"
+                                                    option-label="label"
                                                     placeholder="Busca distrito"
                                                     class="w-full compact-autocomplete"
                                                     :class="districtError ? 'p-invalid' : ''"
                                                     :disabled="!selectedProvince || districts.length === 0"
+                                                    force-selection
+                                                    fluid
                                                     @complete="searchDistricts"
                                                     @change="onDistrictChange"
-                                                    forceSelection
-                                                    fluid
                                                 />
                                                 <small v-if="districtError" class="p-error text-red-600 text-xs mt-1 block">{{ districtError }}</small>
                                             </div>
@@ -845,7 +845,7 @@ onMounted(() => {
                                                 <label for="postalCode" class="block text-sm font-semibold text-gray-800 mb-1">Código Postal</label>
                                                 <IconField>
                                                     <InputIcon class="pi pi-hashtag" />
-                                                    <InputText id="postalCode" v-model="postalCode" type="text" placeholder="Ej: 15434" class="w-full compact-input" :class="postalCodeError ? 'p-invalid' : ''" @input="postalCodeError = ''" fluid />
+                                                    <InputText id="postalCode" v-model="postalCode" type="text" placeholder="Ej: 15434" class="w-full compact-input" :class="postalCodeError ? 'p-invalid' : ''" fluid @input="postalCodeError = ''" />
                                                 </IconField>
                                                 <small v-if="postalCodeError" class="p-error text-red-600 text-xs mt-1 block">{{ postalCodeError }}</small>
                                             </div>
@@ -861,8 +861,8 @@ onMounted(() => {
                                                         placeholder="Ej: Frente al parque, casa verde"
                                                         class="w-full compact-input"
                                                         :class="referenceError ? 'p-invalid' : ''"
-                                                        @input="referenceError = ''"
                                                         fluid
+                                                        @input="referenceError = ''"
                                                     />
                                                 </IconField>
                                                 <small v-if="referenceError" class="p-error text-red-600 text-xs mt-1 block">{{ referenceError }}</small>
@@ -872,7 +872,7 @@ onMounted(() => {
 
                                     <!-- Términos y condiciones -->
                                     <div class="flex items-start space-x-2">
-                                        <Checkbox v-model="acceptTerms" :binary="true" id="acceptTerms" class="mt-1" />
+                                        <Checkbox id="acceptTerms" v-model="acceptTerms" :binary="true" class="mt-1" />
                                         <label for="acceptTerms" class="text-sm text-gray-700 cursor-pointer">
                                             Acepto los
                                             <a href="#" class="text-blue-600 hover:text-blue-800 underline">términos y condiciones</a>

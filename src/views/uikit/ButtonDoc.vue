@@ -119,7 +119,7 @@ function load(index) {
                 <div class="flex flex-wrap gap-2">
                     <Button icon="pi pi-star-fill" class="mr-2 mb-2"></Button>
                     <Button label="Bookmark" icon="pi pi-bookmark" class="mr-2 mb-2"></Button>
-                    <Button label="Bookmark" icon="pi pi-bookmark" iconPos="right" class="mr-2 mb-2"></Button>
+                    <Button label="Bookmark" icon="pi pi-bookmark" icon-pos="right" class="mr-2 mb-2"></Button>
                 </div>
             </div>
             <div class="card flex flex-col gap-4">
@@ -188,7 +188,7 @@ function load(index) {
                 <div class="font-semibold text-xl">Loading</div>
                 <div class="flex flex-wrap gap-2">
                     <Button type="button" class="mr-2 mb-2" label="Search" icon="pi pi-search" :loading="loading[0]" @click="load(0)" />
-                    <Button type="button" class="mr-2 mb-2" label="Search" icon="pi pi-search" iconPos="right" :loading="loading[1]" @click="load(1)" />
+                    <Button type="button" class="mr-2 mb-2" label="Search" icon="pi pi-search" icon-pos="right" :loading="loading[1]" @click="load(1)" />
                     <Button type="button" class="mr-2 mb-2" icon="pi pi-search" :loading="loading[2]" @click="load(2)" />
                     <Button type="button" class="mr-2 mb-2" label="Search" :loading="loading[3]" @click="load(3)" />
                 </div>

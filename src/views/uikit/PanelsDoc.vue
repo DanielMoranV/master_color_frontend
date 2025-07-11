@@ -149,7 +149,7 @@ function toggle() {
                 </div>
 
                 <Card>
-                    <template v-slot:title>
+                    <template #title>
                         <div class="flex items-center justify-between mb-0">
                             <div class="font-semibold text-xl mb-4">Card</div>
                             <Button icon="pi pi-plus" class="p-button-text" @click="toggle" />
@@ -157,7 +157,7 @@ function toggle() {
                         <Menu id="config_menu" ref="menuRef" :model="cardMenu" :popup="true" />
                     </template>
 
-                    <template v-slot:content>
+                    <template #content>
                         <p class="leading-normal m-0">
                             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
                             consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est
@@ -197,7 +197,7 @@ function toggle() {
         <div class="card">
             <div class="font-semibold text-xl mb-4">Splitter</div>
             <Splitter style="height: 300px" class="mb-8">
-                <SplitterPanel :size="30" :minSize="10">
+                <SplitterPanel :size="30" :min-size="10">
                     <div className="h-full flex items-center justify-center">Panel 1</div>
                 </SplitterPanel>
                 <SplitterPanel :size="70">

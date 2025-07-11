@@ -40,7 +40,7 @@ function getSeverity(product) {
             <DataView :value="products" :layout="layout">
                 <template #header>
                     <div class="flex justify-end">
-                        <SelectButton v-model="layout" :options="options" :allowEmpty="false">
+                        <SelectButton v-model="layout" :options="options" :allow-empty="false">
                             <template #option="{ option }">
                                 <i :class="[option === 'list' ? 'pi pi-bars' : 'pi pi-table']" />
                             </template>
@@ -140,7 +140,7 @@ function getSeverity(product) {
             <div class="lg:w-2/3">
                 <div class="card">
                     <div class="font-semibold text-xl mb-4">PickList</div>
-                    <PickList v-model="picklistProducts" breakpoint="1400px" dataKey="id">
+                    <PickList v-model="picklistProducts" breakpoint="1400px" data-key="id">
                         <template #option="{ option }">
                             {{ option.name }}
                         </template>
@@ -151,7 +151,7 @@ function getSeverity(product) {
             <div class="lg:w-1/3">
                 <div class="card">
                     <div class="font-semibold text-xl mb-4">OrderList</div>
-                    <OrderList v-model="orderlistProducts" breakpoint="1400px" dataKey="id" pt:pcList:root="w-full">
+                    <OrderList v-model="orderlistProducts" breakpoint="1400px" data-key="id" pt:pcList:root="w-full">
                         <template #option="{ option }">
                             {{ option.name }}
                         </template>

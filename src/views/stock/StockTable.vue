@@ -67,16 +67,16 @@ function viewMovements(product) {
         <DataTable
             :value="products"
             :loading="loading"
-            dataKey="id"
+            data-key="id"
             :paginator="true"
             :rows="10"
-            :rowsPerPageOptions="[5, 10, 20, 50]"
-            paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-            currentPageReportTemplate="{first} al {last} de {totalRecords} productos"
-            responsiveLayout="scroll"
+            :rows-per-page-options="[5, 10, 20, 50]"
+            paginator-template="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+            current-page-report-template="{first} al {last} de {totalRecords} productos"
+            responsive-layout="scroll"
             class="stock-table"
-            stripedRows
-            :globalFilterFields="['name', 'sku', 'barcode', 'brand', 'category']"
+            striped-rows
+            :global-filter-fields="['name', 'sku', 'barcode', 'brand', 'category']"
         >
             <template #empty>
                 <div class="empty-state">
@@ -88,7 +88,7 @@ function viewMovements(product) {
 
             <template #loading>
                 <div class="loading-state">
-                    <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="4" />
+                    <ProgressSpinner style="width: 50px; height: 50px" stroke-width="4" />
                     <p>Cargando inventario...</p>
                 </div>
             </template>
@@ -112,9 +112,9 @@ function viewMovements(product) {
                         <div class="product-name">{{ data.name }}</div>
                         <div class="product-details">
                             <span class="sku">SKU: {{ data.sku }}</span>
-                            <span class="brand" v-if="data.brand">| {{ data.brand }}</span>
+                            <span v-if="data.brand" class="brand">| {{ data.brand }}</span>
                         </div>
-                        <div class="product-category" v-if="data.category">
+                        <div v-if="data.category" class="product-category">
                             <Tag :value="data.category" severity="info" class="category-tag" />
                         </div>
                     </div>
@@ -183,7 +183,7 @@ function viewMovements(product) {
             <Column header="Acciones" :sortable="false" style="width: 120px">
                 <template #body="{ data }">
                     <div class="action-buttons">
-                        <Button icon="pi pi-chart-line" class="p-button-rounded p-button-text p-button-sm" v-tooltip="'Ver movimientos'" @click="viewMovements(data)" />
+                        <Button v-tooltip="'Ver movimientos'" icon="pi pi-chart-line" class="p-button-rounded p-button-text p-button-sm" @click="viewMovements(data)" />
                     </div>
                 </template>
             </Column>

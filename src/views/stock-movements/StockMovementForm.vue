@@ -333,7 +333,7 @@ onMounted(() => {
 
 <template>
     <div class="stock-movement-form">
-        <form @submit.prevent="handleSubmit" class="form-container">
+        <form class="form-container" @submit.prevent="handleSubmit">
             <!-- Basic Information Section -->
             <div class="form-section">
                 <h3 class="section-title">
@@ -348,8 +348,8 @@ onMounted(() => {
                             id="movement_type"
                             v-model="formData.movement_type"
                             :options="movementTypes"
-                            optionLabel="label"
-                            optionValue="value"
+                            option-label="label"
+                            option-value="value"
                             placeholder="Selecciona el tipo de movimiento"
                             :class="{ 'p-invalid': errors.movement_type }"
                             class="form-select"
@@ -381,20 +381,20 @@ onMounted(() => {
                         <i class="pi pi-box"></i>
                         Productos del Movimiento
                     </h3>
-                    <Button type="button" label="Agregar Producto" icon="pi pi-plus" @click="addStockItem" class="add-button" outlined size="small" />
+                    <Button type="button" label="Agregar Producto" icon="pi pi-plus" class="add-button" outlined size="small" @click="addStockItem" />
                 </div>
 
                 <div v-if="formData.stocks.length === 0" class="empty-stocks">
                     <i class="pi pi-inbox empty-icon"></i>
                     <p>No hay productos agregados</p>
-                    <Button type="button" label="Agregar Primer Producto" icon="pi pi-plus" @click="addStockItem" class="add-first-button" />
+                    <Button type="button" label="Agregar Primer Producto" icon="pi pi-plus" class="add-first-button" @click="addStockItem" />
                 </div>
 
                 <div v-else class="stocks-container">
                     <div v-for="(stock, index) in formData.stocks" :key="index" class="stock-item">
                         <div class="stock-item-header">
                             <span class="stock-item-number">#{{ index + 1 }}</span>
-                            <Button type="button" icon="pi pi-trash" @click="removeStockItem(index)" class="remove-button" text severity="danger" size="small" v-tooltip.top="'Eliminar producto'" />
+                            <Button type="button" v-tooltip.top="'Eliminar producto'" icon="pi pi-trash" class="remove-button" text severity="danger" size="small" @click="removeStockItem(index)" />
                         </div>
 
                         <div class="stock-item-form">
@@ -404,14 +404,14 @@ onMounted(() => {
                                     :id="`stock_id_${index}`"
                                     v-model="stock.selectedProduct"
                                     :suggestions="filteredProducts"
-                                    @complete="searchProducts"
-                                    @item-select="(event) => onProductSelect(event, index)"
-                                    :optionLabel="getProductDisplayText"
+                                    :option-label="getProductDisplayText"
                                     placeholder="Buscar por nombre, SKU, código de barras o marca..."
                                     :class="{ 'p-invalid': errors[`stocks.${index}.stock_id`] }"
                                     class="form-autocomplete"
                                     :loading="loadingProducts"
-                                    forceSelection
+                                    force-selection
+                                    @complete="searchProducts"
+                                    @item-select="(event) => onProductSelect(event, index)"
                                 >
                                     <template #item="{ item }">
                                         <div class="product-item-enhanced">
@@ -454,7 +454,7 @@ onMounted(() => {
                                         :class="{ 'p-invalid': errors[`stocks.${index}.quantity`] }"
                                         class="form-input"
                                         mode="decimal"
-                                        :useGrouping="false"
+                                        :use-grouping="false"
                                     />
                                     <small v-if="errors[`stocks.${index}.quantity`]" class="p-error">
                                         {{ errors[`stocks.${index}.quantity`] }}
@@ -467,8 +467,8 @@ onMounted(() => {
                                         :id="`unit_price_${index}`"
                                         v-model="stock.unit_price"
                                         :min="0"
-                                        :minFractionDigits="2"
-                                        :maxFractionDigits="2"
+                                        :min-fraction-digits="2"
+                                        :max-fraction-digits="2"
                                         :class="{ 'p-invalid': errors[`stocks.${index}.unit_price`] }"
                                         class="form-input"
                                         mode="currency"
@@ -543,7 +543,7 @@ onMounted(() => {
 
             <!-- Form Actions -->
             <div class="form-actions">
-                <Button label="Cancelar" icon="pi pi-times" @click="$emit('cancel')" class="cancel-button" outlined type="button" />
+                <Button label="Cancelar" icon="pi pi-times" class="cancel-button" outlined type="button" @click="$emit('cancel')" />
                 <Button :label="movement?.id ? 'Actualizar Movimiento' : 'Crear Movimiento'" :icon="movement?.id ? 'pi pi-check' : 'pi pi-plus'" type="submit" class="submit-button" :loading="loading" />
             </div>
         </form>
