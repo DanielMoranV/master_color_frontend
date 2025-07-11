@@ -52,6 +52,12 @@ const router = createRouter({
                     meta: { roles: ['client'] }
                 },
                 {
+                    path: '/my-products',
+                    name: 'my-products',
+                    component: () => import('@/views/productsClient/MyProducts.vue'),
+                    meta: { roles: ['client'] }
+                },
+                {
                     path: '/addresses',
                     name: 'client-addresses',
                     component: () => import('@/views/addresses/AddressManager.vue'),

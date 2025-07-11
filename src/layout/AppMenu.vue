@@ -83,15 +83,9 @@ const menuConfig = ref([
         roles: [ROLES.CLIENT],
         items: [
             {
-                label: 'Órdenes de Compra',
+                label: 'Pedidos',
                 icon: 'pi pi-fw pi-shopping-cart',
                 to: '/orders',
-                roles: [ROLES.CLIENT]
-            },
-            {
-                label: 'Mis Compras',
-                icon: 'pi pi-fw pi-cart-plus',
-                to: '/my-purchases',
                 roles: [ROLES.CLIENT]
             },
             {
