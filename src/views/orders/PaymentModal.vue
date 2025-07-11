@@ -162,7 +162,7 @@ const switchToClassicMode = async () => {
 
         if (result.success) {
             // Determinar URL según entorno (sandbox vs producción)
-            const paymentUrl = result.data.sandbox_init_point || result.data.init_point;
+            const paymentUrl = result.data.init_point;
 
             console.log('💳 URL de pago generada:', paymentUrl);
 
@@ -309,7 +309,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <Dialog v-model:visible="isVisible" modal header="Procesar Pago" :style="{ width: '95vw', maxWidth: '800px' }" class="payment-modal" :closable="!loading" :close-on-escape="!loading">
+    <Dialog v-model:visible="isVisible" modal header="Procesar Pago" :style="{ width: '95vw', maxWidth: '800px' }"
+        class="payment-modal" :closable="!loading" :close-on-escape="!loading">
         <div class="payment-content">
             <!-- No Valid Order -->
             <div v-if="!hasValidOrder" class="flex items-center justify-center py-8">
@@ -330,7 +331,9 @@ onBeforeUnmount(() => {
 
             <!-- Bricks Integration -->
             <div v-else-if="useBricks && preferenceData">
-                <MercadoPagoCheckout :order-data="order" :preference-data="preferenceData" @payment-success="handlePaymentSuccess" @payment-error="handlePaymentError" @payment-pending="handlePaymentPending" @use-classic-mode="switchToClassicMode" />
+                <MercadoPagoCheckout :order-data="order" :preference-data="preferenceData"
+                    @payment-success="handlePaymentSuccess" @payment-error="handlePaymentError"
+                    @payment-pending="handlePaymentPending" @use-classic-mode="switchToClassicMode" />
             </div>
 
             <!-- Payment Polling Status (fallback) -->
@@ -340,9 +343,11 @@ onBeforeUnmount(() => {
                         <i class="pi pi-spin pi-spinner text-4xl text-blue-500"></i>
                     </div>
                     <h3 class="polling-title">Esperando confirmación de pago</h3>
-                    <p class="polling-description">Hemos redirigido a MercadoPago. La página se actualizará automáticamente cuando el pago se complete.</p>
+                    <p class="polling-description">Hemos redirigido a MercadoPago. La página se actualizará
+                        automáticamente cuando el pago se complete.</p>
                     <div class="polling-actions">
-                        <Button @click="stopPolling" label="Cancelar verificación" icon="pi pi-times" class="p-button-outlined p-button-danger" />
+                        <Button @click="stopPolling" label="Cancelar verificación" icon="pi pi-times"
+                            class="p-button-outlined p-button-danger" />
                     </div>
                 </div>
             </div>
@@ -367,12 +372,14 @@ onBeforeUnmount(() => {
                         <i class="pi pi-info-circle text-blue-500"></i>
                         <div>
                             <h4 class="method-title">Pago con MercadoPago</h4>
-                            <p class="method-description">Serás redirigido a MercadoPago para completar tu pago de forma segura.</p>
+                            <p class="method-description">Serás redirigido a MercadoPago para completar tu pago de forma
+                                segura.</p>
                         </div>
                     </div>
 
                     <div class="action-buttons">
-                        <Button @click="initializePaymentPreference" class="pay-button" size="large" :loading="loading" :disabled="isPolling">
+                        <Button @click="initializePaymentPreference" class="pay-button" size="large" :loading="loading"
+                            :disabled="isPolling">
                             <i class="pi pi-credit-card mr-2"></i>
                             Pagar con MercadoPago
                         </Button>
@@ -383,7 +390,8 @@ onBeforeUnmount(() => {
 
         <template #footer>
             <div class="modal-actions">
-                <Button label="Cerrar" icon="pi pi-times" @click="closeModal" class="p-button-outlined" :disabled="loading || isPolling" />
+                <Button label="Cerrar" icon="pi pi-times" @click="closeModal" class="p-button-outlined"
+                    :disabled="loading || isPolling" />
                 <div v-if="isPolling" class="polling-status-footer">
                     <i class="pi pi-info-circle text-blue-500 mr-2"></i>
                     <span class="text-sm text-blue-600">Verificando pago cada 5 segundos...</span>

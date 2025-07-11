@@ -183,7 +183,7 @@ export function useCart() {
                     life: 3000
                 });
 
-                const paymentUrl = result.data.init_point || result.data.sandbox_init_point;
+                const paymentUrl = result.data.init_point;
                 if (paymentUrl) {
                     window.location.href = paymentUrl;
                 }

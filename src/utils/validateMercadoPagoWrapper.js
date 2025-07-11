@@ -38,13 +38,12 @@ export const validateMercadoPagoWrapperIntegration = async () => {
             data: {
                 preference_id: 'test-123',
                 init_point: 'https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=test-123',
-                sandbox_init_point: 'https://sandbox.mercadopago.com.ar/checkout/v1/redirect?pref_id=test-123',
                 order_id: 42,
                 total_amount: 150.0
             }
         };
 
-        const requiredFields = ['preference_id', 'init_point', 'sandbox_init_point', 'order_id', 'total_amount'];
+        const requiredFields = ['preference_id', 'init_point', 'order_id', 'total_amount'];
         const hasAllFields = requiredFields.every((field) => mockWrapperResponse.data.hasOwnProperty(field));
 
         if (hasAllFields) {

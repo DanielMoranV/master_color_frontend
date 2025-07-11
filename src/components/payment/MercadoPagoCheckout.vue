@@ -1,11 +1,11 @@
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
-import { useToast } from 'primevue/usetoast';
+import { ordersApi } from '@/api/index';
+import mercadoPagoService from '@/services/mercadopagoService';
 import Button from 'primevue/button';
 import ProgressSpinner from 'primevue/progressspinner';
+import { useToast } from 'primevue/usetoast';
+import { onMounted, onUnmounted, ref } from 'vue';
 import PaymentFallback from './PaymentFallback.vue';
-import mercadoPagoService from '@/services/mercadopagoService';
-import { ordersApi } from '@/api/index';
 
 const props = defineProps({
     orderData: {
@@ -221,7 +221,7 @@ const processCardPayment = async (cardFormData) => {
             });
 
             // Redirigir a MercadoPago en la misma pestaña
-            const paymentUrl = result.data.sandbox_init_point || result.data.init_point;
+            const paymentUrl = result.data.init_point;
             if (paymentUrl) {
                 // Guardar ID de orden para verificar el pago después
                 localStorage.setItem('currentOrderId', props.orderData.id);
@@ -298,7 +298,7 @@ const processWalletPayment = async (walletFormData) => {
                 life: 3000
             });
 
-            const paymentUrl = result.data.sandbox_init_point || result.data.init_point;
+            const paymentUrl = result.data.init_point;
             if (paymentUrl) {
                 localStorage.setItem('currentOrderId', props.orderData.id);
                 window.location.href = paymentUrl;
@@ -349,7 +349,7 @@ const processBankTransfer = async () => {
             });
 
             // Redirigir a MercadoPago donde el usuario podrá elegir transferencia bancaria
-            const paymentUrl = result.data.sandbox_init_point || result.data.init_point;
+            const paymentUrl = result.data.init_point;
             if (paymentUrl) {
                 localStorage.setItem('currentOrderId', props.orderData.id);
                 window.location.href = paymentUrl;
@@ -407,7 +407,7 @@ const proceedToMercadoPago = async () => {
         const paymentData = response.data;
 
         // Check if we have the required payment URLs
-        if (paymentData && (paymentData.sandbox_init_point || paymentData.init_point)) {
+        if (paymentData && paymentData.init_point) {
             console.log('Payment data:', paymentData);
 
             toast.add({
@@ -418,7 +418,7 @@ const proceedToMercadoPago = async () => {
             });
 
             // Redirect to MercadoPago using the generated preference
-            const paymentUrl = paymentData.sandbox_init_point || paymentData.init_point;
+            const paymentUrl = paymentData.init_point;
             if (paymentUrl) {
                 // Save order ID for payment verification after redirect (según la guía)
                 localStorage.setItem('pendingOrderId', props.orderData.id);
@@ -491,7 +491,8 @@ onUnmounted(() => {
 <template>
     <div class="mercadopago-checkout">
         <!-- Loading, Error, or Config Error State -->
-        <PaymentFallback v-if="loading || error || configError" :error="initializationError" :config-error="configError" @retry="handleRetry" @use-classic-mode="handleUseClassicMode" />
+        <PaymentFallback v-if="loading || error || configError" :error="initializationError" :config-error="configError"
+            @retry="handleRetry" @use-classic-mode="handleUseClassicMode" />
 
         <!-- Payment Options -->
         <div v-else class="space-y-6">
@@ -528,16 +529,20 @@ onUnmounted(() => {
                         <i class="pi pi-shield text-blue-600 text-2xl mr-3"></i>
                         <div class="flex-1">
                             <h4 class="font-semibold text-blue-800">Pago seguro con MercadoPago</h4>
-                            <p class="text-blue-700 text-sm mt-1">Acepta tarjetas de crédito, débito, transferencias bancarias y otros métodos de pago</p>
+                            <p class="text-blue-700 text-sm mt-1">Acepta tarjetas de crédito, débito, transferencias
+                                bancarias y otros métodos de pago</p>
                         </div>
                     </div>
 
-                    <Button @click="proceedToMercadoPago" label="Pagar con MercadoPago" icon="pi pi-external-link" class="mt-4 w-full bg-blue-600 border-blue-600 hover:bg-blue-700" :loading="processing" size="large" />
+                    <Button @click="proceedToMercadoPago" label="Pagar con MercadoPago" icon="pi pi-external-link"
+                        class="mt-4 w-full bg-blue-600 border-blue-600 hover:bg-blue-700" :loading="processing"
+                        size="large" />
                 </div>
             </div>
 
             <!-- Payment Method Instructions -->
-            <div v-if="!paymentMethod" class="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+            <div v-if="!paymentMethod"
+                class="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                 <i class="pi pi-arrow-up text-4xl text-gray-400 mb-4"></i>
                 <h3 class="text-lg font-medium text-gray-700 mb-2">Selecciona un método de pago</h3>
                 <p class="text-gray-500">Elige cómo deseas pagar tu pedido para continuar</p>
@@ -557,7 +562,8 @@ onUnmounted(() => {
                         <i class="pi pi-info-circle text-blue-500 mr-3 mt-1"></i>
                         <div>
                             <h4 class="font-medium text-blue-800">Transferencia Bancaria</h4>
-                            <p class="text-blue-700 text-sm mt-1">Después de confirmar tu pedido, recibirás los datos bancarios para realizar la transferencia.</p>
+                            <p class="text-blue-700 text-sm mt-1">Después de confirmar tu pedido, recibirás los datos
+                                bancarios para realizar la transferencia.</p>
                         </div>
                     </div>
                     <Button @click="processBankTransfer" label="Confirmar Pedido" class="mt-4" :loading="processing" />
