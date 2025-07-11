@@ -42,10 +42,22 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="my-products-container">
-        <h2 class="page-title">Historial de Compras</h2>
+    <div class="purchases-page">
+        <!-- Header Section with Gradient Background -->
+        <section class="header-section">
+            <div class="header-content">
+                <div class="icon-wrapper">
+                    <i class="pi pi-shopping-bag"></i>
+                </div>
+                <div>
+                    <h1 class="title">Historial de Compras</h1>
+                    <p class="subtitle">Revisa los pedidos que has realizado</p>
+                </div>
+            </div>
+        </section>
 
         <DataTable
+            class="purchases-table"
             :value="purchases"
             :loading="loading"
             data-key="order_id"
@@ -180,4 +192,94 @@ onMounted(() => {
     align-items: center;
     gap: 1rem;
 }
+/* ------------------ Modern Enhancements ------------------ */
+.purchases-page {
+    padding: 1rem 2rem;
+}
+
+.header-section {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Decorative blurred circle */
+.header-section::after {
+    content: '';
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    top: -50px;
+    right: -50px;
+    filter: blur(50px);
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.icon-wrapper {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.icon-wrapper i {
+    font-size: 1.75rem;
+    color: #ffffff;
+}
+
+.title {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.subtitle {
+    margin: 0.25rem 0 0;
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.purchases-table {
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Dark Mode Support */
+[data-theme='dark'] .header-section {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+}
+
+[data-theme='dark'] .icon-wrapper {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .title,
+[data-theme='dark'] .subtitle {
+    color: #ffffff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
 </style>
